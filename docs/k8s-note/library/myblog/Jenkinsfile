@@ -1,0 +1,87 @@
+@Library('luffy-devops') _
+
+pipeline {
+    agent { label 'jnlp-slave'}
+    options {
+        buildDiscarder(logRotator(numToKeepStr:'10'))
+        disableConcurrentBuilds()
+        timeout(time: 20, unit: 'MINUTES')
+        gitLabConnection('gitlab')
+    }
+    environment {
+        IMAGE_REPO = "10.211.55.27:5000/demo/myblog"
+        IMAGE_CREDENTIAL = "credential-registry"
+        DINGTALK_CREDS = credentials('dingTalk')
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                container('tools') {
+                    checkout scm
+                }
+            }
+        }
+        stage('CI'){
+            failFast true
+            parallel {
+                stage('Unit Test') {
+                    steps {
+                        echo "Unit Test Stage Skip..."
+                    }
+                }
+                stage('Code Scan') {
+                    steps {
+                        container('tools') {
+                            script {
+                               devops.scan().start()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('build-image') {
+            steps {
+                container('tools') {
+                    script{
+                        devops.docker(
+                            "${IMAGE_REPO}",
+                            "${GIT_COMMIT}",
+                            IMAGE_CREDENTIAL
+                        ).build().push()
+                    }
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                container('tools') {
+                    script{
+                        devops.deploy("manifests", true, "manifests/myblog.dpl.yaml").start()
+                    }
+                }
+            }
+        }
+        stage('integration test') {
+            steps {
+                container('tools') {
+                    script{
+                        devops.robotTest("myblog")
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script{
+                devops.notificationSuccess("myblog","dingTalk")
+            }
+        }
+        failure {
+            script{
+                devops.notificationFailed("myblog","dingTalk")
+            }
+        }
+    }
+}

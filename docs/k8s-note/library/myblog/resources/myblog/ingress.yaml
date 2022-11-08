@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: myblog
+  namespace: demo
+spec:
+  rules:
+  - host: blog.qq.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: myblog
+          servicePort: 80

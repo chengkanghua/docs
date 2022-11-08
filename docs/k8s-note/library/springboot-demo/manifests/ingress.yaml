@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: springboot-demo
+  namespace: {{NAMESPACE}}
+spec:
+  rules:
+  - host: {{INGRESS_SPRINGBOOTDEMO}}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: springboot-demo
+            port:
+              number: 8080

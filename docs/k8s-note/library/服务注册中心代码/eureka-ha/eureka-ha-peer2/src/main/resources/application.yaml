@@ -1,0 +1,17 @@
+server:
+  port: ${EUREKA_PORT:8763}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://${spring.security.user.name}:${spring.security.user.password}@peer1:8762/eureka/,http://${spring.security.user.name}:${spring.security.user.password}@peer2:8763/eureka/}
+    fetch-registry: true
+  instance:
+    instance-id: ${eureka.instance.hostname}:${server.port}
+    hostname: peer2
+spring:
+  security:
+    user:
+      name: ${EUREKA_USER:admin}
+      password: ${EUREKA_PASS:admin}
+  application:
+    name: eureka-cluster

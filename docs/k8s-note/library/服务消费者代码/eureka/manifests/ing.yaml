@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eureka-cluster
+  namespace: {{NAMESPACE}}
+spec:
+  rules:
+    - host: {{INGRESS_EUREKA}}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eureka-ingress
+                port:
+                  number: 8761
