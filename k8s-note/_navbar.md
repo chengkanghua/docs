@@ -1,6 +1,5 @@
 <!-- /docs/_navbar.md -->
 
-
-* [En](/)
-* [k8s-devops](/k8s-note/)
-* [dba](/dba-note/)
+* [En](/docs)
+* [k8s-devops](/docs/k8s-note/)
+* [dba](/docs/dba-note/)
