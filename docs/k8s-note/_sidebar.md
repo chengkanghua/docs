@@ -1,7 +1,7 @@
 <!-- docs/_sidebar.md -->
 
-- [1走进Docker的世界](/k8s-note/1走进docker的世界.md)
-- [2Kubernetes安装文档](/k8s-note/2Kubernetes安装文档.md)
+- [1走进Docker的世界](1走进docker的世界.md)
+- [2Kubernetes安装文档](2Kubernetes安装文档.md)
 - [3Kubernetes落地实践之旅](/k8s-node/3Kubernetes落地实践之旅.md)
 - [4Kubernetes进阶实践](4Kubernetes进阶实践.md)
 - [5基于EFK的Kubernetes日志采集方案](5基于EFK的Kubernetes日志采集方案.md)
