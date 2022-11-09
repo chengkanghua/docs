@@ -1,6 +1,6 @@
 <!-- _coverpage.md -->
 
-![logo](/docs/_media/lion.png)
+![logo](docs/_media/lion.png)
 
 # 程康华 <small>0.1</small>
 
