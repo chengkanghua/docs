@@ -20,4 +20,3 @@
 
 [GitHub](https://github.com/chengkanghua)
 [Get Started](/k8s-note/)
-# linux
