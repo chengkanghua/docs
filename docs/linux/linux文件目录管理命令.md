@@ -2686,7 +2686,7 @@ mv: 无法将"nginx.conf" 移动至"nginx.conf_bak": 不允许的操作
 
 
 # Linux文件管理练习题
-
+```
 1linux命令格式是什么样？
 2linux命令必须添加参数才能执行吗
 3解释linux的命令提示符，如何用linux命令解析 [root@pylinux opt]#
@@ -2730,8 +2730,7 @@ mv: 无法将"nginx.conf" 移动至"nginx.conf_bak": 不允许的操作
 41如何解压缩data.zip文件
 42显示具体的系统时间，时：分：秒
 43如何彻底粉碎文件
-
-
+```
 
 
 

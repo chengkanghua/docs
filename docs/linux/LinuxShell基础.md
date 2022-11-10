@@ -1,7 +1,7 @@
 
 
 # 走进shell
-在Linux早起，还没有出现图形化，超哥和其他系统管理员都只能坐在电脑前，输入shell命令，查看控制台的文本输出。
+在Linux早期，还没有出现图形化，输入shell命令，查看控制台的文本输出。
 在大多数Linux发行版里，例如centos，可以简单的用组合键来访问Linux控制台，也就是`ctrl+F1~F7`。
 现在更多的使用xshell这样的控制终端，来连接管理我们的Linux机器。
 以centos为例，默认的shell都是`GNU bash shell`，支持一些特性，例如
@@ -11,12 +11,14 @@
 - shell指令
 
 `GNU bash shell`是在系统普通用户登陆时，作为普通程序运行，这个规则是`/etc/passwd`中指定的条目
+
 ```
 [root@chaogelinux ~]# tail -1 /etc/passwd
 susu:x:2009:2010::/home/susu:/bin/bash
 ```
 bash会在用户登录时候自动启动，如果是虚拟控制台终端登录，`命令行界面（英語：Command-Line Interface，缩写：CLI）提示符会自动出现，此时可以输入shell命令。
 或者是通过图形化桌面登录Linux系统，你就需要启动GNOME这样的图形化终端仿真器来访问shell CLI。
+
 ## 什么是shell
 
 shell的作用是
@@ -74,7 +76,7 @@ _shell脚本规则_
 ```
 [root@chaogelinux data]# cat test.sh
 #!/bin/bash
-echo "超哥强呀，奥力给"
+echo "哥哥强呀，奥力给"
 #!/bin/bash 这里就是注释的作用了
 ```
 系统自带的bash脚本，开机启动脚本
@@ -91,9 +93,9 @@ echo "超哥强呀，奥力给"
 #! /bin/bash
 # Date : 2019-11-28 14:59:18
 # Author：created by chaoge
-# Blog：www.cnblogs.com/pyyu
+# Blog：www.cnblogs.com/kanghua
 ```
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396338-05776ff1-6632-4b4b-87d9-66c014b31e38.png#align=left&display=inline&height=1184&margin=%5Bobject%20Object%5D&originHeight=1184&originWidth=1350&size=0&status=done&style=none&width=1350)
+
 ### 执行shell脚本的方式
 
 - `bash script.sh`或`sh scripte.sh`，文件本身没权限执行，没x权限，则使用的方法，或脚本未指定`shebang`，重点推荐的方式
@@ -103,26 +105,24 @@ echo "超哥强呀，奥力给"
 ```
 [root@chaogelinux data]# cat test.sh
 #!/bin/bash
-echo "超哥强呀，奥力给"
+echo "哥哥强呀，奥力给"
 #!/bin/bash 这里就是注释的作用了
-[root@chaogelinux data]#
-[root@chaogelinux data]#
 [root@chaogelinux data]# sh < test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 [root@chaogelinux data]# sh test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 [root@chaogelinux data]# bash test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 [root@chaogelinux data]# source test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 [root@chaogelinux data]# . /data/test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 权限不足
 [root@chaogelinux data]# ./test.sh
 -bash: ./test.sh: 权限不够
 [root@chaogelinux data]# chmod +x test.sh
 [root@chaogelinux data]# ./test.sh
-超哥强呀，奥力给
+哥哥强呀，奥力给
 ```
 ## 脚本语言
 shell脚本语言属于一种弱类型语言`无需声明变量类型，直接定义使用`
@@ -145,12 +145,12 @@ centos7系统中支持的shell情况，有如下种类
 lrwxrwxrwx 1 root root 4 11月 16 10:48 /usr/bin/sh -> bash
 ```
 ### 其他脚本语言
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396335-0fc4f930-7456-4a93-8ca3-511b239f2fb8.png#align=left&display=inline&height=576&margin=%5Bobject%20Object%5D&originHeight=576&originWidth=1348&size=0&status=done&style=none&width=1348)
 
 - PHP是网页程序语言，专注于Web页面开发，诸多开源产品，wordpress、discuz开源产品都是PHP开发
 - Perl语言，擅长支持强大的正则表达式，以及运维工具的开发
 - Python语言，明星语言，不仅适用于脚本程序开发，也擅长Web页面开发，如（系统后台，资产管理平台），爬虫程序开发，大量Linux运维工具也由python开发，甚至于游戏开发也使用
 ### shell的优势
+
 虽然有诸多脚本编程语言，但是对于Linux操作系统内部应用而言，shell是最好的工具，Linux底层命令都支持shell语句，以及结合三剑客(grep、sed、awk)进行高级用法。
 
 - 擅长系统管理脚本开发，如软件启停脚本、监控报警脚本、日志分析脚本
@@ -162,10 +162,13 @@ lrwxrwxrwx 1 root root 4 11月 16 10:48 /usr/bin/sh -> bash
 /bin/bash
 ```
 ## bash基础特性
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396354-9464f003-7c7f-4d6d-8a2d-d4db9f5437e3.png#align=left&display=inline&height=1022&margin=%5Bobject%20Object%5D&originHeight=1022&originWidth=1584&size=0&status=done&style=none&width=1584)
+
+### bash是什么
+
 bash有诸多方便的功能，有助于运维人员提升工作效率
 **命令历史**
 **Shell会保留其会话中用户提交执行的命令**
+
 ```
 history    #命令，查看历史命令记录，注意【包含文件中和内存中的历史记录】
 [root@chaogelinux ~]# echo $HISTSIZE    #shell进程可保留的命令历史的条数
@@ -218,13 +221,14 @@ ignoreboth
 学生时代所学的数学方程式，如x=1,y=2，那会称之为x，y是未知数
 对于计算机角度，x=1,y=2等于定义了两个变量，名字分别是x，y，且赋值了1和2
 **变量是暂时存储数据的地方，是一种数据标记（房间号，标记了客人所在的位置），数据存储在内容空间，通过调用正确的变量名字，即可取出对应的值。**
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396332-3e09ead0-a243-43b9-af12-2593c882d527.png#align=left&display=inline&height=880&margin=%5Bobject%20Object%5D&originHeight=880&originWidth=1024&size=0&status=done&style=none&width=1024)
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396347-e10325dd-6aa7-4e61-8772-234cc5ec46ca.png#align=left&display=inline&height=1158&margin=%5Bobject%20Object%5D&originHeight=1158&originWidth=990&size=0&status=done&style=none&width=990)
+
+
+
 ### shell变量
 
 - 变量定义与赋值，注意变量与值之间不得有空格
 ```
-name="超哥"
+name="哥哥"
 变量名
 变量类型，bash默认把所有变量都认为是字符串
 bash变量是弱类型，无需事先声明类型，是将声明和赋值同时进行
@@ -232,11 +236,11 @@ bash变量是弱类型，无需事先声明类型，是将声明和赋值同时�
 
 - 变量替换/引用
 ```
-[root@chaogelinux ~]# name="超哥带你学bash"
+[root@chaogelinux ~]# name="哥哥带你学bash"
 [root@chaogelinux ~]# echo ${name}
-超哥带你学bash
+哥哥带你学bash
 [root@chaogelinux ~]# echo $name    #可以省略花括号
-超哥带你学bash
+哥哥带你学bash
 ```
 
 - 变量名规则
@@ -294,13 +298,13 @@ $n2
       - 单引号，识别为普通字符串
 ### 不同的执行方式，不同的shell环境
 ```
-[root@chaogelinux data]# echo user1='超哥' > testsource.sh
+[root@chaogelinux data]# echo user1='哥哥' > testsource.sh
 [root@chaogelinux data]# echo $user1
 [root@chaogelinux data]# sh testsource.sh
 [root@chaogelinux data]# echo $user1
 [root@chaogelinux data]# source testsource.sh
 [root@chaogelinux data]# echo $user1
-超哥
+哥哥
 ```
 ![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807396353-baad49c3-3102-4f12-9a75-e2455a6a8552.png#align=left&display=inline&height=516&margin=%5Bobject%20Object%5D&originHeight=516&originWidth=1592&size=0&status=done&style=none&width=1592)
 解答：
@@ -314,8 +318,8 @@ user1=`whoami`
 [root@chaogelinux data]# sh test.sh
 [root@chaogelinux data]# echo $user1
 A.当前用户
-B.超哥
-C.空
+B.哥哥
+C.空 ☑️
 ```
 ## 环境变量设置
 环境变量一般指的是用export内置命令导出的变量，用于定义shell的运行环境、保证shell命令的正确执行。
@@ -341,7 +345,7 @@ shell通过环境变量确定登录的用户名、PATH路径、文件系统等�
 - readonly ，只有shell结束，只读变量失效
 ```
 直接readonly 显示当前系统只读变量
-[root@chaogelinux ~]# readonly name="超哥"
+[root@chaogelinux ~]# readonly name="哥哥"
 [root@chaogelinux ~]# name="chaochao"
 -bash: name: 只读变量
 ```
@@ -369,7 +373,7 @@ e 　列出进程时，显示每个进程所使用的环境变量。
 ```
 案例
 ```
-1.于超老师登录自己的虚拟机
+1.登录自己的虚拟机
 [yuchao@yumac Luffy_linux]$sshpyyu
 Last login: Sat Sep 26 21:06:16 2020 from 221.218.215.96
 [root@chaogelinux ~]#
@@ -384,7 +388,7 @@ root     16074 15107  0 21:11 pts/0    00:00:00          \_ ps --forest -ef
 ## 子shell
 当在CLI的提示符下，输入/bin/bash指令，或者其他bash指令，会创建一个新的shell程序，这就被称之为`子shell（child shell）`
 子shell同样的拥有CLI提示符，可以输入命令。
-使用如下命令，超哥教你如何查看父子的诞生
+使用如下命令，哥哥教你如何查看父子的诞生
 ```
 [root@chaogelinux ~]# ps -f
 UID        PID  PPID  C STIME TTY          TIME CMD
@@ -405,7 +409,8 @@ root     17144 16966  0 21:18 pts/0    00:00:00 ps -f
 - 第二个ps -ef是在子shell里执行的。
 
 ![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807456773-11c57c04-d60d-4f0f-a620-08c97081b54e.png#align=left&display=inline&height=442&margin=%5Bobject%20Object%5D&originHeight=442&originWidth=1082&size=0&status=done&style=none&width=1082)
-子shell生成时，父进程的部分环境变量被复制到子shell里，这个后面于超老师在给大家说。
+子shell生成时，父进程的部分环境变量被复制到子shell里。
+
 ### 多个子shell
 ```
 1.当前shell关系
@@ -431,7 +436,7 @@ exit 可以退出子shell，也可以退出当前的虚拟控制台终端。
 只需要在父shell里输入exit就可以退出了。
 ```
 ## 进程列表
-若是超哥想要执行一系列的命令，可以通过命令列表来实现，如下
+可以通过命令列表来实现，如下
 ```
 [root@chaogelinux ~]# pwd;ls;cd /opt;pwd;ls
 这样的写法，命令的确会依次执行，但是这并不是【进程列表】
@@ -468,7 +473,7 @@ exit 可以退出子shell，也可以退出当前的虚拟控制台终端。
 [root@chaogelinux tmp]# (pwd;echo $BASH_SUBSHELL)
 /tmp
 1
-细心的同学观察下，超哥这里是怎么改动的
+细心的同学观察下，哥哥这里是怎么改动的
 [root@chaogelinux tmp]# (pwd;(echo $BASH_SUBSHELL))
 /tmp
 2
@@ -573,10 +578,10 @@ root     31440 24734  0 10:34 pts/2    00:00:00          \_ ps -ef --forest
 ```
 通过这种写法，协程的名字指定了，注意扩展语法`{ 任务 }`花括号里面的空格。
 # 内建命令
-这里超哥曾经在15年在上海面试运维的时候，面试官问过这个问题：你知道linux内置命令，外置命令吗？
+曾经在15年在上海面试运维的时候，面试官问过这个问题：你知道linux内置命令，外置命令吗？
 答：
-> >
-> 内置命令：在系统启动时就加载入内存，常驻内存，执行效率更高，但是占用资源
+
+> >内置命令：在系统启动时就加载入内存，常驻内存，执行效率更高，但是占用资源
 > 外置命令：用户需要从硬盘中读取程序文件，再读入内存加载
 
 ## 外部命令
@@ -620,14 +625,15 @@ exit 是 shell 内嵌
 ### 查看内置命令
 ```
 # 该命令列出所有的bash shell可以用的内置命令
-[root@web01 ~ 11:33:33]$compgen -b
+[root@web01 ~ 11:33:33]$ compgen -b
 ```
 ### 查看外置命令
 除了以上的内置命令，日常使用的大部分命令都是外部命令啦。
 可以用type验证下即可。
 # Linux环境变量
-变量的概念，超哥前面已经给大家介绍了。
+
 Linux环境变量可以提升shell使用体验，很多程序和脚本通过环境变量来获取系统信息，存储的临时数据和配置信息。
+
 ## 什么是环境变量
 `environment variable`的作用是存储有关shell会话和工作环境的信息，因此也称之为环境变量。
 它允许你在内存里存储临时数据，便于程序或者shell能够轻松的访问。
@@ -663,8 +669,7 @@ printenv
 ```
 ## 局部环境变量
 局部变量只能在定义他们的进程里可见，局部变量无法单独查看，可以用set命令查到所有的环境变量，包含局部变量，全局变量，以及用户自定义变量。
-> >
-> env、printenv、set之间的差异微小
+> >env、printenv、set之间的差异微小
 > set显示全局变量，局部变量，用户自定义变量，以及按照字母顺序排序
 > env、printenv命令和set的区别在于不会排序，也不会输出局部变量和自定义变量。
 
@@ -673,17 +678,17 @@ printenv
 自定义的变量，尽量用小写字母，进行和系统变量区分开，防止修改系统变量导致灾难。
 ```
 [root@web01 ~]# echo $my_name
-[root@web01 ~]# my_name="超哥"
+[root@web01 ~]# my_name="妹妹"
 [root@web01 ~]#
 [root@web01 ~]# echo $my_name
-超哥
+妹妹
 [root@web01 ~]# set |grep my_name
-my_name=超哥
+my_name=妹妹
 ```
 局部变量，在父子shell是不可见的
 ```
 [root@web01 ~]# echo $my_name
-超哥
+妹妹
 [root@web01 ~]#
 [root@web01 ~]# bash
 [root@web01 ~]# echo $my_name
@@ -698,15 +703,15 @@ exit
 想要解决这个问题，就可以设置全局变量来改变这个情况。
 ## 设置全局变量
 ```
-[root@web01 ~]# export name='超哥带你学shell'
+[root@web01 ~]# export name='哥哥带你学shell'
 [root@web01 ~]#
 [root@web01 ~]# printenv name
-超哥带你学shell
+哥哥带你学shell
 [root@web01 ~]#
 [root@web01 ~]# bash
 [root@web01 ~]#
 [root@web01 ~]# printenv name
-超哥带你学shell
+哥哥带你学shell
 ```
 通过`export`命令设置全局变量，在子shell里也都是可见的。
 ### 作用域优先级
@@ -717,24 +722,24 @@ exit
 通过如下过程，**看出子shell不会影响到父shell的变量**
 ```
 1.当前的父shell
-[root@web01 ~]# name='我是超哥，这里是全局变量'
+[root@web01 ~]# name='我是哥哥，这里是全局变量'
 [root@web01 ~]#
-[root@web01 ~]# export name='我是超哥，这里是全局变量'
+[root@web01 ~]# export name='我是哥哥，这里是全局变量'
 [root@web01 ~]#
 [root@web01 ~]#
 [root@web01 ~]# bash
 [root@web01 ~]#
-[root@web01 ~]# name='我是子shell，我也是超哥'
+[root@web01 ~]# name='我是子shell，我也是哥哥'
 [root@web01 ~]#
 [root@web01 ~]#
 [root@web01 ~]# printenv name
-我是子shell，我也是超哥
+我是子shell，我也是哥哥
 [root@web01 ~]#
 [root@web01 ~]# exit
 exit
 [root@web01 ~]#
 [root@web01 ~]# printenv name
-我是超哥，这里是全局变量
+我是哥哥，这里是全局变量
 2.子shell即使用export也无法修改父shell的变量值
 ```
 ## 删除变量
@@ -742,7 +747,7 @@ exit
 [root@web01 ~]# unset name
 [root@web01 ~]# echo $name
 ```
-要注意的还是，在子shell里删除变量，也不回影响父shell
+要注意的还是，在子shell里删除变量，也不会影响父shell
 ## 查找变量
 小技巧，过滤出部分系统的环境变量
 ```
@@ -758,7 +763,7 @@ quote ()
 quote_readline ()
 ```
 ## PATH变量
-PATH变量的作用，超哥已经在其他章节给大家讲解过了。
+PATH变量的作用，哥哥已经在其他章节给大家讲解过了。
 ## 登录Shell
 登录Linux时，bash shell是默认的shell启动，shell会从5个文件中读取，是否定义了环境变量
 
@@ -770,6 +775,7 @@ PATH变量的作用，超哥已经在其他章节给大家讲解过了。
 
 `/etc/profile`文件是系统上默认的bash主启动文件，每个用户启动都会执行该文件。
 该文件利用了`for`语句，进行配置文件循环读取，遍历执行`/etc/profile.d`目录下所有的文件
+
 ```
 [root@web01 ~]# ls  /etc/profile.d/
 ```
@@ -788,9 +794,9 @@ PATH变量的作用，超哥已经在其他章节给大家讲解过了。
 ```
 [root@web01 ~]# cat hello.sh
 #!/bin/bash
-echo 'hello 超哥，你讲的课真有意思'
+echo 'hello 哥哥，你讲的课真有意思'
 [root@web01 ~]# bash hello.sh
-hello 超哥，你讲的课真有意思
+hello 哥哥，你讲的课真有意思
 ```
 ## 永久性环境变量
 对于想要设置永久的环境变量，也就是每次开机都能够生效，大多数运维的习惯是写入`/etc/profile`
