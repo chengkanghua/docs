@@ -700,6 +700,7 @@ _显示正在监听的TCP和UDP连接_
 
 _显示socket统计_
 可以用于统计服务器链接数的宏观数据统计
+
 ```
 [root@local-gege ~]# ss -s
 Total: 570 (kernel 1071)
