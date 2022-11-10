@@ -1,5 +1,5 @@
 
-你每天是怎么起床的？有的人有女朋友，，或是男朋友，，而我是被穷醒的，，，
+你每天是怎么起床的？有的人有女朋友，，或是男朋友，，而我是被穷醒的.   
 **什么是计划任务：** 后台运行，到了预定的时间就会自动执行的任务，前提是：事先手动将计划任务设定好。
 
 - 周期性任务执行
@@ -22,12 +22,12 @@ rpm -qf 查看命令属于的安装包
 rpm -e  卸载软件
 ```
 **检查crond服务是否运行**
+
 ```
 systemctl status crond.service  #centos7
 service crond status    #centos6
 ```
 ## crond定时任务服务应用
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610807990480-3e51e0ec-2893-420b-9483-d5d9569ed311.png#align=left&display=inline&height=654&margin=%5Bobject%20Object%5D&originHeight=654&originWidth=1150&size=0&status=done&style=none&width=1150)
 
 ```
 cron 定时任务的名字
@@ -35,15 +35,12 @@ crond 定时任务进程名
 crontab 管理定时任务命令
 ```
 
-
-
-
-
 Cron是Linux系统中以后台进程模式周期性执行命令或指定程序任务的服务软件名。
 Linux系统启动后，cron软件便会启动，对应的进程名字叫做crond，默认是定期（每分钟检查一次)检查系统中是否有需要执行的任务计划，如果有，则按计划进行，好比我们平时用的闹钟。
 
 - crond定时任务默认最快的频率是每分钟执行
 - 若是需要以秒为单位的计划任务，则编写shell脚本更格式，crond不适用了
+
 ```
 #秒级shell脚本
 [root@pylinux tmp]# cat test_cron.sh
@@ -69,6 +66,7 @@ done
 - `at`定时任务工具，依赖于`atd`服务，适用于执行一次就结束的调度任务
 
 例如突发任务，某天夜里3点需要临时性备份数据，可以使用at软件
+
 ```
 语法
 HH:MM
@@ -80,6 +78,7 @@ tomorrow    明天
 now+1min  #一分钟之后
 now+1minutes/hours/days/weeks
 ```
+
 ```
 一分钟之后运行ls /opt
 at now+1min
@@ -106,6 +105,7 @@ atrm 6  #效果一样
 - `cron`定时任务依赖于`crond`服务，启动`crond服务后`通过linux命令`crontab`可以配置周期性定时任务，是Linux运维最常用的工具
 ### 定时任务与邮件服务
 任务计划触发执行后，会通过邮件发送给用户，（并非互联网上的邮件，而是系统内部的邮件服务）
+
 ```
 1.检查服务器端口，25号邮件端口是否打开,centos5是sendmail，centos6、7是postfix服务
 ss -tnl |grep 25
@@ -121,16 +121,20 @@ systemctl start postfix
 ```
 **本地电子邮件服务**
 [网易邮箱邮件协议解释](http://help.163.com/09/1223/14/5R7P6CJ600753VB8.html)
+
 ```
 smtp：simple mail transmission protocol
     pop3：Post Office Procotol
     imap4：Internet Mail Access Procotol
 ```
+
 **mailx命令**
+
 了解三个概念：
 MTA：`Mail Transport Agent`，邮件传送代理，也就是`postfix`服务
 MUA：`Mail User Agent`，收发邮件的客户端，可以是`foxmail`，也可以是`其他客户端`
 Centos7通过命令`mailx`发送邮件，通过`mail`命令是收邮件
+
 ```
 [root@chaogelinux ~]# mailx -s "hello gege" gege    # 给gege系统用户发送邮件，-s 添加主题
 hi chaoge,how are you?    #文章内容
@@ -164,6 +168,7 @@ You have mail in /var/spool/mail/chaoge
 - **系统定时任务**
 
 crond服务除了会在工作时查看`/var/spool/cron`文件夹下的定时任务文件以外，还会查看`/etc/cron.d`目录以及`/etc/anacrontab`下面的文件内容，里面存放`每天、每周、每月需要执行的系统任务`
+
 ```
 [root@pylinux ~]# ls -l /etc/|grep cron*
 -rw-------.  1 root  root      541 4月  11 2018 anacrontab
@@ -176,6 +181,7 @@ drwxr-xr-x.  2 root  root     4096 6月  10 2014 cron.monthly    #每月的定�
 drwxr-xr-x.  2 root  root     4096 6月  10 2014 cron.weekly    #每周的定时任务
 ```
 系统定时任务配置文件`/etc/crontab`
+
 ```
 [root@chaogelinux data]# cat /etc/crontab
 SHELL=/bin/bash
@@ -199,6 +205,7 @@ command to be executed  任务是什么
 
 当系统管理员（root）或是普通用户(chaoge)创建了需要定期执行的任务，可以使用`crontab`命令配置，
 crond服务在启动时，会每分钟查看`/var/spool/cron`路径下以`系统用户名`命名的`定时任务文件`，以确定是否有需要执行的任务。
+
 ```
 #root用户有一个定时任务文件
 [root@pylinux ~]# ls -l /var/spool/cron/
@@ -232,6 +239,7 @@ crontab -l #列出用户设置的定时任务，等于cat var/spool/cron/root
 crontab -e  #编辑用户的定时任务，等于如上命令编辑的是 vi /var/spool/cron/root文件
 ```
 _检查crond服务是否运行_
+
 ```
 [root@pylinux ~]# systemctl is-active crond
 active
@@ -239,6 +247,7 @@ active
 root       711     1  0 10月20 ?      00:00:01 /usr/sbin/crond -n
 ```
 _定时任务相关的文件_
+
 ```
 /var/spool/cron  定时任务的配置文件所在目录
 /var/log/cron  定时任务日志文件
@@ -248,11 +257,13 @@ _定时任务相关的文件_
 ### 定时任务语法格式
 口诀：什么时候做什么事
 查看定时任务配置文件
+
 ```
 [root@luffycity ~]# cat /etc/crontab
 ```
 ![](https://cdn.nlark.com/yuque/0/2021/jpeg/194754/1610807990527-6368805c-a7e3-49bf-ab9a-1528e9c298ad.jpeg#align=left&display=inline&height=878&margin=%5Bobject%20Object%5D&originHeight=878&originWidth=2266&size=0&status=done&style=none&width=2266)
 案例
+
 ```
 每天上午8点30，去上学
 30 08 * * *  go to school
@@ -260,6 +271,7 @@ _定时任务相关的文件_
 00 00  *  * *  go home
 ```
 _定时任务符号_
+
 ```
 crontab任务配置基本格式：
 *  *　 *　 *　 *　　command
@@ -286,6 +298,7 @@ crontab任务配置基本格式：
 | /n | n表示可以整除的数字，每隔n的单位时间，如每隔10分钟表示 _* cmd |
 
 示例
+
 ```
 0 * * * *   每小时执行，每小时的整点执行
 1 2 * * 4   每周执行，每周四的凌晨2点1分执行
@@ -300,6 +313,7 @@ crontab任务配置基本格式：
 ```
 ![](https://cdn.nlark.com/yuque/0/2021/jpeg/194754/1610807990514-d44eb3a8-4b27-419b-8b37-377334bfdecb.jpeg#align=left&display=inline&height=2981&margin=%5Bobject%20Object%5D&originHeight=2981&originWidth=2270&size=0&status=done&style=none&width=2270)
 案例1
+
 ```
 */1 * * * * /bin/sh  /scripts/data.sh      #每分钟执行命令
 30 3,12 * * *  /bin/sh  /scripts/data.sh  #每天的凌晨3点半，和12点半执行脚本
@@ -313,6 +327,7 @@ crontab任务配置基本格式：
 00 11 * 4 1-3 /bin/sh  /scripts/data.sh        #4月份的周一到周三的上午11点执行脚本
 ```
 案例2
+
 ```
 # 每天早上7点到上午11点，每2小时运行cmd命令
 00 07-11/2 * * * CMD
@@ -351,15 +366,18 @@ crontab -e
 crontab: installing new crontab
 ```
 第三步：检查定时任务
+
 ```
 [root@pylinux ~]# crontab -l
 * * * * * /usr/bin/echo "哥哥带你学linux" >> /testcron/hellogege.txt
 ```
 第四步：可以检测文件内容
+
 ```
 tail -f /testcron/hellogege.txt
 ```
 ### 每5分钟让服务器进行时间同步
+
 ```
 crontab -e 
 */5 * * * * /usr/sbin/ntpdate  ntp1.aliyun.com &> /dev/null
@@ -367,6 +385,7 @@ crontab -e
 ### 每晚0点整，把站点目录/var/www/html下的内容打包备份到/data目录下
 
 - 提醒，tar命令不建议使用绝对路径打包，特殊情况可以使用-P参数
+
 ```
 1.检查文件夹是否存在，不存在则创建
 [root@pylinux ~]# ls -d /var/www/html /data
@@ -385,6 +404,7 @@ gege10.txt  gege1.txt  gege2.txt  gege3.txt  gege4.txt  gege5.txt  gege6.txt  ge
 ```
 
 **编写shell脚本，丢给定时任务定期执行**
+
 ```
 [root@pylinux scripts]# cat bak.sh
 #!/bin/bash
@@ -392,6 +412,7 @@ cd /var/www && \
 /bin/tar -zcf /data/bak_$(date +%F).tar.gz ./html
 ```
 **创建定时任务**
+
 ```
 crontab -e
 写入
@@ -404,6 +425,7 @@ crontab -e
 >/dev/null 2>&1 等价于  1>/dev/null 2>/dev/null  等价于 &> /dev/null
 ```
 ### 取消定时任务发邮件功能
+
 ```
 1.定时任务的命令 >  /dev/null   #命令的执行正确结果输出到黑洞，标准错误还是报错
 2.定时任务的命令 &>  /dev/null  #组合符  &> 正确和错误的输出，都写入黑洞，危险命令，有风险，慎用
@@ -411,3 +433,8 @@ crontab -e
 ### 补充anacron
 如果由于机器故障关机，定时任务未执行，下次开机也不会执行任务
 使用anacron下次开机会扫描定时任务，将未执行的，全部执行，服务器很少关机重启，所以忽略。
+
+
+
+
+

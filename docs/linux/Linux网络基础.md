@@ -1,32 +1,33 @@
 ## 计算机网络
 
-计算机网络学习的核心内容就是网络协议的学习。
-网络协议是为计算机网络中进行数据交换而建立的规则、标准或者说是约定的集合。因为不同用户的数据终端可能采取的字符集是不同的，两者需要进行通信，必须要在一定的标准上进行。
-一个很形象地比喻就是我们的语言，我们大天朝地广人多，地方性语言也非常丰富，而且方言之间差距巨大。A地区的方言可能B地区的人根本无法接受，所以我们要为全国人名进行沟通建立一个语言标准，这就是我们的普通话的作用。同样，放眼全球，我们与外国友人沟通的标准语言是英语，所以我们才要苦逼的学习英语。
+计算机网络学习的核心内容就是网络协议的学习。  
+网络协议是为计算机网络中进行数据交换而建立的规则、标准或者说是约定的集合。因为不同用户的数据终端可能采取的字符集是不同的，两者需要进行通信，必须要在一定的标准上进行。  
+一个很形象地比喻就是我们的语言，我们大天朝地广人多，地方性语言也非常丰富，而且方言之间差距巨大。A地区的方言可能B地区的人根本无法接受，所以我们要为全国人名进行沟通建立一个语言标准，这就是我们的普通话的作用。同样，放眼全球，我们与外国友人沟通的标准语言是英语，所以我们才要苦逼的学习英语。  
 
 ---
 
-计算机网络协议同我们的语言一样，多种多样。
-而ARPA公司与1977年到1979年推出了一种名为ARPANET的网络协议受到了广泛的热捧，其中最主要的原因就是它推出了人尽皆知的TCP/IP标准网络协议。
-目前TCP/IP协议已经成为Internet中的"通用语言"，下图为不同计算机群之间利用TCP/IP进行通信的示意图。
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856859526-6deb221c-0a0a-4995-9a31-e98e87344c13.png#align=left&display=inline&height=348&margin=%5Bobject%20Object%5D&originHeight=348&originWidth=1014&size=0&status=done&style=none&width=1014)
+计算机网络协议同我们的语言一样，多种多样。  
+而ARPA公司与1977年到1979年推出了一种名为ARPANET的网络协议受到了广泛的热捧，其中最主要的原因就是它推出了人尽皆知的TCP/IP标准网络协议。  
+目前TCP/IP协议已经成为Internet中的"通用语言"，下图为不同计算机群之间利用TCP/IP进行通信的示意图。  
+![image-20221110144938102](Linux网络基础.assets/image-20221110144938102.png)
 
-### 网络层次划分
-为了使不同计算机厂家生产的计算机能够相互通信，以便在更大的范围内建立计算机网络，国际标准化组织（ISO）在1978年提出了"开放系统互联参考模型"
-即著名的`OSI/RM模型（Open System Interconnection/Reference Model）。`
-它将计算机网络体系结构的通信协议划分为七层，`自下而上`依次为：
-物理层（Physics Layer）
-数据链路层（Data Link Layer）
-网络层（Network Layer）
-传输层（Transport Layer）
-会话层（Session Layer）
-表示层（Presentation Layer）
-应用层（Application Layer）。
-其中第四层完成数据传送服务，上面三层面向用户。
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856861259-0cbd5f81-b41c-4a0d-9441-5e573482b345.png#align=left&display=inline&height=914&margin=%5Bobject%20Object%5D&originHeight=914&originWidth=1132&size=0&status=done&style=none&width=1132)
+### 网络层次划分. 
+
+为了使不同计算机厂家生产的计算机能够相互通信，以便在更大的范围内建立计算机网络，国际标准化组织（ISO）在1978年提出了"开放系统互联参考模型".  
+即著名的`OSI/RM模型（Open System Interconnection/Reference Model）。`   
+它将计算机网络体系结构的通信协议划分为七层，`自下而上`依次为：   
+物理层（Physics Layer）.  
+数据链路层（Data Link Layer）.  
+网络层（Network Layer）.   
+传输层（Transport Layer）.   
+会话层（Session Layer）.   
+表示层（Presentation Layer）.  
+应用层（Application Layer）。   
+其中第四层完成数据传送服务，上面三层面向用户。   
+![image-20221110144951321](Linux网络基础.assets/image-20221110144951321.png)
 
 ### 网络体系结构分层
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856861250-ef25c15d-0236-48c9-85ae-9c221cea706c.png#align=left&display=inline&height=536&margin=%5Bobject%20Object%5D&originHeight=536&originWidth=1322&size=0&status=done&style=none&width=1322)
+![image-20221110144958764](Linux网络基础.assets/image-20221110144958764.png)
 ### 应用层
 **应用层(application-layer）的任务是通过应用进程间的交互来完成特定网络应用。**
 应用层协议定义的是应用进程（进程：主机中正在运行的程序）间的通信和交互的规则。
@@ -39,17 +40,16 @@ DNS解析系统这好比我们手机上的电话簿，名字只是便于记忆�
 小红  15293843845
 ```
 **HTTP协议**
-超文本传输协议（HTTP，HyperText Transfer Protocol)是互联网上应用最为广泛的一种网络协议。所有的 WWW（万维网） 文件都必须遵守这个标准。设计 HTTP 最初的目的是为了提供一种发布和接收 HTML 页面的方法。
+超文本传输协议（HTTP，HyperText Transfer Protocol)是互联网上应用最为广泛的一种网络协议。所有的 WWW（万维网） 文件都必须遵守这个标准。设计 HTTP 最初的目的是为了提供一种发布和接收 HTML 页面的方法。   
 我们能够上网，也就是因为有TCP/IP协议，且定义了互联网传输的HTTP协议，我们才能看到琳琅满目的商品网站
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856994831-65c08f56-5b92-4d24-9aa2-c6af2a89db2d.png#align=left&display=inline&height=623&margin=%5Bobject%20Object%5D&originHeight=1828&originWidth=3780&size=0&status=done&style=none&width=1288)
 
 ### 传输层
-**运输层(transport layer)的主要任务就是负责向两台主机进程之间的通信提供通用的数据传输服务**。
-第一个端到端，即主机到主机的层次。传输层负责将上层数据分段并提供端到端的、可靠的或不可靠的传输。
+**运输层(transport layer)的主要任务就是负责向两台主机进程之间的通信提供通用的数据传输服务**。   
+第一个端到端，即主机到主机的层次。传输层负责将上层数据分段并提供端到端的、可靠的或不可靠的传输。   
 此外，传输层还要处理端到端的差错控制和流量控制问题。 传输层的任务是根据通信子网的特性，最佳的利用网络资源，为两个端系统的会话层之间，提供建立、维护和取消传输连接的功能，负责端到端的可靠数据传输。在这一层，信息传送的协议数据单元称为段或报文。 网络层只是根据网络地址将源结点发出的数据包传送到目的结点，而传输层则负责将数据可靠地传送到相应的端口。
-传输层主要使用如下两种协议
-**传输控制协议 TCP**（Transmisson Control Protocol）--提供**面向连接**的，**可靠的**数据传输服务。
-**用户数据协议 UDP**（User Datagram Protocol）--提供**无连接**的，尽最大努力的数据传输服务（**不保证数据传输的可靠性**）。
+传输层主要使用如下两种协议.  
+**传输控制协议 TCP**（Transmisson Control Protocol）--提供**面向连接**的，**可靠的**数据传输服务。   
+**用户数据协议 UDP**（User Datagram Protocol）--提供**无连接**的，尽最大努力的数据传输服务（**不保证数据传输的可靠性**）。  
 
 ```
 UDP 是无连接的；
@@ -76,7 +76,8 @@ TCP 连接的两端都设有发送缓存和接收缓存，用来临时存放双�
 ```
 yum install net-tools -y
 语　　法：
-ifconfig [网络设备][down up -allmulti -arp -promisc][add<地址>][del<地址>][<hw<网络设备类型><硬件地址>][io_addr<I/O地址>][irq<IRQ地址>][media<网络媒介类型>][mem_start<内存地址>][metric<数目>][mtu<字节>][netmask<子网掩码>][tunnel<地址>][-broadcast<地址>][-pointopoint<地址>][IP地址]
+ifconfig [网络设备]
+[down up -allmulti -arp -promisc][add<地址>][del<地址>][<hw<网络设备类型><硬件地址>][io_addr<I/O地址>][irq<IRQ地址>][media<网络媒介类型>][mem_start<内存地址>][metric<数目>][mtu<字节>][netmask<子网掩码>][tunnel<地址>][-broadcast<地址>][-pointopoint<地址>][IP地址]
 ```
 参数
 ```
@@ -121,7 +122,7 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
         TX packets 15  bytes 1560 (1.5 KiB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610857066248-8c71942c-ba27-4495-baa7-b08e7d13443d.png#align=left&display=inline&height=575&margin=%5Bobject%20Object%5D&originHeight=1014&originWidth=2372&size=0&status=done&style=none&width=1345)
+
 ### _启动/关闭指定网卡_
 ```
 [root@local-gege ~]# ifconfig ens33 down  #注意不得在服务器上执行，关闭了网卡就断开连接了
@@ -167,7 +168,9 @@ route程序对内核的IP选路表进行操作。它主要用于通过已用ifco
 路由概念：
 计算机之间的数据传输必须经过网络，网络可以直接连接两台计算机，或者通过一个一个的节点构成。
 路由器理解为互联网的中转站，网络中的数据包就是通过一个一个路由器转发到达目的地。
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610857066266-ae4b2ec7-dd1b-4051-9f4b-b0ba657eb0a2.png#align=left&display=inline&height=554&margin=%5Bobject%20Object%5D&originHeight=554&originWidth=1180&size=0&status=done&style=none&width=1180)
+
+![image-20221110145541816](Linux网络基础.assets/image-20221110145541816.png)
+
 ### 路由的分类
 路由分为静态路由和动态路由。
 Linux上配置的都是静态路由，是系统管理员使用route命令假如，也就是通过手动输入的方式添加路由规则。
@@ -230,6 +233,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.178.2   0.0.0.0         UG    102    0        0 ens33
 192.168.178.0   0.0.0.0         255.255.255.0   U     102    0        0 ens33
 ```
+
 解释
 
 - Destination：表示网络号，network的意思
@@ -246,6 +250,8 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 - Metric：需要经过几个网络节点才能到达路由的目标地址
 - Ref：参考到此路由规则的数目
 - Iface：路由对应的网络设备接口
+
+
 ```
 192.168.178.0   0.0.0.0         255.255.255.0   U     102    0        0 ens33
 表示主机所在网段是192.168.178.0
@@ -256,6 +262,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 ### 添加和删除默认网关
 默认网关就是数据包不匹配任何设定的路由规则最后流经的地址关口。
 网关网关，网络的关口，就好比家里的门，外出就得经过访问，数据也是一样。
+
 ```
 #此时我的机器，路由信息
 [root@local-gege network-scripts]# route
@@ -264,7 +271,9 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 default         bogon           0.0.0.0         UG    102    0        0 ens33
 192.168.178.0   0.0.0.0         255.255.255.0   U     102    0        0 ens33
 ```
+
 ### 删除网关
+
 ```
 [root@local-gege network-scripts]# route del default
 [root@local-gege ~]# route
@@ -283,6 +292,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 以上方式等同于
 route add -net 0.0.0.0 gw 192.168.178.2
 ```
+
 ## arp命令
 arp是地址解析协议（ARP、Address Resolution Protocol），主要功能是根据IP地址获取物理地址（MAC地址）
 ```
@@ -602,6 +612,7 @@ udp6       0      0 ::1:323                 :::*                                
 - -p：显示进程号与进程名
 ### 显示当前系统的路由表
 效果等同于route -n
+
 ```
 [root@local-gege ~]# netstat -rn
 Kernel IP routing table
@@ -686,7 +697,7 @@ _显示正在监听的TCP和UDP连接_
 ```
 [root@local-gege ~]# ss -tunlp |column -t
 ```
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610857066239-2fb1b847-3790-49a6-bb97-009fb2fc273f.png#align=left&display=inline&height=290&margin=%5Bobject%20Object%5D&originHeight=290&originWidth=1574&size=0&status=done&style=none&width=1574)
+
 _显示socket统计_
 可以用于统计服务器链接数的宏观数据统计
 ```
@@ -970,6 +981,7 @@ FTP 选项：
   -np, --no-parent                 不追溯至父目录。
 ```
 _下载单个的文件_
+
 ```
 [root@local-gege ~]# wget http://chengkanghua.top/
 --2019-12-10 14:50:27--  http://chengkanghua.top/
@@ -985,6 +997,7 @@ _下载单个的文件_
 <h1> 各位小伙伴，看懂了源代码编译安装了吗？我们再来一个骇客帝国编译安装，如何?</h1>
 ```
 _下载文件，指定文件名保存到本地_
+
 ```
 [root@local-gege ~]# wget -O /tmp/test.html www.chengkanghua.top
 --2019-12-10 14:55:08--  http://www.chengkanghua.top/
@@ -997,6 +1010,7 @@ _下载文件，指定文件名保存到本地_
 2019-12-10 14:55:08 (14.1 MB/s) - 已保存 “/tmp/test.html” [141/141])
 ```
 _限速下载，限制每秒1k_
+
 ```
 [root@local-gege ~]# wget --limit-rate=1k https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/lrzsz-0.12.20-36.el7.x86_64.rpm
 ```
@@ -1016,6 +1030,7 @@ wget -c  --limit-rate=1k https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/
 3.看到HTTP状态码 206 partial content 代表客户端请求一个未完成的资源，继续下载
 ```
 _后台下载_
+
 ```
 [root@local-gege tmp]# wget -b  --limit-rate=1k https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/lrzsz-0.12.20-36.el7.x86_64.rpm
 继续在后台运行，pid 为 6475。

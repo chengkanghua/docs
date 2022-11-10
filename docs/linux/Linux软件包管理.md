@@ -6,6 +6,7 @@ export LC_ALL=zh_CN.UTF-8
 ```
 
 # Linux软件包管理
+
 windows程序  exe
 macos程序 dmg
 
@@ -157,7 +158,10 @@ rpm软件包在安装的时候，由作者定义依赖关系
 _windows软件管理工具_
 			360软件管家 等等
 _Linux软件管理_
-![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856830611-2b85db8f-5142-452a-8baa-a54760b22acd.png#align=left&display=inline&height=1026&margin=%5Bobject%20Object%5D&originHeight=1026&originWidth=2128&size=0&status=done&style=none&width=2128)
+
+![image-20221110125011325](Linux%E8%BD%AF%E4%BB%B6%E5%8C%85%E7%AE%A1%E7%90%86.assets/image-20221110125011325.png)
+
+
 **yum命令**是在Fedora和RedHat以及SUSE中基于rpm的软件包管理器，它可以使系统管理人员交互和自动化地更细与管理RPM软件包，能够从指定的服务器自动下载RPM包并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软体包，无须繁琐地一次次下载、安装。
 尽管 RPM 能够帮助用户查询软件相关的依赖关系，但问题还是要运维人员自己来解决， 而有些大型软件可能与数十个程序都有依赖关系，在这种情况下安装软件会是非常痛苦的。
 Yum 软件仓库便是为了进一步降低软件安装难度和复杂度而设计的技术。Yum 软件仓库可以 根据用户的要求分析出所需软件包及其相关的依赖关系，然后自动从服务器下载软件包并安装到系统。
@@ -242,6 +246,7 @@ gpgcheck=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 ```
 自定义一个简单的repo文件
+
 ```
 touch gege.repo #写入
 [base]
@@ -257,6 +262,10 @@ gpgcheck=0
 
 - `[http://mirrors.163.com/](http://mirrors.163.com/)`
 - `[https://opsx.alibaba.com/mirrors](https://opsx.alibaba.com/mirrors)`
+
+
+
+
 ```
 1.备份现有repo仓库
 2.下载新的repo文件
@@ -282,6 +291,9 @@ wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-5.repo
 
 - `[http://mirrors.sohu.com/](http://mirrors.sohu.com/)`
 ### yum命令
+
+
+
 ```
 yum命令的用法：
     yum [options] [command] [package ...]
@@ -393,6 +405,7 @@ gpgcheck=0
 ![](https://cdn.nlark.com/yuque/0/2021/png/194754/1610856830589-0c02fdf1-f42d-456c-99c6-7979f0b68958.png#align=left&display=inline&height=632&margin=%5Bobject%20Object%5D&originHeight=632&originWidth=2202&size=0&status=done&style=none&width=2202)
 ## 源代码编译安装
 无论是rpm命令或是yum命令，都是安装二进制格式的程序包，别人编译好的
+
 ```
 mysql-xx.rpm
 redis-xx.rpm
@@ -418,6 +431,7 @@ yum和编译安装结合使用，能够最大程度解决问题
 ```
 ### 编译三部曲
 前提条件：准备好开发工具以及开发环境
+
 ```
 开发工具：gcc make等
 开发组件：
@@ -433,16 +447,19 @@ yum groupinstall "Server Platform Development"
 检查依赖到的外部环境
 ```
 第二曲，执行make命令
+
 ```
 make是Linux开发套件里面自动化编译的一个控制程序，他通过借助 Makefile 里面编写的编译规范进行自动化的调用 gcc 、ld 以及运行某些需要的程序进行编译的程序。一般情况下，他所使用的 Makefile 控制代码，由 configure 这个设置脚本根据给定的参数和系统环境生成。
 make这一步就是编译，大多数的源代码包都经过这一步进行编译（当然有些perl或python编写的软件需要调用perl或python来进行编译）
 make 的作用是开始进行源代码编译，以及一些功能的提供，这些功能由他的 Makefile 设置文件提供相关的功能，比如 make install 一般表示进行安装，make uninstall 是卸载，不加参数就是默认的进行源代码编译。
 ```
 第三曲：开始安装 make install
+
 ```
 开始安装软件到./configure指定的安装路径
 ```
 ### 源码编译安装nginx
+
 ```
 1.准备编译环境
 yum install gcc patch libffi-devel python-devel  zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel openssl openssl-devel -y
@@ -471,6 +488,7 @@ export PATH=/opt/ngx112/sbin:$PATH
 12.启动nginx，可以访问页面
 ```
 ### 环境变量配置文件
+
 ```
 /etc/profile
 用于设置系统级的环境变量和启动程序，在这个文件下配置会对所有用户生效。当用户登录(login)时，文件会被执行，并从/etc/profile.d目录的配置文件中查找shell设置。如果对/etc/profile修改的话必须重启才会生效
