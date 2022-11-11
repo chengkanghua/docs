@@ -12,4 +12,4 @@
 - Go编程
 
 [GitHub](https://github.com/chengkanghua)
-[Get Started](/docs/k8s-note/)
+[Get Started](/k8s-note/)
