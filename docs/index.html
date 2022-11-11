@@ -15,8 +15,6 @@
   <link rel="stylesheet" href="https://unpkg.com/docsify-toc@1.0.0/dist/toc.css"> 
   <!-- 侧边栏多级分类自动折叠展开风格-->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar-folder.min.css" />
-	<!-- 网站暗黑风格-->
-	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-dark-mode@latest/dist/style.min.css"/>
 
 <style>
     .app-nav{
@@ -29,7 +27,18 @@
       height: 50px;
       border-bottom: 1px solid #eee;
     }
-
+    .page_toc {
+    height: 916px;
+    overflow: scroll;
+    position: fixed;
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.07);
+    border-image-slice: 1;
+    padding-left: 0px;
+    width: 200px;
+	}
+    
 </style>
 </head>
 <body>
@@ -47,7 +56,7 @@
       //search: 'auto', //开启搜索
       relativePath: true,// 启用相对路径
       mergeNavbar: true, //小屏幕设备合并导航栏到侧边栏
-      //coverpage: true, //开启首页封面
+      coverpage: true, //开启首页封面
       //onlyCover: true, //封面和内容单独显示
       routerMode: 'history',
       // 让你的内容页在滚动到指定的锚点时，距离页面顶部有一定空间。
@@ -81,30 +90,6 @@
       title: 'TOC',
   	},
     //sidebarDisplayLevel: 2, //侧边栏层级默认展开数量 0 不展开 1 展开二级目录
-  count:{
-    countable: true,
-    position: 'top',
-    margin: '10px',
-    float: 'right',
-    fontsize:'0.9em',
-    color:'rgb(90,90,90)',
-    language:'chinese',
-    localization: {
-      words: "",
-      minute: ""
-    },
-    isExpected: true
-  },
-    dark: {
-    background: "#95A5A6",
-    toggleBtnBg: "#2ECC71",
-    textColor: "#BDC3C7"
-  	},
-    light: {
-    background: "white",
-    toggleBtnBg: "var(--theme-color)",
-    textColor: "var(--theme-color)"
-     },
     }
   </script>
 
@@ -118,8 +103,6 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
   <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-  <!-- 字数统计-->
-  <script src="https://cdn.jsdelivr.net/npm/docsify-count@latest/dist/countable.min.js"></script>
 
   <!-- 支持 LaTex 语言-->
   <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
@@ -218,8 +201,6 @@
   <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
 	<!--右边加一个目录跳转-->
   <script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>
-	<!-- 网站暗黑风格-->
-  <script src="//cdn.jsdelivr.net/npm/docsify-dark-mode@latest/dist/index.min.js"></script>
 
 </body>
 </html>
