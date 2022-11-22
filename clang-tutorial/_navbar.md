@@ -7,4 +7,4 @@
 * [dba](/dba-note/)
 * [linux](/linux/)
 * [wangdoc](/)
-  * [clang-tutorial](/wangdoc/clang-tutorial/)
+  * [clang-tutorial](/clang-tutorial/)
