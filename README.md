@@ -15,4 +15,4 @@
 - Go编程
 
 [GitHub](https://github.com/chengkanghua)
-[Get Started](/k8s-note/)
+[Get Started](/)
