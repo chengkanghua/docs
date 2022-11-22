@@ -6,5 +6,3 @@
   * [k8s-2023](/k8s-2023/)
 * [dba](/dba-note/)
 * [linux](/linux/)
-* [wangdoc](/)
-  * [clang-tutorial](/clang-tutorial/)
