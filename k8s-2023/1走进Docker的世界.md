@@ -8,7 +8,7 @@
 
 ![img](1走进Docker的世界.assets/1666340642482.jpg)
 
-![img](1走进Docker的世界.assets/docker-differents.svg+xml)
+![image-20221122115845209](1走进Docker的世界.assets/image-20221122115845209.png)
 
 Docker 公司位于旧金山,原名dotCloud，底层利用了Linux容器技术（LXC）（在操作系统中实现资源隔离与限制）。为了方便创建和管理这些容器，dotCloud 开发了一套内部工具，之后被命名为“Docker”。Docker就是这样诞生的。
 
