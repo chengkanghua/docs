@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>11 Generator的应用</title>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <script>
+
+        // Generator 部署ajax操作，让异步代码同步化
+        // 回调地狱
+        /* $.ajax({
+            url: 'https://free-api.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976',
+            method: 'get',
+            success(res) {
+                console.log(res);
+
+                // 继续发送请求
+                $.ajax({
+                    url: '',
+                    method: 'get',
+                    success(res1) {
+                        // 发送ajax
+                        $.ajax({
+                            url: '',
+                            method: 'get',
+                            success(res2) {
+
+                                // 发送ajax
+                                $
+                            }
+                        })
+                    }
+                })
+
+            }
+        }) */
+
+        function* main() {
+            console.log('main');
+
+            let res = yield request(
+                'https://free-api.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976'
+            )
+            console.log(res);
+
+            // 执行后面的操作
+            console.log('数据请求完成，可以继续操作');
+
+        }
+        const ite = main();
+        ite.next();
+
+        function request(url) {
+            $.ajax({
+                url,
+                method: 'get',
+                success(res) {
+                    ite.next(res);
+                }
+            })
+        }
+
+        // 加载loading...页面
+        // 数据加载完成...（异步操作）
+        // loading关闭掉
+
+    /*     function* load() {
+            loadUI();
+            yield showData();
+            hideUI();
+        }
+
+        let itLoad = load();
+        itLoad.next();
+
+        function loadUI() {
+            console.log('加载loading...页面');
+        }
+        function showData() {
+            // 模拟异步操作
+            setTimeout(() => {
+                console.log('数据加载完成');
+                itLoad.next();
+                
+            }, 1000);
+        }
+        function hideUI() {
+            console.log('隐藏loading...页面');
+            
+        } */
+        
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>async异步操作</title>
+</head>
+
+<body>
+    <script>
+
+        //Generator  Promise  async  1.解决回调地域  2.使得异步操作显得更加方便
+        
+        // 作用：使得异步操作更加方便
+        // 基本操作 async它会返回一个Promise对象  then catch
+        // async是Generator的一个语法糖
+        async function f() {
+            // return await 'hello async';
+            let s = await 'hello world';
+            let data = await s.split('');
+            return data;
+        }
+        // 如果async函数中有多个await 那么then函数会等待所有的await指令 运行完的结果 才去执行
+        f().then(v => {
+            console.log(v)
+        }).catch(e => console.log(e));
+
+        async function f2() {
+            // throw new Error('出错了');
+            try {
+                await Promise.reject('出错了');
+            } catch (error) {
+
+            }
+            return await Promise.resolve('hello');
+        }
+        f2().then(v => console.log(v)).catch(e => console.log(e));
+
+
+
+
+        // 需求： 想获取和风天气 现在now的数据
+        const getJSON = function (url) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.onreadystatechange = handler;
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('Accept', 'application/json');
+                // 发送
+                xhr.send();
+
+                function handler() {
+                    if (this.readyState === 4) {
+                        if (this.status === 200) {
+                            resolve(this.response);
+                        } else {
+                            reject(new Error(this.statusText));
+                        }
+                    }
+
+                }
+            })
+        }
+
+        async function getNowWeather(url) {
+            // 发送ajax 获取实况天气
+            let res = await getJSON(url);
+            console.log(res);
+            // 获取HeWeather6的数据   获取未来3~7天的天气状况
+            let arr = await res.HeWeather6;
+            return arr[0].now;
+        }
+        getNowWeather(
+                'https://free-api.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976')
+            .then(now => {
+                console.log(now);
+            })
+    </script>
+
+</body>
+
+</html>

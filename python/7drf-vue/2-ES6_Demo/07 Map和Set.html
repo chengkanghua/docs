@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        //  集合：表示无重复值的有序列表
+        let set = new Set();
+        console.log(set);
+
+        // 添加元素
+        set.add(2);
+        set.add('4');
+        set.add('4');
+        // set.add(['hello','world',3]);
+        // 删除元素
+        set.delete(2);
+        // 校验某个值是否在set中
+        console.log(set.has('4'));
+        console.log(set.size);
+
+        /* set.forEach((val,key)=>{
+            console.log(val);
+            console.log(key);
+        }) */
+
+        // 将set转换成数组
+        let set2 = new Set([1, 2, 3, 3, 3, 4]);
+        // 扩展运算符
+        let arr = [...set2]
+        console.log(arr);
+
+
+        // 1.set中对象的引用无法被释放
+        // let set3 = new Set(),obj = {};
+        // set3.add(obj);
+        // // 释放当前的资源
+        // obj = null;
+        // console.log(set3);
+
+        let set4 = new WeakSet(),
+            obj = {};
+        set4.add(obj);
+        // 释放当前的资源
+        obj = null;
+        console.log(set4);
+
+        // WeakSet
+        // 1.不能传入非对象类型的参数
+        // 2.不可迭代
+        // 3.没有forEach()
+        // 4.没有size属性
+
+
+        // Map类型是键值对的有序列表，键和值是任意类型
+
+        /*  let map = new Map();
+         map.set('name','张三');
+         map.set('age',20);
+         console.log(map.get('name'));
+         console.log(map);
+         map.has('name');//true
+         map.delete('name');
+         map.clear();
+         console.log(map);
+         map.set(['a',[1,2,3]],'hello');
+         console.log(map); */
+
+        let m = new Map([
+            ['a', 1],
+            ['c', 2]
+        ]);
+        console.log(m);
+        
+    </script>
+
+</body>
+
+</html>

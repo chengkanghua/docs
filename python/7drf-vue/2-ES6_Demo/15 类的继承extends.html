@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>类的继承</title>
+</head>
+
+<body>
+    <script>
+        // 使用关键字 extends
+        class Animal{
+            constructor(name,age) {
+                this.name = name;
+                this.age = age;
+            }
+            sayName(){
+                return this.name;
+            }
+            sayAge(){
+                return this.age;
+            }
+        }
+
+        class Dog extends Animal{
+            constructor(name,age,color) {
+                super(name,age);
+                // Animal.call(this,name,age);
+                this.color = color;
+            }
+            // 子类自己的方法
+            sayColor(){
+                return `${this.name}是${this.age}岁了,它的颜色是${this.color}`
+            }
+            // 重写父类的方法
+            sayName(){
+                return this.name + super.sayAge() + this.color;
+            }
+            
+        }
+        let d1 = new Dog('小黄',28,'red');
+        console.log(d1.sayColor());
+        console.log(d1.sayName());
+
+
+        // 思考：如何让多个类 混入到一个类中？？？？
+        
+    </script>
+
+</body>
+
+</html>

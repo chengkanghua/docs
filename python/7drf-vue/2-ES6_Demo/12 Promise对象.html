@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
+</head>
+
+<body>
+
+    <script>
+        // Promise 承诺
+        // 相当于一个容器，保存着未来才会结束的事件(异步操作)的一个结果
+        // 各种异步操作都可以用同样的方法进行处理 axios
+
+        // 特点：
+        // 1.对象的状态不受外界影响  处理异步操作 三个状态  Pending(进行)  Resolved(成功) Rejected(失败)
+        // 2.一旦状态改变，就不会再变，任何时候都可以得到这个结果
+
+        
+       /*  let pro = new Promise(function(resolved,rejected) {
+            //执行异步操作
+            let res = {
+                code: 201,
+                data:{
+                    name:'小马哥'
+                },
+                error:'失败了'
+            }
+            setTimeout(() => {
+                if(res.code === 200){
+                    resolved(res.data);
+                }else{
+                    rejected(res.error);
+                }
+            }, 1000);
+        })
+        console.log(pro);
+        pro.then((val)=>{
+            console.log(val);  
+        },(err)=>{
+            console.log(err);
+        }); */
+       
+
+      /*   function timeOut(ms) {
+            return new Promise((resolved,rejected)=>{
+                setTimeout(() => {
+                    resolved('hello promise success!!')
+                }, ms);
+            })
+        }
+        timeOut(2000).then((val)=>{  // 两秒之后返回
+            console.log(val);
+        }) */
+
+        // https://free-api.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976
+ /*        const getJSON = function (url) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.onreadystatechange = handler;
+                xhr.responseType = 'json';
+                xhr.setRequestHeader('Accept', 'application/json');
+                // 发送
+                xhr.send();
+
+                function handler() {
+                    if (this.readyState === 4) { // 4表示成功回调
+                        if (this.status === 200) {
+                            resolve(this.response.HeWeather6);
+                        } else {
+                            reject(new Error(this.statusText));
+                        }
+                    }
+
+                }
+            })
+        }
+        let a = getJSON(
+                'https://free-api.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976')
+            .then((data) => {
+                // console.log(data);   
+                return data[0]
+            }).then((obj)=>{
+                console.log(obj);  //Promise {<pending>}
+            })
+        console.log(a);  //{status: 'invalid key'}
+ */
+        /* 
+        catch(err=>{
+
+        })
+
+         // then(null,err=>{
+
+         // })
+        
+        */
+
+        // getJSON('https://free-ap.heweather.net/s6/weather/now?location=beijing&key=4693ff5ea653469f8bb0c29638035976')
+        //     .then(data => {
+        //         console.log(data);
+        //     }).catch(err => {
+        //         console.log(err);
+        //     })
+
+
+        // then()方法 
+        // then() 第一个参数是relove回调函数，第二个参数是可选的 是reject状态回调的函数
+        // then()返回一个新的promise实例，可以采用链式编程 
+
+
+        // resolve()  reject() all() race()  done() finally()
+
+        // resolve()能将现有的任何对象转换成promise对象
+        // let p = Promise.resolve('foo');
+        /*  let p = new Promise(resolve=>resolve('foo'));
+         p.then((data)=>{
+             console.log(data);
+             
+         }) */
+
+        // 应用：一些游戏类的素材比较多，等待图片、flash、静态资源文件 都加载完成 才进行页面的初始化
+        /* let promise1 = new Promise((resolve, reject) => {});
+        let promise2 = new Promise((resolve, reject) => {});
+        let promise3 = new Promise((resolve, reject) => {});
+
+        let p4 = Promise.all([promise1, promise2, promise3])
+
+        p4.then(()=>{
+            // 三个都成功  才成功
+        }).catch(err=>{
+            // 如果有一个失败 则失败
+        }) */
+
+        // race() 某个异步请求设置超时时间，并且在超时后执行相应的操作
+        // 1 请求图片资源
+        function requestImg(imgSrc) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function () {  //onload 当图像装载完毕时调用的事件句柄。	
+                    resolve(img);  //Promise.resolve(value)方法返回一个以给定值解析后的Promise 对象
+                }
+                img.src = imgSrc;
+            });
+        }
+
+        function timeout() {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    reject(new Error('图片请求超时'));
+                }, 3000);
+            })
+        }
+        Promise.race([requestImg('https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.duitang.com%2Fuploads%2Fblog%2F202102%2F18%2F20210218112720_25189.thumb.1000_0.jpg&refer=http%3A%2F%2Fc-ssl.duitang.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1646595131&t=12acaf9c7b1e00ac6a874e1b0945c3af'),
+                    timeout()]).then(data=>{
+            console.log(data);
+            document.body.appendChild(data);
+            
+        }).catch(err=>{
+            console.log(err);
+            
+        }); 
+
+        /* 
+        server.listen(3000).then(()=>{
+
+        }).finally(server.stop());  //finally不管前面执行是否成功，最后都会执行
+        */
+
+
+    </script>
+</body>
+
+</html>

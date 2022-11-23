@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+        <li>4</li>
+    </ul>
+    <script>
+        // 数组的方法  from()  of()
+        // 1.from() 将伪数组转换成真正的数组
+        function add() {
+            console.log(arguments);
+            // es5转换
+            // let arr = [].slice.call(arguments);
+            // console.log(arr);
+            // es6写法
+            let arr = Array.from(arguments);
+            console.log(arr);
+        }
+        // add(1, 2, 3);
+
+        let lis = document.querySelectorAll('li')
+        console.log(lis);
+
+        // console.log(Array.from(lis));
+        // 扩展运算符 将伪数组转换成真正的数组
+        // console.log([...lis]);
+
+        // from() 还可以接受第二个参数，用来对每个元素进行处理
+
+        let liContents = Array.from(lis, ele => ele.textContent);
+        console.log(liContents);
+
+        // 2.of() 将任意的数据类型，转换成数组
+        console.log(Array.of(3, 11, 20, [1, 2, 3], {
+            id: 1
+        }));
+
+
+        // 3.copywithin() 数组内部将制定位置的元素复制到其它的位置，返回当前数组
+        // 从3位置往后的所有数值去替换从0位置往后的三个数值
+        console.log([1, 2, 3, 8, 9, 10].copyWithin(0, 3));  //[8,9,10,8,9,10]
+
+        //  4.find() findIndex()
+        // find()找出第一个符合条件的数组成员
+        let num = [1, 2, -10, -20, 9, 2].find(n => n < 0)
+        // console.log(num);  // -10
+
+        // findIndex()找出第一个符合条件的数组成员的索引
+        let numIndex = [1, 2, -10, -20, 9, 2].findIndex(n => n < 0)
+        //console.log(numIndex); // 2
+
+
+        // 5.entries() keys() values() 返回一个遍历器  可以使用for...of循环进行遍历
+        
+        // keys() 对键名遍历
+        // values() 对值遍历
+        // entries() 对键值对遍历
+        // console.log(['a','b'].keys());
+
+        for (let index of ['a', 'b'].keys()) {
+            console.log(index);
+        }
+
+        for (let ele of ['a', 'b'].values()) {
+            console.log(ele);
+        }
+
+        for(let [index,ele] of ['a','b'].entries()){
+            console.log(index,ele); 
+        }
+        let letter = ['a','b','c'];
+        let it = letter.entries();
+        // console.log(it.next().value);  //(2) [0, 'a']
+        // console.log(it.next().value);  //(2) [1, 'b']
+        // console.log(it.next().value);  //(2) [2, 'c']
+        // console.log(it.next().value);  //undefined
+
+        // 6.includes() 返回一个布尔值，表示某个数组是否包含给定的值
+        console.log([1,2,3].includes(2));   // true
+        console.log([1,2,3].includes('4')); // false
+
+        // 之前 indexof()
+        console.log([1,2,3].indexOf('2'));  // -1
+
+
+        
+        
+        
+    </script>
+
+</body>
+
+</html>

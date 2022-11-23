@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>解构赋值</title>
+</head>
+
+<body>
+    <script>
+        // 解构赋值是对赋值运算符的一种扩展
+        // 它针对数组和对象来进行操作
+        // 优点：代码书写上简洁易读
+        let node = {
+            type:'iden',
+            name:'foo'
+        }
+        // let type = node.type;
+        // let name = node.name;
+        
+        // 完全解构
+        let {type,name} = node;
+        console.log(type,name);
+
+        let obj = {
+            a:{
+                name:"张三"
+            },
+            b:[],
+            c:'hello,world'
+        }
+
+        // 不完全解构 可忽略
+        // let {a} = obj;
+        // console.log(a);
+        // 剩余运算符
+        // let {a,...res} = obj;
+        // console.log(a,res);
+
+        // 默认值
+        // let {a,b = 30} = {a:20};
+        // console.log(a,b) // 20 30
+
+        // 对数组解构
+        // let arr = [1,2,3];
+        // let [a,b] = arr;
+        // console.log(a,b); // 1 2
+        // 可嵌套
+        let [a,[b],c] = [1,[2],3];
+        console.log(a,b,c) // 1 2 3
+
+        
+        
+        
+        
+
+
+    </script>
+
+
+</body>
+
+</html>
