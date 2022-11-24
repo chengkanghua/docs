@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+  # 主节点
+  master:
+    image: mongo-replica-set
+    restart: always
+    privileged: true
+    container_name: master
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123
+    command: --replSet replica-set --keyFile /data/conf/mongodb.key
+    volumes:
+      - ./data/mongo/d1:/data/db
+  # 副节点
+  secondary:
+    image: mongo-replica-set
+    restart: always
+    privileged: true
+    container_name: secondary
+    ports:
+      - 27018:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123
+    command: --replSet replica-set --keyFile /data/conf/mongodb.key
+    volumes:
+      - ./data/mongo/d2:/data/db
+  # 仲裁节点
+  arbiter:
+    image: mongo-replica-set
+    restart: always
+    privileged: true
+    container_name: arbiter
+    ports:
+      - 27019:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123
+    command: --replSet replica-set --keyFile /data/conf/mongodb.key
+    volumes:
+      - ./data/mongo/d3:/data/db
+
+networks:
+  # 默认使用自己创建的网络
+  default:
