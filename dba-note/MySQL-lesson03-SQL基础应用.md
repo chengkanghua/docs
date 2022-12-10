@@ -218,7 +218,7 @@ sage    TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '年龄',
 sgender ENUM('m','f','n') NOT NULL DEFAULT 'n' COMMENT '性别' ,
 sfz     CHAR(18) NOT NULL UNIQUE  COMMENT '身份证',
 intime  TIMESTAMP NOT NULL DEFAULT NOW() COMMENT '入学时间'
-) ENGINE=INNODB CHARSET=utf8 COMMENT '学生表';
+) ENGINE=INNODB CHARSET=utf8mb4 COMMENT '学生表';
 ```
 
 建表规范：
@@ -291,6 +291,15 @@ DESC stu;
 rename table 旧表名 to 新表名;
 
 alter table 表名 drop primary key;  # 删除主键
+
+
+mysql> alter table student drop primary key;
+ERROR 1075 (42000): Incorrect table definition; there can be only one auto column and it must be defined as a key
+# 列的属性还带有AUTO_INCREMENT，那么要先将这个列的自动增长属性去掉，才可以删除主键。
+mysql> alter table student modify id int(11);
+mysql> alter table student drop primary key;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
 ```
 
 
@@ -1022,26 +1031,26 @@ INTO OUTFILE '/tmp/dis.sql';
 
 ```csharp
 show  databases;                          #查看所有数据库
-show tables;                                          #查看当前库的所有表
-SHOW TABLES FROM                        #查看某个指定库下的表
-show create database world                #查看建库语句
+show tables;                               #查看当前库的所有表
+SHOW TABLES FROM                           #查看某个指定库下的表
+show create database world                 #查看建库语句
 show create table world.city                #查看建表语句
-show  grants for  root@'localhost'       #查看用户的权限信息
+show  grants for  root@'localhost'          #查看用户的权限信息
 show  charset；                                   #查看字符集
 show collation                                      #查看校对规则
 show processlist;                                  #查看数据库连接情况
 show index from                                 #表的索引情况
 show status                                         #数据库状态查看
-SHOW STATUS LIKE '%lock%';         #模糊查询数据库某些状态
+SHOW STATUS LIKE '%lock%';                #模糊查询数据库某些状态
 SHOW VARIABLES                             #查看所有配置信息
-SHOW variables LIKE '%lock%';          #查看部分配置信息
+SHOW variables LIKE '%lock%';             #查看部分配置信息
 show engines                                       #查看支持的所有的存储引擎
 show engine innodb status\G               #查看InnoDB引擎相关的状态信息
 show binary logs                                    #列举所有的二进制日志
 show master status                                 #查看数据库的日志位置信息
 show binlog evnets in                             #查看二进制日志事件
 show slave status \G                             #查看从库状态
-SHOW RELAYLOG EVENTS               #查看从库relaylog事件信息
+SHOW RELAYLOG EVENTS                      #查看从库relaylog事件信息
 desc  (show colums from city)               #查看表的列定义信息
 http://dev.mysql.com/doc/refman/5.7/en/show.html
 ```

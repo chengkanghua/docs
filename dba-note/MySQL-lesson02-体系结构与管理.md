@@ -11,6 +11,7 @@ TCP/IP方式（远程、本地）：
 mysql -uroot -p123 -h 10.0.0.51 -P3306
 Socket方式(仅本地)：
 mysql -uroot -p123 -S /tmp/mysql.sock
+当什么参数都没有指定的时候，mysql默认使用socket方式登陆
 ```
 
 ## 1.2 实例介绍
@@ -76,9 +77,7 @@ DQL： 数据查询语言    # data query language
 
 ![img](assets/16956686-127fff46fdb7fea9.png)
 
-image.png
 
-**以上图片由五行哥提供**
 
 ### 1.4.1 库：
 
@@ -307,11 +306,9 @@ Enter password:
 
 ![img](assets/16956686-54becae60bf4ca48.png)
 
-image
+
 
 提示：
-
-
 
 ```undefined
 以上多种方式，都可以单独启动MySQL服务
@@ -437,17 +434,13 @@ mysqld --initialize-insecure  --user=mysql --datadir=/data/3309/data --basedir=/
 ### 2.5.4 systemd管理多实例
 
 ```ruby
-cd /etc/systemd/system
-cp mysqld.service mysqld3307.service
-cp mysqld.service mysqld3308.service
-cp mysqld.service mysqld3309.service
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3307.service
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3308.service
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3309.service
 
-vim mysqld3307.service
-ExecStart=/app/mysql/bin/mysqld  --defaults-file=/data/3307/my.cnf
-vim mysqld3308.service
-ExecStart=/app/mysql/bin/mysqld  --defaults-file=/data/3308/my.cnf
-vim mysqld3309.service
-ExecStart=/app/mysql/bin/mysqld  --defaults-file=/data/3309/my.cnf
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3307/my.cnf#g /etc/systemd/system/mysqld3307.service
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3308/my.cnf#g /etc/systemd/system/mysqld3308.service
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3309/my.cnf#g /etc/systemd/system/mysqld3309.service
 ```
 
 ### 2.5.5 授权
@@ -476,3 +469,74 @@ mysql -S /data/3309/mysql.sock -e "select @@server_id"
 
 
 ​	
+
+多实例部署简洁版
+
+```
+
+# mysql多实列
+mkdir -p /data/330{7,8,9}/data
+
+#配置文件
+cat > /data/3307/my.cnf <<EOF
+[mysqld]
+basedir=/app/mysql
+datadir=/data/3307/data
+socket=/data/3307/mysql.sock
+log_error=/data/3307/mysql.log
+port=3307
+server_id=7
+log_bin=/data/3307/mysql-bin
+EOF
+
+cat > /data/3308/my.cnf <<EOF
+[mysqld]
+basedir=/app/mysql
+datadir=/data/3308/data
+socket=/data/3308/mysql.sock
+log_error=/data/3308/mysql.log
+port=3308
+server_id=8
+log_bin=/data/3308/mysql-bin
+EOF
+
+cat > /data/3309/my.cnf <<EOF
+[mysqld]
+basedir=/app/mysql
+datadir=/data/3309/data
+socket=/data/3309/mysql.sock
+log_error=/data/3309/mysql.log
+port=3309
+server_id=9
+log_bin=/data/3309/mysql-bin
+EOF
+
+#初始化三套数据库
+mv /etc/my.cnf /etc/my.cnf.bak
+mysqld --initialize-insecure  --user=mysql --datadir=/data/3307/data --basedir=/app/mysql
+mysqld --initialize-insecure  --user=mysql --datadir=/data/3308/data --basedir=/app/mysql
+mysqld --initialize-insecure  --user=mysql --datadir=/data/3309/data --basedir=/app/mysql
+
+# systemd 管理多套实例
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3307.service
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3308.service
+cp /etc/systemd/system/mysqld.service /etc/systemd/system/mysqld3309.service
+
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3307/my.cnf#g
+/etc/systemd/system/mysqld3307.service
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3308/my.cnf#g /etc/systemd/system/mysqld3308.service
+sed -i s#--defaults-file=/etc/my.cnf#--defaults-file=/data/3309/my.cnf#g /etc/systemd/system/mysqld3309.service
+
+chown -R mysql.mysql /data/*
+
+systemctl start mysqld3307.service
+systemctl start mysqld3308.service
+systemctl start mysqld3309.service
+
+#验证多实例
+netstat -lnp|grep 330
+mysql -S /data/3307/mysql.sock -e "select @@server_id"
+mysql -S /data/3308/mysql.sock -e "select @@server_id"
+mysql -S /data/3309/mysql.sock -e "select @@server_id"
+```
+

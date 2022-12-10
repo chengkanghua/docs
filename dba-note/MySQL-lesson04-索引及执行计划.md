@@ -1,14 +1,10 @@
 # 1. 索引作用
 
-
-
 ```undefined
 提供了类似于书中目录的作用,目的是为了优化查询
 ```
 
 # 2. 索引的种类(算法)
-
-
 
 ```undefined
 B树索引
@@ -24,12 +20,12 @@ GIS
 
 image.png
 
-
+![image-20221125202502341](MySQL-lesson04-索引及执行计划.assets/image-20221125202502341.png)
 
 ```jsx
 B-tree
-B+Tree 在范围查询方面提供了更好的性能(> < >= <= like)
-B*Tree
+B+Tree #在范围查询方面提供了更好的性能(> < >= <= like)；在叶子添加了Q
+B*Tree #了解一下，在支节点添加了查询前后链接
 ```
 
 # 4. 在功能上的分类
@@ -134,9 +130,11 @@ db01 [world]>desc city;
 
 Field :列名字
 key  :有没有索引,索引类型
-PRI: 主键索引
-UNI: 唯一索引
-MUL: 辅助索引(单列,联和,前缀)
+    PRI: 主键索引
+    UNI: 唯一索引
+    MUL: 辅助索引(单列,联和,前缀)
+
+db01 [world]>show index from city;
 ```
 
 ## 7.1 单列普通辅助索引
@@ -147,16 +145,19 @@ MUL: 辅助索引(单列,联和,前缀)
 
 ```csharp
 db01 [world]>alter table city add index idx_name(name);
-                                       表                    索引名（列名）
+                           表           索引名（列名）
 db01 [world]>create index idx_name1 on city(name);
 db01 [world]>show index from city;
-![image](https://upload-images.jianshu.io/upload_images/16956686-8c8421524dca6291.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+```
+![image](MySQL-lesson04-索引及执行计划.assets/1240.png)
+
+```
 注意:
 以上操作不代表生产操作,我们不建议在一个列上建多个索引
 同一个表中，索引名不能同名。
 ### 7.1.2 删除索引:
 db01 [world]>alter table city drop index idx_name1;
-                                        表名                 索引名
+                          表名                索引名
 ```
 
 ### 7.2 覆盖索引(联合索引)
@@ -173,7 +174,7 @@ Master [world]>alter table city add index idx_co_po(countrycode,population);
 
 ```csharp
 db01 [world]>alter table city add index idx_di(district(5));
-注意：数字列不能用作前缀索引。
+注意：数字列不能用作前缀索引。 字符串列作前缀索引
 ```
 
 ### 7.4 唯一索引
@@ -197,6 +198,53 @@ db01 [world]>select * from city where name='suzhou';
 ```
 
 ===============================================
+
+```SQL
+/*模拟数据库数据做压力测试*/
+CREATE DATABASE oldboy CHARSET utf8mb4 COLLATE utf8mb4_bin;
+USE oldboy;
+CREATE TABLE t_100w (id INT,num INT,k1 CHAR(2),k2 CHAR(4),dt TIMESTAMP);
+
+/*下面语句用sqlyog工具执行*/
+DELIMITER //
+CREATE PROCEDURE rand_data(IN num INT)
+BEGIN
+DECLARE str CHAR(62) DEFAULT 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+DECLARE str2 CHAR(2);
+DECLARE str4 CHAR(4);
+DECLARE i INT DEFAULT 0;
+WHILE i<num DO
+SET str2=CONCAT(SUBSTRING(str,1+FLOOR(RAND()*61),1),SUBSTRING(str,1+FLOOR(RAND()*61),1));
+SET str4=CONCAT(SUBSTRING(str,1+FLOOR(RAND()*61),2),SUBSTRING(str,1+FLOOR(RAND()*61),2));
+SET i=i+1;
+INSERT INTO t_100w VALUES (i,FLOOR(RAND()*num),str2,str4,NOW());
+END WHILE;
+END;
+//
+DELIMITER;
+
+/*插入100w条数据 需要等待几分钟*/
+call rand_data(1000000);
+commit;
+```
+
+
+
+```sql
+SHOW TABLES;
+SELECT COUNT(*) FROM t_100w; 
+/*这条语句效率高，但是数据统计不准确*/
+SELECT table_name,table_rows FROM information_schema.tables WHERE table_schema='oldboy';
+SELECT * FROM t_100w WHERE id<5;
+
+/*命令行下执行 压力测试语句 100并发一共运行2000次*/
+mysqlslap --defaults-file=/etc/my.cnf \
+--concurrency=100 --iterations=1 --create-schema='oldboy' \
+--query="SELECT * FROM oldboy.t_100w WHERE k2='VWQR'" engine=innodb \
+--number-of-queries=2000 -uroot -p123 -verbose
+```
+
+
 
 # 8. 执行计划获取及分析
 
@@ -231,6 +279,29 @@ image
 
 image
 
+```sql
+DESC SELECT * FROM oldboy.t_100w WHERE k2='VWQR';
+EXPLAIN SELECT * FROM t_100w WHERE k2='VWQR';
+
+3306 [(none)]>EXPLAIN SELECT * FROM oldboy.t_100w WHERE k2='VWQR'\G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t_100w   # 查询的表
+   partitions: NULL    
+         type: ALL      #查询的类型 全表 索引
+possible_keys: NULL     # 可能会用到的
+          key: NULL     # 使用到的  
+      key_len: NULL
+          ref: NULL
+         rows: 923742
+     filtered: 10.00
+        Extra: Using where  # 额外的信息
+1 row in set, 1 warning (0.00 sec)
+```
+
+
+
 ## 8.2 执行计划分析
 
 ### 8.2.0 重点关注的信息
@@ -247,7 +318,7 @@ Extra: Using index condition              ---->额外信息        *****
 
 ### 8.2.1 type详解
 
-
+ALL , INDEX,RANGE, ref，eq_ref, system,const,NULL
 
 ```php
 从左到右性能依次变好.
@@ -273,8 +344,11 @@ DESC  SELECT countrycode  FROM city;
 2. 联合索引中,任何一个非最左列作为查询条件时:
 idx_a_b_c(a,b,c)  ---> a  ab  abc
 
-SELECT * FROM t1 WHERE b 
-SELECT * FROM t1 WHERE c    
+DESC city;
+SHOW INDEX FROM city;
+ALTER TABLE city ADD INDEX idx_c_p(countrycode,population);
+DESC SELECT * FROM city WHERE CountryCode='CHN';/*走索引*/
+DESC SELECT * FROM city WHERE Population='CHN';/*不走索引*/
 
 RANGE :
 索引范围扫描 
@@ -296,6 +370,7 @@ DESC SELECT * FROM city WHERE countrycode IN ('CHN','USA');
 DESC SELECT * FROM city WHERE countrycode='CHN'
 UNION ALL 
 SELECT * FROM city WHERE countrycode='USA';
+
 ref: 
 非唯一性索引,等值查询
 DESC SELECT * FROM city WHERE countrycode='CHN';
@@ -312,11 +387,27 @@ system,const :
 DESC SELECT * FROM city WHERE id=10;
 ```
 
+
+
+```SQL
+CREATE TABLE city(
+ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+Name CHAR(35) NOT NULL,
+CountryCode CHAR(3) NOT NULL,
+district CHAR(20) NOT NULL,
+Population INT(11) NOT NULL
+) ENGINE=INNODB CHARSET=utf8;
+```
+
+
+
+
+
 ### 8.2.2 其他字段解释
 
 
 
-```kotlin
+```sql
 extra: 
 filesort ,文件排序.
 SHOW INDEX FROM city;
@@ -351,7 +442,15 @@ Benchmark
     Maximum number of seconds to run all queries: 701.743 seconds
     Number of clients running queries: 100
     Average number of queries per client: 20
+-------------
+USE oldboy;
+DESC SELECT * FROM oldboy.t_100w WHERE k2='780p';
+DESC t_100w;
 
+ALTER TABLE t_100w ADD INDEX idx(k2);
+DESC SELECT * FROM oldboy.t_100w WHERE k2='780p';
+
+------------
 优化后:
 [root@db01 ~]# mysqlslap --defaults-file=/etc/my.cnf --concurrency=100 --iterations=1 --create-schema='oldboy' --query="select * from oldboy.t_100w where k2='780P'" engine=innodb --number-of-queries=2000 -uroot -p123 -verbose
 mysqlslap: [Warning] Using a password on the command line interface can be insecure.
@@ -363,6 +462,12 @@ Benchmark
     Number of clients running queries: 100
     Average number of queries per client: 20
 
+---- 
+DESC SELECT * FROM t_100w WHERE k1='ab' ORDER BY k2;
+/*为上面语句做*/
+ALTER TABLE t_100w ADD INDEX idx_1_2(k1,k2);
+DESC SELECT * FROM t_100w WHERE k1='ab' ORDER BY k2;
+----
 联合索引:
 1. SELECT * FROM t1  WHERE a=    b=   
 我们建立联合索引时:
@@ -375,23 +480,26 @@ ALTER TABLE t1 ADD INDEX idx_b_a(b,a);
 DESC  SELECT * FROM t_100w WHERE num <1000 AND k2='DEEF';
 我们建索引时:
 ALTER TABLE t_100w ADD INDEX idx_2_n(k2,num);
-语句书写时
+// 语句书写时 等值放在左边
 DESC  SELECT * FROM t_100w WHERE  k2='DEEF'  AND  num <1000 ;
 3. 如果查询中出现多子句
 我们要按照子句的执行顺序进行建立索引.
+
 ```
 
 ### 8.2.3 explain(desc)使用场景（面试题）
 
 
 
-```css
+```sql
 题目意思:  我们公司业务慢,请你从数据库的角度分析原因
 1.mysql出现性能问题,我总结有两种情况:
 （1）应急性的慢：突然夯住
 应急情况:数据库hang(卡了,资源耗尽)
 处理过程:
-1.show processlist;  获取到导致数据库hang的语句
+1.show processlist;  获取到导致数据库hang的语句，\
+  语句太长使用show full processlist;
+  # 临时解决kill id
 2. explain 分析SQL的执行计划,有没有走索引,索引的类型情况
 3. 建索引,改语句
 （2）一段时间慢(持续性的):
@@ -513,7 +621,7 @@ pt-duplicate-key-checker
 
 
 
-```csharp
+```sql
 select * from tab;       全表扫描。
 select  * from tab where 1=1;
 在业务数据库中，特别是数据量比较大的表。
@@ -525,7 +633,7 @@ select * from tab;
 SQL改写成以下语句：
 select  * from  tab  order by  price  limit 10 ;    需要在price列上建立索引
 （2）
-select  * from  tab where name='zhangsan'          name列没有索引
+select  * from  tab where name='zhangsan'  //  name列没有索引
 改：
 1、换成有索引的列作为查询条件
 2、将name列建立索引
@@ -579,6 +687,9 @@ DML ?   --->锁冲突
 
 
 ```ruby
+create table t1 (id int ,name varchar(64),telnum char(11));
+insert into t1 values(1,'zs','110'),(2.'ls','120'),(3,'w5','119');
+
 这样会导致索引失效. 错误的例子：
 mysql> alter table tab add index inx_tel(telnum);
 Query OK, 0 rows affected (0.03 sec)
@@ -593,21 +704,21 @@ mysql> desc tab;
 | telnum | varchar(20) | YES  | MUL | NULL    |      |
 +--------+-------------+------+-----+---------+-------+
 3 rows in set (0.01 sec)
-mysql> select * from tab where telnum='1333333';
+mysql> select * from tab where telnum='110';
 +------+------+---------+
 | id  | name | telnum  |
 +------+------+---------+
-|    1 | a    | 1333333 |
+|    1 | a    | 110 |
 +------+------+---------+
 1 row in set (0.00 sec)
-mysql> select * from tab where telnum=1333333;
+mysql> select * from tab where telnum=110;
 +------+------+---------+
 | id  | name | telnum  |
 +------+------+---------+
-|    1 | a    | 1333333 |
+|    1 | a    | 110 |
 +------+------+---------+
 1 row in set (0.00 sec)
-mysql> explain  select * from tab where telnum='1333333';
+mysql> explain  select * from tab where telnum='110';
 +----+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+
 | id | select_type | table | type | possible_keys | key    | key_len | ref  | rows | Extra                |
 +----+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+
@@ -615,21 +726,21 @@ mysql> explain  select * from tab where telnum='1333333';
 |  1 | SIMPLE      | tab  | ref  | inx_tel      | inx_tel | 63      | const |    1 | Using index condition |
 +----+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+
 1 row in set (0.00 sec)
-mysql> explain  select * from tab where telnum=1333333;
+mysql> explain  select * from tab where telnum=110;
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 | id | select_type | table | type | possible_keys | key  | key_len | ref  | rows | Extra      |
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 |  1 | SIMPLE      | tab  | ALL  | inx_tel      | NULL | NULL    | NULL |    2 | Using where |
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 1 row in set (0.00 sec)
-mysql> explain  select * from tab where telnum=1555555;
+mysql> explain  select * from tab where telnum=120;
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 | id | select_type | table | type | possible_keys | key  | key_len | ref  | rows | Extra      |
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 |  1 | SIMPLE      | tab  | ALL  | inx_tel      | NULL | NULL    | NULL |    2 | Using where |
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 1 row in set (0.00 sec)
-mysql> explain  select * from tab where telnum='1555555';
+mysql> explain  select * from tab where telnum='120';
 +----+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+
 | id | select_type | table | type | possible_keys | key    | key_len | ref  | rows | Extra                |
 +----+-------------+-------+------+---------------+---------+---------+-------+------+-----------------------+

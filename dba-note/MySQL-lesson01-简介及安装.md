@@ -16,7 +16,7 @@
 高级SQL：存储过程、函数、触发器、视图、事件
 ```
 
-## 2、老男孩MySQL课程-2019-03月-中级DBA要求（80%以上）
+## 2、MySQL课程-2019-03月-中级DBA要求（80%以上）
 
 
 
@@ -166,7 +166,7 @@ NoSQL:非关系型数据库管理系统
 
 ```csharp
 RDBMS  ：
-MySQL 、Oracle、MSSQL（SQL Server）、PG
+    MySQL 、Oracle、MSSQL（SQL Server）、PG
  
 NoSQL：Not Only SQL
 键-值（key-value）：Redis, memcached
@@ -229,6 +229,8 @@ Percona:
 你们公司用什么版本数据库? 具体什么小版本号?
 5.6.20 5.6.34 5.6.36  5.6.38  5.6.40    
 5.7.18  5.7.20  5.7.22
+5.7.20 17年9月13号
+5.6.44 19年3月15号
 ```
 
 ## 5、MySQL二进制安装
@@ -243,10 +245,11 @@ Percona:
 ### 5.2. 解压并改名为mysql
 
 ```ruby
+cd app
 wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
-[root@db01 app]# tar zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz -C ./
-[root@db01 app]# mv mysql-5.7.20-linux-glibc2.12-x86_64 mysql
-[root@db01 app]# ls -l /app/mysql/
+tar zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz -C ./
+mv mysql-5.7.20-linux-glibc2.12-x86_64 mysql
+ls -l /app/mysql/
 total 36
 drwxr-xr-x  2 root root   4096 Mar  4 14:55 bin
 -rw-r--r--  1 7161 31415 17987 Sep 13  2017 COPYING
@@ -398,7 +401,7 @@ cp mysql.server    /etc/init.d/mysqld    # 这种是centos6的软件启动管理
 ### 5.8 使用systemd管理mysql
 
 ```csharp
-vim /etc/systemd/system/mysqld.service 
+cat > /etc/systemd/system/mysqld.service <<EOF
 [Unit]
 Description=MySQL Server
 Documentation=man:mysqld(8)
@@ -412,11 +415,13 @@ User=mysql
 Group=mysql
 ExecStart=/app/mysql/bin/mysqld --defaults-file=/etc/my.cnf
 LimitNOFILE = 5000
+EOF
 ```
 
 注意：将原来模式启动mysqld先关闭，然后再用systemd管理。
 
 ```undefined
+systemctl daemon-reload
 systemctl  start/stop/restart/status   mysqld
 ```
 
@@ -521,5 +526,99 @@ mysql> quit
 8.使用root用户重新登录mysql
 mysql -uroot -p
  Enter password: <输入新设的密码newpassword>
+```
+
+
+
+## 配置root用户可以远程登录
+
+```bash
+mysql -uroot -p
+use mysql
+select host,User from mysql.user where user="root";
+update mysql.user set host='%' where User='root' and host='localhost' limit 1;
+flush privileges;
+
+```
+
+
+
+
+
+## 简洁版
+
+```
+# mysql 5.7.20 二进制安装
+mkdir -p /app
+cd /app
+wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz
+tar zxvf mysql-5.7.20-linux-glibc2.12-x86_64.tar.gz -C ./
+mv mysql-5.7.20-linux-glibc2.12-x86_64 mysql
+
+echo 'export PATH=/app/mysql/bin:$PATH' >>/etc/profile
+source /etc/profile
+
+useradd mysql
+mkdir /data/mysql -p 
+chown -R mysql.mysql /app/*
+chown -R mysql.mysql /data/*
+
+
+#初始化数据，初始化管理员的临时密码
+#mysqld --initialize  --user=mysql --basedir=/app/mysql --datadir=/data/mysql
+
+#初始化数据，初始化管理员的密码为空
+\rm -rf  /data/mysql/*
+mysqld --initialize-insecure  --user=mysql --basedir=/app/mysql --datadir=/data/mysql
+
+
+cat > /etc/my.cnf <<EOF
+[mysqld]
+user=mysql
+basedir=/app/mysql
+datadir=/data/mysql
+server_id=6
+port=3306
+socket=/tmp/mysql.sock
+[mysql]
+socket=/tmp/mysql.sock
+prompt=3306 [\\d]>
+EOF
+
+# centos6启动管理方式
+# cp /app/mysql/support-files/mysql.server /etc/init.d/mysqld   
+# /etc/init.d/mysqld start
+# /etc/init.d/mysqld stop
+
+# systemd 管理mysql
+cat > /etc/systemd/system/mysqld.service <<EOF
+[Unit]
+Description=MySQL Server
+Documentation=man:mysqld(8)
+Documentation=http://dev.mysql.com/doc/refman/en/using-systemd.html
+After=network.target
+After=syslog.target
+[Install]
+WantedBy=multi-user.target
+[Service]
+User=mysql
+Group=mysql
+ExecStart=/app/mysql/bin/mysqld --defaults-file=/etc/my.cnf
+LimitNOFILE = 5000
+EOF
+
+systemctl daemon-reload
+systemctl  start  mysqld
+
+# 管理员修改密码
+mysqladmin -uroot -p password 
+
+# 配置root用户可以远程登录
+mysql -uroot -p123 -e "select host,User from mysql.user where user='root';"
+mysql -uroot -p123 -e "update mysql.user set host='%' where User='root' and host='localhost' limit 1;
+flush privileges;"
+
+
+
 ```
 
