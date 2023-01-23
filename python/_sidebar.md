@@ -1,6 +1,7 @@
 
 - 1Python基础V2.0
   - [README](python/1Python基础V2.0/README.md)
+  - [学前必备](python/1Python基础V2.0/学前必备.md)
   - [Day01作业讲解](python/1Python基础V2.0/day01作业讲解.md)
   - [Day01计算机基础和环境搭建](python/1Python基础V2.0/day01计算机基础和环境搭建.md)
   - [Day02作业答案](python/1Python基础V2.0/day02作业答案.md)
@@ -12,11 +13,13 @@
   - [Day06数据类型](python/1Python基础V2.0/day06数据类型.md)
   - [Day07数据类型](python/1Python基础V2.0/day07数据类型.md)
   - [Day08总结和考试](python/1Python基础V2.0/day08总结和考试.md)
-  - [学前必备](python/1Python基础V2.0/学前必备.md)
-  - [第一阶段考试题 答案](python/1Python基础V2.0/第一阶段考试题-答案.md)
+
   - [第一阶段考试题](python/1Python基础V2.0/第一阶段考试题.md)
+  - [第一阶段考试题 答案](python/1Python基础V2.0/第一阶段考试题-答案.md)
+  
 
 - 2函数和模块V2.0
+  - [README](python/2函数和模块v2.0/README.md)
   - [Day09文件操作相关](python/2函数和模块v2.0/day09文件操作相关.md)
   - [Day10函数基础](python/2函数和模块v2.0/day10函数基础.md)
   - [Day11函数进阶](python/2函数和模块v2.0/day11函数进阶.md)
@@ -25,13 +28,14 @@
   - [Day14模块和内置模块](python/2函数和模块v2.0/day14模块和内置模块.md)
   - [Day15内置和开发规范](python/2函数和模块v2.0/day15内置和开发规范.md)
   - [Day16阶段总结和考试](python/2函数和模块v2.0/day16阶段总结和考试.md)
-  - [第二模块考核答案](python/2函数和模块v2.0/第二模块考核答案.md)
-  - [第二阶段考试题 含答案](python/2函数和模块v2.0/第二阶段考试题-含答案.md)
   - [第二阶段考试题](python/2函数和模块v2.0/第二阶段考试题.md)
+  - [第二阶段考试题 含答案](python/2函数和模块v2.0/第二阶段考试题-含答案.md)
+  - [第二模块考核答案](python/2函数和模块v2.0/第二模块考核答案.md)
+  
+
 
 - 3面向对象编程V2.0
-  - [协程和异步编程文档](python/3面向对象编程v2.0/Python-asyncio高性能异步编程/协程和异步编程文档.md)
-  - [课堂笔记](python/3面向对象编程v2.0/Python-asyncio高性能异步编程/课堂笔记.md)
+  - [README](python/3面向对象编程v2.0/README.md)
   - [Day17初识面向对象](python/3面向对象编程v2.0/day17初识面向对象.md)
   - [Day18面向对象进阶](python/3面向对象编程v2.0/day18面向对象进阶.md)
   - [Day19面向对象高级和应用](python/3面向对象编程v2.0/day19面向对象高级和应用.md)
@@ -40,8 +44,11 @@
   - [Day22并发编程上](python/3面向对象编程v2.0/day22并发编程上.md)
   - [Day23并发编程下](python/3面向对象编程v2.0/day23并发编程下.md)
   - [Day24阶段总结和考试](python/3面向对象编程v2.0/day24阶段总结和考试.md)
-  - [第3阶段考试题 含答案](python/3面向对象编程v2.0/第3阶段考试题-含答案.md)
+  - [异步编程](python/3面向对象编程v2.0/Python-asyncio高性能异步编程/课堂笔记.md)
+  - [协程和异步编程文档](python/3面向对象编程v2.0/Python-asyncio高性能异步编程/协程和异步编程文档.md)
   - [第3阶段考试题](python/3面向对象编程v2.0/第3阶段考试题.md)
+  - [第3阶段考试题 含答案](python/3面向对象编程v2.0/第3阶段考试题-含答案.md)
+  
 
 - 4MySQLv2.0版
   - [Readme](python/4MySQLv2.0版/blog/readme.md)
