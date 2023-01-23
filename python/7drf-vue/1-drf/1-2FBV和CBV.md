@@ -158,7 +158,10 @@ class UserView(View):
 django restframework框架 是在django的基础上又给我们提供了很多方便的功能，让我们可以更便捷基于django开发restful API，来一个简单的实例，快速了解下：
 
 - 基于django
+  
   <img src="assets/image-20210819132015065.png" alt="image-20210819132015065" style="zoom: 25%;" />
+  
 - 基于django + django restframework框架
+  
   <img src="assets/image-20210819132209726.png" alt="image-20210819132209726" style="zoom:25%;" />
 

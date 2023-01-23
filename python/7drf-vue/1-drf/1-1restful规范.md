@@ -332,6 +332,18 @@ def users(request):
 
 基于django + restful规范来开发一个后台接口示例。
 
+```bash
+pip install django==3.2
+#创建项目
+django-admin startproject demo
+cd demo/
+#创建应用
+django-admin startapp app01
+
+```
+
+
+
 ```python
 # urls.py
 
@@ -410,6 +422,21 @@ def users(request, version, pk=None):
             "error": "请求错误"
         }
         return JsonResponse(info)
+
+```
+
+
+
+运行 测试
+
+```bash
+
+cd demo
+python manage.py runserver 
+curl http://127.0.0.1:8000/api/v1/users/2/
+{"code": 0, "data": {"id": 1, "name": "\u6b66\u6c9b\u9f50"}}
+
+
 
 ```
 

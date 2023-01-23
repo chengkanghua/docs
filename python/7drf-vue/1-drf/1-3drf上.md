@@ -140,7 +140,7 @@ class UserView(APIView):
 ```
 
 ```python
-# rest_framework.request.Request 类
+# from rest_framework.request import Request 按ctrl点击类
 
 class Request:
     """
@@ -154,7 +154,7 @@ class Request:
     """
 
     def __init__(self, request, parsers=None, authenticators=None,negotiator=None, parser_context=None):
-    	self._request = request
+    	  self._request = request
         self.parsers = parsers or ()
         self.authenticators = authenticators or ()
         ...
@@ -236,6 +236,25 @@ drf框架中支持5种版本的设置。
 ![image-20210819154455680](assets/image-20210819154455680.png)
 
 ```python
+#urls.py
+from django.urls import path
+from app01 import views
+
+urlpatterns = [
+    path('api/users/', views.UserView.as_view()),
+]
+
+#app01/view.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import QueryParameterVersioning
+
+class UserView(APIView):
+    versioning_class = QueryParameterVersioning
+    
+    def get(self, request, *args, **kwargs):
+        return Response({"code": 1000, "data": "xxx"})
+
 # settings.py
 
 REST_FRAMEWORK = {
@@ -244,6 +263,9 @@ REST_FRAMEWORK = {
     "ALLOWED_VERSIONS": ["v1", "v2", "v3"],
     "DEFAULT_VERSIONING_CLASS":"rest_framework.versioning.QueryParameterVersioning"
 }
+
+#
+http://127.0.0.1:8000/users/?version=1
 ```
 
 源码执行流程：
@@ -256,17 +278,33 @@ REST_FRAMEWORK = {
 
 ![image-20210819154955480](assets/image-20210819154955480.png)
 
+```bash
+#urls.py
+from django.urls import path,re_path
+from app01 import views
+
+urlpatterns = [
+    re_path('^api/(?P<version>\w+)/users/$', views.UserView.as_view()),
+]
+
+#app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import URLPathVersioning
+
+class UserView(APIView):
+    versioning_class = URLPathVersioning
+
+    def get(self, request, *args, **kwargs):
+        return Response({"code": 1000, "data": "xxx"})
+
+    def post(self, request, *args, **kwargs):
+        return Response({"code": 1000, "data": "xxx"})
 
 
-
-
-
-
-
-
-
-
-
+#
+http://127.0.0.1:8000/api/v2/users/
+```
 
 
 
@@ -278,9 +316,32 @@ REST_FRAMEWORK = {
 
 ![image-20210819155617845](assets/image-20210819155617845.png)
 
+```bash
+#urls.py
+from django.urls import path,re_path
+from app01 import views
+
+urlpatterns = [
+    path('api/users/', views.UserView.as_view()),
+]
+
+#app01/view.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import AcceptHeaderVersioning
+
+class UserView(APIView):
+    versioning_class = AcceptHeaderVersioning
+
+    def get(self, request, *args, **kwargs):
+        return Response({"code": 1000, "data": "xxx"})
 
 
 
+#
+# curl -H "Content-type:aplication/json;version=v3" http://127.0.0.1:8000/api/users/
+{"code":1000,"data":"xxx"}
+```
 
 
 
@@ -306,11 +367,78 @@ REST_FRAMEWORK = {
   ALLOWED_HOSTS = ["*"]
   ```
 
+```python
+#urls.py
+from django.urls import path,re_path
+from app01 import views
+
+urlpatterns = [
+    path('api/users/', views.UserView.as_view()),
+]
+
+#app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import HostNameVersioning
+
+class UserView(APIView):
+    versioning_class = HostNameVersioning
+
+    def get(self, request, *args, **kwargs):
+        print(request.version)
+        return Response({"code": 1000, "data": "xxx"})
+        
+# curl v1.wupeiqi.com:8000/api/users/
+# curl v2.wupeiqi.com:8000/api/users/
+```
+
+
+
 
 
 #### 3.5 路由的namespace传递
 
 ![image-20210819161839318](assets/image-20210819161839318.png)
+
+```py
+#urls.py
+from django.urls import path,re_path,include
+
+urlpatterns = [
+    path('api/v1/', include("app01.urls", namespace='v1')),
+    path('api/v2/', include("app01.urls", namespace='v2')),
+]
+#app01/urls.py
+from django.urls import path,re_path,include
+from app01 import views
+
+urlpatterns =[
+    path('users/', views.UserView.as_view()),
+]
+
+app_name = 'app01'
+
+#app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import NamespaceVersioning
+
+class UserView(APIView):
+    versioning_class = NamespaceVersioning
+
+    def get(self, request, *args, **kwargs):
+        print(request.version)
+        return Response({"code": 1000, "data": "xxx"})
+
+
+      
+# curl 127.0.0.1:8000/api/v1/users/
+# curl 127.0.0.1:8000/api/v2/users/
+```
+
+
+
+
 
 
 
@@ -384,6 +512,45 @@ http://127.0.0.1:8000/api/v3/order/
 
 
 
+```bash
+#app01/urls.py
+
+from django.urls import path,re_path,include
+from app01 import views
+
+urlpatterns =[
+    path('users/', views.UserView.as_view(),name="u1"),
+]
+
+app_name = 'app01'
+
+#app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import NamespaceVersioning
+
+class UserView(APIView):
+    versioning_class = NamespaceVersioning
+
+    def get(self, request, *args, **kwargs):
+        print(request.version)
+        url1 =request.versioning_scheme.reverse("u1",request=request)
+        print(url1)
+        return Response({"code": 1000, "data": "xxx"})
+        
+# curl http://127.0.0.1:8000/api/v2/users/
+# 控制台输出
+v2
+http://127.0.0.1:8000/api/v2/users/  #地址
+[23/Jan/2023 09:52:03] "GET /api/v2/users/ HTTP/1.1" 200 6852
+
+
+```
+
+
+
+
+
 ### 小结
 
 以后使用drf开发后端API接口时：
@@ -411,7 +578,7 @@ http://127.0.0.1:8000/api/v3/order/
 在drf中也给我们提供了 认证组件 ，帮助我们快速实现认证相关的功能，例如：
 
 ```python
-# models.py
+# app01/models.py
 
 from django.db import models
 
@@ -419,15 +586,168 @@ class UserInfo(models.Model):
     username = models.CharField(verbose_name="用户名", max_length=32)
     password = models.CharField(verbose_name="密码", max_length=64)
     token = models.CharField(verbose_name="TOKEN", max_length=64, null=True, blank=True)
+    
+    
+#数据应用
+python manage.py makemigrations
+python manage.py migrate
+
+#urls.py
+from django.urls import path,re_path,include
+from app01 import views
+
+urlpatterns = [
+    path('api/auth/', views.AuthView.as_view()),
+    path('api/v1/', include("app01.urls", namespace='v1')),
+    path('api/v2/', include("app01.urls", namespace='v2')),
+]
+
+# app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import NamespaceVersioning
+import uuid
+from app01 import models
+
+class AuthView(APIView):
+    """用户登录认证"""
+    def post(self,request,*args,**kwargs):
+        print(request.data)
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user_object = models.UserInfo.objects.filter(username=username,password=password).first()
+        if not user_object:
+            return Response({"code":1000,"data":"用户或密码错误"})
+
+        token = str(uuid.uuid4())
+
+        user_object.token = token
+        user_object.save()
+
+        return Response({"code":0,"data":{"token":token,"name":username}})
+
+#数据库添加用户 和密码测试。peiqi 123
+# 127.0.0.1:8000/api/auth
+{"username":"peiqi","password":"123"}
 ```
 
 ![image-20210821170610618](assets/image-20210821170610618.png)
 
 
 
+
+
 ![image-20210821171152853](assets/image-20210821171152853.png)
 
 
+
+```bash
+#urls.py
+from django.urls import path,re_path,include
+from app01 import views
+
+urlpatterns = [
+    path('api/auth/', views.AuthView.as_view()),
+    path('api/order/',views.OrderView.as_view()),
+    path('api/pay/', views.PayView.as_view()),
+    # path('api/v1/', include("app01.urls", namespace='v1')),
+    # path('api/v2/', include("app01.urls", namespace='v2')),
+]
+#app01/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.versioning import NamespaceVersioning
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
+import uuid
+from app01 import models
+
+class AuthView(APIView):
+    """用户登录认证"""
+    def post(self,request,*args,**kwargs):
+        print(request.data)
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user_object = models.UserInfo.objects.filter(username=username,password=password).first()
+        if not user_object:
+            return Response({"code":1000,"data":"用户或密码错误"})
+
+        token = str(uuid.uuid4())
+
+        user_object.token = token
+        user_object.save()
+
+        return Response({"code":0,"data":{"token":token,"name":username}})
+
+class MyAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            raise AuthenticationFailed({"code":1001,'error':"认证失败"})
+        user_object = models.UserInfo.objects.filter(token=token).first()
+        if not user_object:
+            raise AuthenticationFailed({"code":1001,'error':"认证失败"})
+        return user_object,token
+    def authenticate_header(self, request):
+        return 'Bearer realm="API'
+
+class OrderView(APIView):
+    authentication_classes = [MyAuthentication,]
+
+    def get(self,request,*args,**kwargs):
+        print(request.user)
+        print(request.auth)
+        return Response({"code":0,"data":"数据..."})
+
+class PayView(APIView):
+    authentication_classes = [MyAuthentication,]
+
+    def get(self,request,*args,**kwargs):
+        print(request.user)
+        print(request.auth)
+        return Response({"code":0,"data":"数据..."})
+
+class UserView(APIView):
+    versioning_class = NamespaceVersioning
+
+    def get(self, request, *args, **kwargs):
+        print(request.version)
+        url1 =request.versioning_scheme.reverse("u1",request=request)
+        print(url1)
+        return Response({"code": 1000, "data": "xxx"})
+
+
+
+
+
+
+
+
+#访问 http://127.0.0.1:8000/api/auth/
+{"username":"wupeiqi","password":"123"}
+#用上一行json post请求登录
+{
+    "code": 0,
+    "data": {
+        "token": "bc086413-8f7b-4887-86c6-31d3c0362b49",
+        "name": "wupeiqi"
+    }
+}
+
+
+#拼接访问
+127.0.0.1:8000/api/order/?token=bc086413-8f7b-4887-86c6-31d3c0362b49
+
+
+```
+
+
+
+
+
+​	
 
 在视图类中设置类变量 `authentication_classes`的值为 认证类 `MyAuthentication`，表示此视图在执行内部功能之前需要先经过 认证。
 
@@ -477,6 +797,35 @@ class UserInfo(models.Model):
 
 
 ![image-20210821214440034](assets/image-20210821214440034.png)
+
+```py
+#app01/views.py
+#modify
+class MyAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return None
+        user_object = models.UserInfo.objects.filter(token=token).first()
+        if not user_object:
+            return None
+        return user_object,token
+
+    def authenticate_header(self, request):
+        return 'Bearer realm="API"'
+
+class OrderView(APIView):
+    authentication_classes = [MyAuthentication,]
+
+    def get(self,request,*args,**kwargs):
+        if request.user:
+            return Response({"code":0,"data":{"user": request.user.username,"list":[11,22,33]}})
+        return Response({"code":1,"data": {"user":None,"list":[1,2,3]}})
+
+      
+# curl http://127.0.0.1:8000/api/order/
+# curl 127.0.0.1:8000/api/order/?token=f2ccdb95-f518-442b-b30d-588decaecfc2
+```
 
 
 
@@ -539,6 +888,12 @@ class UserInfo(models.Model):
     username = models.CharField(verbose_name="用户名", max_length=32)
     password = models.CharField(verbose_name="密码", max_length=64)
     token = models.CharField(verbose_name="TOKEN", max_length=64, null=True, blank=True)
+    
+    
+#应用数据    
+python manage.py makemigrations
+python manage.py migrate
+    
 ```
 
 ![image-20210822100012603](assets/image-20210822100012603.png)
