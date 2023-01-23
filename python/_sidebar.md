@@ -2,8 +2,8 @@
 - 1Python基础V2.0
   - [README](python/1Python基础V2.0/README.md)
   - [学前必备](python/1Python基础V2.0/学前必备.md)
-  - [Day01作业讲解](python/1Python基础V2.0/day01作业讲解.md)
   - [Day01计算机基础和环境搭建](python/1Python基础V2.0/day01计算机基础和环境搭建.md)
+  - [Day01作业讲解](python/1Python基础V2.0/day01作业讲解.md)  
   - [Day02作业答案](python/1Python基础V2.0/day02作业答案.md)
   - [Day02快速上手](python/1Python基础V2.0/day02快速上手.md)
   - [Day03Python基础](python/1Python基础V2.0/day03Python基础.md)
