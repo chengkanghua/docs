@@ -28,17 +28,6 @@
       height: 50px;
       border-bottom: 1px solid #eee;
     }
-    .page_toc {
-    height: 916px;
-    overflow: scroll;
-    position: fixed;
-    border-left-style: solid;
-    border-left-width: 1px;
-    border-left-color: rgba(0, 0, 0, 0.07);
-    border-image-slice: 1;
-    padding-left: 0px;
-    width: 200px;
-	}
     .sidebar, body {
     background-color: #f8f8f8;
     }
@@ -72,13 +61,23 @@
       auto2top: true,
       loadNavbar: true, // load from _navbar.md 开启导航
       loadSidebar: true,//开启侧边栏
-      subMaxLevel: 3, //设置侧片栏最大层级,最大6级
+      subMaxLevel: 4, //设置侧片栏最大层级,最大6级
       //alias: {
       // '/.*/_sidebar.md': '/_sidebar.md'
       // },
       //sidebarDisplayLevel: 0,
+      ext: '.md',
+      //自动为每个页面增加标题
+      loadSidebar: true,
+      autoHeader: true,
+      //配置日期格式 显示文档更新日期
+     formatUpdated: '{MM}/{DD} {HH}:{mm}',
+     formatUpdated: function(time) {
+      // ...
 
-      //maxLevel: 4,
+        return time;
+      },
+      maxLevel: 4,
       //search: 'auto', //开启搜索
       //relativePath: true,// 启用相对路径
       mergeNavbar: true, //小屏幕设备合并导航栏到侧边栏
@@ -95,6 +94,13 @@
        depth: 6,
        maxAge: 86400000, // 过期时间，单位毫秒，默认一天
      },
+     // 字数统计
+    count:{
+      countable:true,
+      fontsize:'0.9em',
+      color:'rgb(90,90,90)',
+      language:'chinese'
+     },
 
       // 页脚
       footer: {
@@ -110,11 +116,12 @@
           errorText: 'Error',
           successText: 'OK!'
       },
+      /*	    
       toc: {  //右边添加一个目录跳转， 这个和字数统计冲突
       scope: '.markdown-section',
       headings: 'h1, h2, h3 ',
       title: 'TOC',
-  	},
+  	},*/
     //sidebarDisplayLevel: 2, //侧边栏层级默认展开数量 0 不展开 1 展开二级目录
    // 支持mermaid
   plugins: [
@@ -243,8 +250,10 @@
 	<!--给侧边栏进行多级分类，并且自动折叠-->
   <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
 	<!--右边加一个目录跳转-->
-  <script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>
+	<!--<script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>-->
   <script type="text/javascript" src="//unpkg.com/mermaid/dist/mermaid.min.js"></script>
+  <!--字数统计 -->
+  <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
 
 </body>
 </html>
