@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+
+</head>
+<body>
+
+<div id="app">
+
+    <p>消息：{{msg}} </p>
+    <p>网站：<span v-html="link"></span></p>
+    <input type="text" v-model="data">
+    <input type="text" v-model="msg">
+
+    <p><img height="200" width="300" :src="url" alt=""></p>
+    <p><input type="text" :value="msg"></p>
+
+    <p>
+        <a :href="link2">{{site}}</a>
+        网站名称 <input type="text" v-model="site">
+        url地址 <input type="text" v-model="link2">
+    </p>
+
+    <p>年龄：{{age+1}}</p>
+    <p>{{is_login?"苑":"登录"}}</p>
+    <p>{{citys.split(" ").reverse().join(",")}}</p>
+
+</div>
+
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                msg: "hello world",
+                link: "<a href=''>百度</a>",
+                data: "12345",
+                url: "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.jj20.com%2Fup%2Fallimg%2F4k%2Fs%2F02%2F210924212T335E-0-lp.jpg&refer=http%3A%2F%2Fimg.jj20.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1651547665&t=8400e614ab0c70908b71277961012c19",
+                site: "百度",
+                link2: "http://www.baidu.com",
+                age: 23,
+                is_login: false,
+                citys: "北京 上海 深圳 广州",
+
+            }
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

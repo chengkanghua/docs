@@ -1,0 +1,36 @@
+# 对象
+# 对象的成员是键值对格式数据，属性与属性之间必须使用英文冒号(:)来映射，同时每一个之间使用英文逗号(,)隔开
+# 方式1：使用花括号声明，花括号可以换行，无需左对齐
+dict: {name: xiaoming, age: 17}
+map: {
+  name: xiaohong,
+  age: 16,
+  sex: false
+}
+
+# 方式2：使用缩进键值对成员进行对象声明，对象成员必须缩进左对齐，不对齐则报错
+data:
+  name: xiaoming
+  age: 16
+
+# 多层嵌套对象[类似python的多维字典]
+people:
+  name: xiaoming
+  age: 26
+  love:
+    - code
+    - watching TV
+    - shopping
+  son:
+    name: xiaohui
+    age: 3
+
+goods_list:
+  -
+    name: 立白洗衣粉
+    price: 39.90
+    num: 3
+  -
+    name: 黑猫神蚊香液
+    price: 56.50
+    num: 6

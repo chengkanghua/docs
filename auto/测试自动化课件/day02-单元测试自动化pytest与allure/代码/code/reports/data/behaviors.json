@@ -1,0 +1,68 @@
+{
+  "uid" : "b1a8273437954620fa374b796ffaacdd",
+  "name" : "behaviors",
+  "children" : [ {
+    "name" : "测试用例模块的描述: 购物车模块，用户模块",
+    "children" : [ {
+      "name" : "测试用例的分类描述",
+      "children" : [ {
+        "name" : "测试用例test_01的标题描述",
+        "uid" : "bf869f7dcc8dff71",
+        "parentUid" : "65e4685c00c8125b800a2586cb4fd465",
+        "status" : "passed",
+        "time" : {
+          "start" : 1653211731941,
+          "stop" : 1653211731941,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "测试用例test_02的标题描述",
+        "uid" : "547f62f2e8884095",
+        "parentUid" : "65e4685c00c8125b800a2586cb4fd465",
+        "status" : "passed",
+        "time" : {
+          "start" : 1653211731944,
+          "stop" : 1653211731944,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "65e4685c00c8125b800a2586cb4fd465"
+    }, {
+      "name" : "测试用例的分类2描述",
+      "children" : [ {
+        "name" : "测试用例test_03的标题描述",
+        "uid" : "732906e7a984385",
+        "parentUid" : "bc3eaed5ca1fd07a95959331a907d9de",
+        "status" : "failed",
+        "time" : {
+          "start" : 1653211731946,
+          "stop" : 1653211731949,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "bc3eaed5ca1fd07a95959331a907d9de"
+    } ],
+    "uid" : "714e47a43860c7cdfcd13d7e0ae20944"
+  } ]
+}

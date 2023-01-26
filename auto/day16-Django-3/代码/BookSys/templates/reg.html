@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
+
+</head>
+<body>
+<h3>AJAX请求</h3>
+<input id="i1" type="text" onblur="foo()">
+<span class="err"></span>
+<script>
+    // JS代码
+    function foo() {
+        // 发送AJAX请求
+        $.ajax({
+            url: "/ajax_reg/",
+            type: "post",
+            data: {
+                user: $("#i1").val()
+            },
+            success: function (res) {
+                var data = res;
+                // 反序列化
+                // var data = JSON.parse(res);
+                if (data.state) {
+                    // 边框变红
+                    $("#i1").css("border","1px solid red")
+
+                    // 显示错误信息
+                    $(".err").html(data.msg)
+                }
+            }
+        })
+    }
+</script>
+</body>
+</html>

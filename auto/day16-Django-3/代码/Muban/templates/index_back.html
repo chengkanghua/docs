@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .active {
+            color: red;
+        }
+
+        .active2 {
+            background-color: red;
+        }
+
+    </style>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+          integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+</head>
+<body>
+
+<h3>深度查询 句点符 .</h3>
+
+
+<p>用户名：{{ name }}</p>
+<p>四大名著：{{ books }}</p>
+<p>四大名著第一本：{{ books.2 }}</p>
+<p>info {{ info }}</p>
+<p>info的年龄 {{ info.age }}</p>
+<p>s1的姓名:{{ s1.name }}</p>
+<p>s1的年龄:{{ s1.age }}</p>
+
+<p>stu_list第二个学生的姓名:{{ stu_list.1.name }}</p>
+
+
+<h3>过滤器语法</h3>
+<p>四大名著第一本：{{ books|first }}</p>
+<p>四大名著第一本：{{ books|last }}</p>
+<p>now: {{ now|date:"Y/m/d" }}</p>
+<p>age :{{ age|add:1 }}</p>
+<p>文件大小：{{ fileSize|filesizeformat }}</p>
+<p>四大名著：{{ books|default:"目前没有该书籍" }}</p>
+<p>{{ link|safe }}</p>
+
+
+<h3>if标签</h3>
+
+{% if user %}
+    <p>用户名：{{ user }}</p>
+{% else %}
+    <p><a href="">登录</a><a href="">注册</a></p>
+{% endif %}
+
+
+{% if score > 90 %}
+    <p>优秀</p>
+{% elif score > 60 %}
+    <p>良好</p>
+{% else %}
+    <p>不及格</p>
+{% endif %}
+
+
+<h3>for标签</h3>
+
+
+<ul>
+    {% for book in books %}
+
+
+        {% if forloop.first %}
+            <li> {{ forloop.counter }} <span class="active"> {{ book }}</span></li>
+        {% else %}
+
+            <li> {{ forloop.counter }} {{ book }}</li>
+        {% endif %}
+
+
+    {% endfor %}
+</ul>
+
+
+<hr>
+
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <table class="table table-bordered table-hover">
+            <tr>
+                <th>ID</th>
+                <th>书籍名称</th>
+                <th>价格</th>
+            </tr>
+            {% for bookDict in book_list1 %}
+
+                {% if bookDict.price > 200 %}
+                    <tr class="active2">
+                        <td>{{ bookDict.id }}</td>
+                        <td>{{ bookDict.name }}</td>
+                        <td>{{ bookDict.price }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td>{{ bookDict.id }}</td>
+                        <td>{{ bookDict.name }}</td>
+                        <td>{{ bookDict.price }}</td>
+                    </tr>
+                {% endif %}
+
+
+            {% endfor %}
+
+        </table>
+    </div>
+</div>
+
+
+</body>
+</html>

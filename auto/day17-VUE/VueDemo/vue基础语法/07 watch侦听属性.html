@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+    <style>
+
+
+        .pass{
+            outline-color: green;
+        }
+
+        .fail{
+            outline-color: red;
+        }
+
+
+    </style>
+
+</head>
+<body>
+
+<div id="app">
+    <p>{{num}}</p>
+    <p><input type="text" v-model="num"></p>
+
+
+     <p>
+        <input type="password" :class="tips" v-model="password">
+    </p>
+</div>
+
+
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                num:100,
+                password:"",
+                tips:"fail"
+
+            }
+        },
+        methods: {
+
+        },
+        computed:{},
+        watch:{
+            num:function (newVal,oldVal) {
+                console.log("oldVal",oldVal);
+                console.log("newVal",newVal);
+            },
+            password:function (newVal,oldVal) {
+                if(newVal.length>5){
+                    // 边框样式变成绿色
+                    console.log("OK");
+                    this.tips = "pass"
+
+                }else{
+                    // 边框样式变成红色
+                    console.log("not OK")
+
+
+
+                }
+            }
+            
+        }
+   
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

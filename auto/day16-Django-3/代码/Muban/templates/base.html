@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+        <title>title</title>
+    {% endblock %}
+
+    {% block css %}
+
+    {% endblock %}
+
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css">
+</head>
+<body>
+
+
+<div class="header"></div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+
+            <div class="panel panel-danger">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    <p><a href="index/">首页</a></p>
+                    <p><a href="/order/">我的订单</a></p>
+                </div>
+            </div>
+
+            <div class="panel panel-success">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+
+        </div>
+        <div class="col-md-9">
+
+            {% block content %}
+                <p>content</p>
+            {% endblock content %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+-
+  name: 用户登录-测试用户名与密码为空的情况
+  request:
+    method: post
+    url: http://127.0.0.1:8000/user/login
+    json:
+      "username": ""
+      "password": ""
+  assert:
+    - code == 400
+
+-
+  name: 用户登录-测试密码为空的情况
+  request:
+    method: post
+    url: http://127.0.0.1:8000/user/login
+    json:
+      "username": "xiaoming"
+      "password": ""
+  assert:
+    - code == 400
+
+
+-
+  name: 用户登录-测试有账号密码但是密码错误的情况
+  request:
+    method: post
+    url: http://127.0.0.1:8000/user/login
+    json:
+      "username": "xiaoming"
+      "password": "1234562222"
+  assert:
+    - code == 400
+
+
+-
+  name: 用户登录-测试有账号密码单而且正确的情况
+  request:
+    method: post
+    url: http://127.0.0.1:8000/user/login
+    json:
+      "username": "xiaoming"
+      "password": "123456"
+  assert:
+    - code == 200

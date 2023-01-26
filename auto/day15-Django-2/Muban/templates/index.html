@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block css %}
+    <style>
+        .active2 {
+            background-color: red;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <table class="table table-bordered table-hover">
+                <tr>
+                    <th>ID</th>
+                    <th>书籍名称</th>
+                    <th>价格</th>
+                </tr>
+                {% for bookDict in book_list1 %}
+
+                    {% if bookDict.price > 200 %}
+                        <tr class="active2">
+                            <td>{{ bookDict.id }}</td>
+                            <td>{{ bookDict.name }}</td>
+                            <td>{{ bookDict.price }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td>{{ bookDict.id }}</td>
+                            <td>{{ bookDict.name }}</td>
+                            <td>{{ bookDict.price }}</td>
+                        </tr>
+                    {% endif %}
+
+
+                {% endfor %}
+
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block title %}
+    <title>首页</title>
+{% endblock %}
+
+

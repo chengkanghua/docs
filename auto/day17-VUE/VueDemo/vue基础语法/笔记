@@ -1,0 +1,21 @@
+
+
+
+浏览器向服务器发送请求形式：
+
+
+同步页面刷新（浏览器通过事件发起http请求）
+
+ (1) 地址栏  get
+ (2) 超链接标签 a   get
+ (3) form get post
+
+
+异步局部刷新
+  Ajax请求（浏览器通过执行js代码发送的http请求）
+  JS代码
+
+  jQuery(ajax)
+  VUE(ajax)
+  React(ajax)
+

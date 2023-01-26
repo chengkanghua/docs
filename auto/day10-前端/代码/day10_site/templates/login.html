@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/bootstrap-3.4.1/css/bootstrap.css">
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .account {
+            width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 100px;
+            border: 1px solid #dddddd;
+            padding: 10px 30px 30px 30px;
+
+            box-shadow: 5px 5px 10px #dddddd;
+            -webkit-box-shadow: 5px 5px 10px #dddddd;
+        }
+
+        .account > h2 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="account">
+    <h2>用户登录</h2>
+
+    <form>
+        <div class="form-group">
+            <label for="user">用户名</label>
+            <input type="text" class="form-control" id="user" placeholder="用户名">
+        </div>
+        <div class="form-group">
+            <label for="pwd">密码</label>
+            <input type="password" class="form-control" id="pwd" placeholder="密码">
+        </div>
+
+        <div class="clearfix">
+            <input type="submit" value="提交" class="btn btn-primary">
+            <input type="reset" value="重置" class="btn btn-default">
+
+            <a style="float: right;" href="#">忘记密码？</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
