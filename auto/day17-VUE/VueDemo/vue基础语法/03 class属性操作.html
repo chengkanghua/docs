@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+    <style>
+        .c1 {
+            color: red;
+        }
+
+        .c2 {
+            background-color: lightblue;
+        }
+    </style>
+
+</head>
+<body>
+
+<div id="app">
+    <div :class="{c1:true,c2:true}">HELLO VUE</div>
+    <div :class="{c1:isC1,c2:isC2}">HELLO VUE2</div>
+    <div :class="styleObj">HELLO VUE2</div>
+    <div :class="[styleObj1,styleObj2]">HELLO VUE2</div>
+</div>
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                isC1: false,
+                isC2: true,
+                styleObj: {
+                    c1: true,
+                    c2: true
+                },
+                styleObj1: {
+                    c1: true
+                },
+                styleObj2: {
+                    c2: true
+                }
+
+            }
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

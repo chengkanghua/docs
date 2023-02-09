@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<div id="app">
+    <p @dblclick="foo('alvin')">{{msg}}</p>
+</div>
+
+
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                msg: "yuan",
+                books2: [
+                    {title: "西游记", price: 199},
+                    {title: "三国演义", price: 299},
+                    {title: "红楼梦", price: 399},
+                    {title: "金瓶梅", price: 499}
+                ]
+
+            }
+        },
+        methods: {
+
+            foo(name) {
+                this.msg = name;
+                console.log(this); // vm对象
+                var that = this;
+                this.books2.filter(function () {
+                    console.log("::", this);// window对象
+                    console.log(":::", that);// window对象
+                })
+            },
+
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

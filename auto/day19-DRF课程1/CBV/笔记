@@ -1,0 +1,18 @@
+
+
+
+
+/books/add
+/books/
+/books/edit/1
+/books/delete/1
+
+
+/books/
+       get     --- >查看所有资源逻辑   :所有数据
+       post    --- >添加逻辑          :返回添加的数据
+/books/1
+       get     --- >查看单个资源逻辑   ：
+       delete  --- >删除单个资源逻辑   ：空
+       put     --- >更新单个资源逻辑   ：编辑数据
+       patch   --- >更新单个资源逻辑

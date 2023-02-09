@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<div id="app">
+    <h3>四大名著</h3>
+    <p>{{books}}</p>
+
+    <ul>
+        <li>{{books[0]}}</li>
+        <li>{{books[1]}}</li>
+        <li>{{books[2]}}</li>
+        <li>{{books[3]}}</li>
+    </ul>
+
+    <ul>
+        <li v-for="(b,i) in books">{{i}}:::{{b}}</li>
+    </ul>
+
+
+    <table border="1">
+        <tr>
+            <td>序号</td>
+            <td>书籍名称</td>
+            <td>书籍价格</td>
+        </tr>
+
+        <tr v-for="(book,index) in filterBook2">
+            <td>{{index}}</td>
+            <td>{{book.title}}</td>
+            <td>{{book.price}}</td>
+        </tr>
+
+
+        <!--        <tr v-for="(book,index) in books2">-->
+
+        <!--            <template v-if="book.price>200">-->
+        <!--                <td>{{index}}</td>-->
+        <!--                <td>{{book.title}}</td>-->
+        <!--                <td>{{book.price}}</td>-->
+        <!--            </template>-->
+        <!--            -->
+        <!--        </tr>-->
+
+    </table>
+
+    <p>方法：{{yyy()}}</p>
+    <p>计算属性：{{xxx}}</p>
+    <p>filterBook2：{{filterBook2}}</p>
+</div>
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                books: ["西游记", "水浒传", "三国演义", "红楼梦", "金瓶梅"],
+                books2: [
+                    {title: "西游记", price: 199},
+                    {title: "三国演义", price: 299},
+                    {title: "红楼梦", price: 399},
+                    {title: "金瓶梅", price: 499}
+                ]
+            }
+        },
+        methods: {
+            yyy(){
+                return 200
+            }
+        },
+
+        computed: {
+            xxx(){
+                return 100
+            },
+            filterBook2(){
+                 return this.books2.filter(function (item) {
+                     if(item.price>200){
+                         return item
+                     }
+                 })
+            }
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

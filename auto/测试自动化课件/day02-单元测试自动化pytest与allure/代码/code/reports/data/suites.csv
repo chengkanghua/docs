@@ -1,0 +1,4 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Sun May 22 17:28:51 CST 2022","Sun May 22 17:28:51 CST 2022","0","","main","TestAdd","","","测试用例test_01的标题描述","测试用例test_01的详细描述"
+"failed","Sun May 22 17:28:51 CST 2022","Sun May 22 17:28:51 CST 2022","3","","main","TestAdd","","","测试用例test_03的标题描述","测试用例test_03的详细描述"
+"passed","Sun May 22 17:28:51 CST 2022","Sun May 22 17:28:51 CST 2022","0","","main","TestAdd","","","测试用例test_02的标题描述",""

@@ -1,0 +1,64 @@
+{
+  "uid" : "ab17fc5a4eb3bca4b216b548c7f9fcbc",
+  "name" : "timeline",
+  "children" : [ {
+    "name" : "WIN-Q0O96JBBIJ2",
+    "children" : [ {
+      "name" : "49436-MainThread",
+      "children" : [ {
+        "name" : "测试用例test_03的标题描述",
+        "uid" : "732906e7a984385",
+        "parentUid" : "07253d0020246bbf4a318f9135e6bec4",
+        "status" : "failed",
+        "time" : {
+          "start" : 1653211731946,
+          "stop" : 1653211731949,
+          "duration" : 3
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "测试用例test_02的标题描述",
+        "uid" : "547f62f2e8884095",
+        "parentUid" : "07253d0020246bbf4a318f9135e6bec4",
+        "status" : "passed",
+        "time" : {
+          "start" : 1653211731944,
+          "stop" : 1653211731944,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      }, {
+        "name" : "测试用例test_01的标题描述",
+        "uid" : "bf869f7dcc8dff71",
+        "parentUid" : "07253d0020246bbf4a318f9135e6bec4",
+        "status" : "passed",
+        "time" : {
+          "start" : 1653211731941,
+          "stop" : 1653211731941,
+          "duration" : 0
+        },
+        "flaky" : false,
+        "newFailed" : false,
+        "newPassed" : false,
+        "newBroken" : false,
+        "retriesCount" : 0,
+        "retriesStatusChange" : false,
+        "parameters" : [ ]
+      } ],
+      "uid" : "07253d0020246bbf4a318f9135e6bec4"
+    } ],
+    "uid" : "726b8c2484b794499ed282f90c84e26f"
+  } ]
+}

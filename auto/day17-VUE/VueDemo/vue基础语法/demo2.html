@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .tab {
+            width: 800px;
+            height: 300px;
+            /*border: 1px solid rebeccapurple;*/
+            margin: 200px auto;
+        }
+
+        .tab ul {
+            list-style: none;
+        }
+
+        .tab ul li {
+            display: inline-block;
+        }
+
+        .tab_title {
+            background-color: #f7f7f7;
+            border: 1px solid #eee;
+            border-bottom: 1px solid #e4393c;
+        }
+
+        .tab .tab_title li {
+            padding: 10px 25px;
+            font-size: 14px;
+        }
+
+        .tab .tab_title li.active {
+            background-color: #e4393c;
+            color: #fff;
+            cursor: default;
+        }
+
+        .tab_con li.hide {
+            display: none;
+        }
+
+    </style>
+
+    <script src="vue3.js"></script>
+</head>
+<body>
+
+<div class="tab">
+
+    <ul class="tab_title">
+        <li @click="foo(index)" :class="{active:index===currentNum}" v-for="(tab_title,index) in tab_title_list">
+            {{tab_title}}
+        </li>
+    </ul>
+
+    <ul class="tab_con">
+        <li :class="{hide:index!==currentNum}" v-for="(tab_con,index) in tab_con_list">{{tab_con}}</li>
+    </ul>
+
+</div>
+
+<script>
+
+    // vue版本
+
+    vm = Vue.createApp({
+        data() {
+            return {
+                currentNum: 0,
+                tab_title_list: ["商品介绍", "规格与包装", "售后保障", "商品评论"],
+                tab_con_list: ["商品介绍...", "规格与包装...", "售后保障...", "商品评论..."],
+            }
+        },
+
+        methods: {
+            foo(index) {
+                console.log(index);
+                this.currentNum = index
+
+            }
+        }
+
+
+    }).mount('.tab')
+
+
+</script>
+
+</body>
+</html>

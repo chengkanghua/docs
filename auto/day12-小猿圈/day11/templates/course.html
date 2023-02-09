@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>学科列表</h1>
+<div style="margin-bottom: 10px;">
+    <a class="btn btn-success" href="/course/add">新 建</a>
+</div>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>学科</th>
+        <th>QQ群</th>
+        <th>详细</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in data_list %}
+    <tr>
+        <th>{{item.id}}</th>
+        <td>
+            <a href="/course/detail?cid={{item.id}}">{{item.title}}</a>
+        </td>
+        <td>{{item.qq}}</td>
+        <td>
+            <a href="/course/detail?cid={{item.id}}">查看详细</a>
+        </td>
+        <td>
+            <a href="/course/edit?cid={{item.id}}" class="btn btn-primary btn-xs">编辑</a>
+
+            <a href="/course/delete?cid={{item.id}}" class="btn btn-danger btn-xs">删除</a>
+        </td>
+    </tr>
+    {% endfor %}
+
+    </tbody>
+</table>
+{% endblock %}
+
+

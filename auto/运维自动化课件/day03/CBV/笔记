@@ -1,0 +1,15 @@
+"contentType:urlencoded \r\n\r\na=1&b=2"  # request.POST:针对的是urlencoded数据
+'contentType:json \r\n\r\n{"a":1,"b":2}'  # request.POST不解析json数据
+
+
+
+
+
+restful接口：
+
+
+/book/   GET   查看所有资源，返回所有资源
+/book/   POST  添加资源，返回添加的资源
+/book/1  GET   查看某个资源，返回这一个资源
+/book/1  PUT   编辑某个资源，返回这编辑之后的这个资源
+/book/1  DELETE   删除某个资源，返回空

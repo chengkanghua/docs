@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action="/cc" method="post" enctype="multipart/form-data">
+    <input type='text' name="user"/>
+    <input type='password' name="pwd"/>
+    <p>
+        性别：
+        男 <input type="radio" name="gender" value="1">
+        女 <input type="radio" name="gender" value="2">
+    </p>
+    <p>
+        爱好：
+        篮球：<input type="checkbox" name="hobby" value="11">
+        足球：<input type="checkbox" name="hobby" value="22">
+        乒乓球：<input type="checkbox" name="hobby" value="33">
+    </p>
+    <p>
+        <textarea name="extra"></textarea>
+    </p>
+    <p>
+        城市：
+        <select name="city">
+            <option value="88">北京</option>
+            <option value="99">上海</option>
+            <option value="sz">深圳</option>
+        </select>
+    </p>
+    <p>
+        文件：<input type="file" name="avatar">
+    </p>
+
+
+    <input type='submit' value="提交"/>
+</form>
+
+</body>
+</html>

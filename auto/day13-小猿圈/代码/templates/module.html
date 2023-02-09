@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>模块管理</h1>
+<div style="margin-bottom: 10px;">
+    <a class="btn btn-success" href="/module/add">新 建</a>
+</div>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>名称</th>
+        <th>学科</th>
+        <th>讲师</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in data_list %}
+    <tr>
+        <th>{{item.id}}</th>
+        <td>{{item.name}}</td>
+        <td>{{item.title}}</td>
+        <td>{{item.tname}}</td>
+        <td>
+            <a href="/module/edit?mid={{item.id}}" class="btn btn-primary btn-xs">编辑</a>
+
+            <a href="/module/delete?mid={{item.id}}" class="btn btn-danger btn-xs">删除</a>
+        </td>
+    </tr>
+    {% endfor %}
+
+    </tbody>
+</table>
+
+{% endblock %}

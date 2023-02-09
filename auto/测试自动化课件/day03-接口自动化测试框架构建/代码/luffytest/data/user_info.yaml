@@ -1,0 +1,9 @@
+-
+  name: 用户中心-测试jwt认证鉴权
+  request:
+    method: get
+    url: http://127.0.0.1:8000/user
+    headers:
+      Authorization: "Bearer {token}"
+  assert:
+    - code == 200
