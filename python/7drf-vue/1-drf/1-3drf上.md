@@ -977,6 +977,9 @@ class PayView(APIView):
         print(request.user)
         return Response({"code": 0, "data": "数据..."})
 
+      
+# http://127.0.0.1:8000/api/order/?token=f2ccdb95-f518-442b-b30d-588decaecfc2
+# 当修改数据库  roul 为2时候才是有权访问的
 ```
 
 

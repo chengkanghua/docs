@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 200 200" style="enable-background:new 0 0 200 200;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#808080;}
+	.st1{font-family:'SourceHanSansCN-Regular-GBpc-EUC-H';}
+	.st2{font-size:72px;}
+	.st3{fill:#FBB03B;stroke:url(#SVGID_1_);stroke-width:0.5;stroke-miterlimit:10;}
+</style>
+<text transform="matrix(1 0 0 1 5 97)" class="st0 st1 st2">果</text>
+<text transform="matrix(1 0 0 1 5 165)" class="st0 st1 st2">粒</text>
+<g>
+	<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="53.4335" y1="104.3871" x2="187.25" y2="104.3871">
+		<stop  offset="0" style="stop-color:#FFFFFF"/>
+		<stop  offset="1" style="stop-color:#000000"/>
+	</linearGradient>
+	<path class="st3" d="M108.62,48.27c-5.13,2.14-11.4,3.99-18.1,5.56v24.37h17.81v9.98H90.52V97c4.13,3.56,16.53,16.39,19.38,19.67
+		l-6.41,8.41c-2.42-3.99-8.12-11.69-12.97-17.67v61.42H79.98V105.7c-5.84,14.39-13.4,28.5-20.66,37.34
+		c-1.14-2.99-3.71-7.27-5.56-9.83c9.26-10.12,19.1-28.64,24.8-45.03h-21.8v-9.98h23.23V56.25c-7.12,1.43-14.25,2.71-20.95,3.56
+		c-0.43-2.28-1.85-5.84-3.13-8.12c15.96-2.71,34.77-6.84,45.32-11.69L108.62,48.27z M141.54,127.93v-17.24h-31.21v-9.41h73.53v9.41
+		h-31.78v17.24h28.64v9.26h-28.64v18.67H187v9.4h-82.94v-9.4h37.48v-18.67h-27.93v-9.26H141.54z M179.02,43.99v44.75H115.6V43.99
+		H179.02z M125.58,79.47h43.04V53.25h-43.04V79.47z"/>
+</g>
+</svg>

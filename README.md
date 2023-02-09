@@ -3,7 +3,7 @@
 > An awesome project.
 
 
-![logo](_media/lion.png)
+![logo](_media/logo-200.svg)
 
 # 程康华 <small>0.1</small>
 
