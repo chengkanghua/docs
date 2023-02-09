@@ -2,8 +2,7 @@
 
 > An awesome project.
 
-
-![logo](_media/logo-200.svg)
+<img src="_media/logo-200.svg" width="300px" data-no-zoom />
 
 # 程康华 <small>0.1</small>
 

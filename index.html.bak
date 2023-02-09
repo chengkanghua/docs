@@ -6,20 +6,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="description" content="Description">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <link rel="icon" href="/_media/icon-16.svg">
+  <link rel="stylesheet" href="/static/vue.css">
   <!--latex-->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+  <link rel="stylesheet" href="/static/katex.min.css" />
   <!-- alert -->
   <link rel="stylesheet" href="https://cdn.bootcss.com/sweetalert/1.1.3/sweetalert.min.css" type='text/css' media='all' />
   <!--右边添加目录跳转-->
-  <link rel="stylesheet" href="https://unpkg.com/docsify-toc@1.0.0/dist/toc.css">
+  <link rel="stylesheet" href="/static/toc.css">
   <!-- 侧边栏多级分类自动折叠展开风格-->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar-folder.min.css" />
-  <link rel="stylesheet" href="//unpkg.com/mermaid/dist/mermaid.min.css" />
+  <link rel="stylesheet" href="/static/sidebar-folder.min.css" />
+  
 
 <style>
     .app-nav{
-      position: fixed;
+      /*position: fixed;*/
       margin: 0;
       /*padding: 10px 50px 10px 0;*/
       padding: 10px 0 10px 0;/*上、右、下、左*/
@@ -28,17 +29,6 @@
       height: 50px;
       border-bottom: 1px solid #eee;
     }
-    .page_toc {
-    height: 916px;
-    overflow: scroll;
-    position: fixed;
-    border-left-style: solid;
-    border-left-width: 1px;
-    border-left-color: rgba(0, 0, 0, 0.07);
-    border-image-slice: 1;
-    padding-left: 0px;
-    width: 200px;
-        }
     .sidebar, body {
     background-color: #f8f8f8;
     }
@@ -53,29 +43,47 @@
     background-color: #f8f8f8;
     }
 
+    code {
+        font-size: 1.05rem !important;
+    }
+ 
+    .markdown-section {
+    	font-size:1.05rem !important;
+    }
 </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">加载中，请稍后...</div>
   <script>
     window.$docsify = {
       name: '程康华的实战笔记',
       // homepage: '/菜单/1项目介绍.md',
-      repo: 'https://github.com/chengkanghua',
+      //repo: 'https://github.com/chengkanghua',
+      // logo: '/_media/icon-16.svg',
       auto2top: true,
       loadNavbar: true, // load from _navbar.md 开启导航
       loadSidebar: true,//开启侧边栏
-      subMaxLevel: 2,   //设置侧片栏最大层级,最大6级
-      alias: {
-        '/.*/_sidebar.md': '/_sidebar.md'
-      },
-      sidebarDisplayLevel: 0,
+      subMaxLevel: 4, //设置侧片栏最大层级,最大6级
+      //alias: {
+      // '/.*/_sidebar.md': '/_sidebar.md'
+      // },
+      //sidebarDisplayLevel: 0,
+      ext: '.md',
+      //自动为每个页面增加标题
+      loadSidebar: true,
+      autoHeader: true,
+      //配置日期格式 显示文档更新日期
+     formatUpdated: '{MM}/{DD} {HH}:{mm}',
+     formatUpdated: function(time) {
+      // ...
 
-      //maxLevel: 4,
-      //search: 'auto',  //开启搜索
-      relativePath: true,// 启用相对路径
+        return time;
+      },
+      maxLevel: 4,
+      //search: 'auto', //开启搜索
+      //relativePath: true,// 启用相对路径
       mergeNavbar: true, //小屏幕设备合并导航栏到侧边栏
-      coverpage: true,   //开启首页封面
+      //coverpage: true, //开启首页封面
       //onlyCover: true, //封面和内容单独显示
       routerMode: 'history',
       // 让你的内容页在滚动到指定的锚点时，距离页面顶部有一定空间。
@@ -88,11 +96,18 @@
        depth: 6,
        maxAge: 86400000, // 过期时间，单位毫秒，默认一天
      },
+     // 字数统计
+    count:{
+      countable:true,
+      fontsize:'0.9em',
+      color:'rgb(90,90,90)',
+      language:'chinese'
+     },
 
       // 页脚
       footer: {
         copy: '<span>Copyright &copy; 2022 &nbsp  &nbsp</span>',
-        copy: '<span id="sitetime"></span> <br/> <span>Copyright &copy; 2022 &nbsp  &nbsp</span>',
+	copy: '<span id="sitetime"></span> <br/> <span>Copyright &copy; 2022 &nbsp  &nbsp</span>',
         auth: ' <strong><a href="https://github.com/chengkanghua" target="_blank">Mr.ckh</a></strong>',
         pre: '<hr/>',
         style: 'font-size: 18px; text-align: center;',
@@ -103,55 +118,56 @@
           errorText: 'Error',
           successText: 'OK!'
       },
+      /*	    
       toc: {  //右边添加一个目录跳转， 这个和字数统计冲突
       scope: '.markdown-section',
-      headings: 'h1, h2 ',
+      headings: 'h1, h2, h3 ',
       title: 'TOC',
-        },
+  	},*/
     //sidebarDisplayLevel: 2, //侧边栏层级默认展开数量 0 不展开 1 展开二级目录
-    // 支持mermaid
-    plugins: [
-        function (hook, vm) {
-        hook.ready(function () {
-            mermaid.initialize({ startOnLoad: false });
-        });
-        hook.doneEach(function () {
-            mermaid.init(undefined, '.mermaid');
-        });
+   // 支持mermaid
+  plugins: [
+    function (hook, vm) {
+      hook.ready(function () {
+        mermaid.initialize({ startOnLoad: false });
+      });
+      hook.doneEach(function () {
+        mermaid.init(undefined, '.mermaid');
+      });
+    }
+  ],
+   markdown: {
+    renderer: {
+      code: function (code, lang) {
+        var html = '';
+        if (code.match(/^sequenceDiagram/) || code.match(/^graph/) || code.match(/^gantt/)) {
+          html = '<div class="mermaid">' + code + '</div>';
         }
-    ],
-    markdown: {
-        renderer: {
-        code: function (code, lang) {
-            var html = '';
-            if (code.match(/^sequenceDiagram/) || code.match(/^graph/) || code.match(/^gantt/)) {
-            html = '<div class="mermaid">' + code + '</div>';
-            }
-            var hl = Prism.highlight(code, Prism.languages[lang] || Prism.languages.markup);
-            return html + '<pre v-pre data-lang="' + lang + '"><code class="lang-' + lang + '">' + hl + '</code></pre>';
-        }
-        }
+        var hl = Prism.highlight(code, Prism.languages[lang] || Prism.languages.markup);
+        return html + '<pre v-pre data-lang="' + lang + '"><code class="lang-' + lang + '">' + hl + '</code></pre>';
       }
+    }
+  }
     }
   </script>
 
 
 
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="/static/docsify.min.js"></script>
+  <script src="/static/search.min.js"></script>
       <!-- emoji表情支持 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+  <script src="/static/emoji.min.js"></script>
     <!-- 图片放大缩小支持 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <script src="/static/zoom-image.min.js"></script>
    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
-  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  <script src="/static/docsify-copy-code.min.js"></script>
 
   <!-- 支持 LaTex 语言-->
-  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
+  <script src="/static/docsify-katex.js"></script>
 
     <!-- 回到顶部功能 -->
-  <script src="https://cdn.jsdelivr.net/gh/wugenqiang/NoteBook@master/plugin/jquery.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/wugenqiang/NoteBook@master/plugin/jquery.goup.js"></script>
+  <script src="/static/jquery.js"></script>
+  <script src="/static/jquery.goup.js"></script>
   <script type="text/javascript">
     $(document).ready(function () {
       $.goup({
@@ -165,7 +181,7 @@
   </script>
 
    <!-- 页脚 -->
-  <script src="//unpkg.com/docsify-footer-enh/dist/docsify-footer-enh.min.js"></script>
+  <script src="/static/docsify-footer-enh.min.js"></script>
 
     <!-- 添加网站运行时间统计 -->
   <script language=javascript>
@@ -201,43 +217,45 @@
          var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
          var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) / minutes);
          var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours - diffMinutes * minutes) / seconds);
-         document.getElementById("sitetime").innerHTML = " 本站已安全运行 " + diffYears + " 年 " + diffDays + " 天 " + diffHours + " 小时 " + diffMinutes + " 分 " + diffSeconds + " 秒 ";
+         document.getElementById("sitetime").innerHTML=" 本站已安全运行 " + diffYears + " 年 " + diffDays + " 天 " + diffHours + " 小时 " + diffMinutes + " 分 " + diffSeconds + " 秒 ";
       }
       siteTime();
   </script>
       <!-- 复制提醒 -->
-      <script src="https://cdn.bootcss.com/sweetalert/1.1.3/sweetalert.min.js"></script>
+      <script src="/static/sweetalert.min.js"></script>
       <script>
         document.body.oncopy = function () { swal("复制成功 ","若要转载或引用请务必保留原文链接，并申明来源。","success"); };
       </script>
   <!-- 红心点击特效 -->
-  <script src="//cdn.jsdelivr.net/gh/jerryc127/butterfly_cdn@2.1.0/js/click_heart.js"></script>
+  <script src="/static/click_heart.js"></script>
   <!-- 访问量统计 -->
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <script async src="/static/busuanzi.pure.mini.js"></script>
 <!-- Markdown 引用样式美化 -->
-  <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+  <script src="/static/docsify-plugin-flexible-alerts.min.js"></script>
 
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-docker.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-go.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-json.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-c.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-css.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-powershell.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-sql.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-yaml.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/prism-properties.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs/components/matlab.min.js"></script>
+  <script src="/static/prism-bash.min.js"></script>
+  <script src="/static/prism-docker.min.js"></script>
+  <script src="/static/prism-java.min.js"></script>
+  <script src="/static/prism-go.min.js"></script>
+  <script src="/static/prism-json.min.js"></script>
+  <script src="/static/prism-python.min.js"></script>
+  <script src="/static/prism-cpp.min.js"></script>
+  <script src="/static/prism-c.min.js"></script>
+  <script src="/static/prism-javascript.min.js"></script>
+  <script src="/static/prism-css.min.js"></script>
+  <script src="/static/prism-powershell.min.js"></script>
+  <script src="/static/prism-sql.min.js"></script>
+  <script src="/static/prism-yaml.min.js"></script>
+  <script src="/static/prism-properties.min.js"></script>
+ 
 
-        <!--给侧边栏进行多级分类，并且自动折叠-->
-  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
-        <!--右边加一个目录跳转-->
-  <script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>
-  <script type="text/javascript" src="//unpkg.com/mermaid/dist/mermaid.min.js"></script>
+	<!--给侧边栏进行多级分类，并且自动折叠-->
+  <script src="/static/docsify-sidebar-collapse.min.js"></script>
+	<!--右边加一个目录跳转-->
+	<!--<script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>-->
+  <script type="text/javascript" src="/static/mermaid.min.js"></script>
+  <!--字数统计 -->
+  <script src="/static/countable.js"></script>
 
 </body>
 </html>
