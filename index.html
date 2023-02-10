@@ -183,7 +183,45 @@
    <!-- 页脚 -->
   <script src="/static/docsify-footer-enh.min.js"></script>
 
-    <!-- 添加网站运行时间统计 -->
+
+  <!-- 复制提醒 -->
+  <script src="/static/sweetalert.min.js"></script>
+  <script>
+        document.body.oncopy = function () { swal("复制成功 ","若要转载或引用请务必保留原文链接，并申明来源。","success"); };
+  </script>
+
+  <!-- 红心点击特效 -->
+  <script src="/static/click_heart.js"></script>
+  <!-- 访问量统计 -->
+  <script async src="/static/busuanzi.pure.mini.js"></script>
+<!-- Markdown 引用样式美化 -->
+  <script src="/static/docsify-plugin-flexible-alerts.min.js"></script>
+
+  <script src="/static/prism-bash.min.js"></script>
+  <script src="/static/prism-docker.min.js"></script>
+  <script src="/static/prism-java.min.js"></script>
+  <script src="/static/prism-go.min.js"></script>
+  <script src="/static/prism-json.min.js"></script>
+  <script src="/static/prism-python.min.js"></script>
+  <script src="/static/prism-cpp.min.js"></script>
+  <script src="/static/prism-c.min.js"></script>
+  <script src="/static/prism-javascript.min.js"></script>
+  <script src="/static/prism-css.min.js"></script>
+  <script src="/static/prism-powershell.min.js"></script>
+  <script src="/static/prism-sql.min.js"></script>
+  <script src="/static/prism-yaml.min.js"></script>
+  <script src="/static/prism-properties.min.js"></script>
+ 
+
+	<!--给侧边栏进行多级分类，并且自动折叠-->
+  <script src="/static/docsify-sidebar-collapse.min.js"></script>
+	<!--右边加一个目录跳转-->
+	<!--<script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>-->
+  <script type="text/javascript" src="/static/mermaid.min.js"></script>
+  <!--字数统计 -->
+  <script src="/static/countable.js"></script>
+    
+  <!-- 添加网站运行时间统计 -->
   <script language=javascript>
       function siteTime() {
          window.setTimeout("siteTime()", 1000);
@@ -221,41 +259,5 @@
       }
       siteTime();
   </script>
-      <!-- 复制提醒 -->
-      <script src="/static/sweetalert.min.js"></script>
-      <script>
-        document.body.oncopy = function () { swal("复制成功 ","若要转载或引用请务必保留原文链接，并申明来源。","success"); };
-      </script>
-  <!-- 红心点击特效 -->
-  <script src="/static/click_heart.js"></script>
-  <!-- 访问量统计 -->
-  <script async src="/static/busuanzi.pure.mini.js"></script>
-<!-- Markdown 引用样式美化 -->
-  <script src="/static/docsify-plugin-flexible-alerts.min.js"></script>
-
-  <script src="/static/prism-bash.min.js"></script>
-  <script src="/static/prism-docker.min.js"></script>
-  <script src="/static/prism-java.min.js"></script>
-  <script src="/static/prism-go.min.js"></script>
-  <script src="/static/prism-json.min.js"></script>
-  <script src="/static/prism-python.min.js"></script>
-  <script src="/static/prism-cpp.min.js"></script>
-  <script src="/static/prism-c.min.js"></script>
-  <script src="/static/prism-javascript.min.js"></script>
-  <script src="/static/prism-css.min.js"></script>
-  <script src="/static/prism-powershell.min.js"></script>
-  <script src="/static/prism-sql.min.js"></script>
-  <script src="/static/prism-yaml.min.js"></script>
-  <script src="/static/prism-properties.min.js"></script>
- 
-
-	<!--给侧边栏进行多级分类，并且自动折叠-->
-  <script src="/static/docsify-sidebar-collapse.min.js"></script>
-	<!--右边加一个目录跳转-->
-	<!--<script src="https://unpkg.com/docsify-toc@1.0.0/dist/toc.js"></script>-->
-  <script type="text/javascript" src="/static/mermaid.min.js"></script>
-  <!--字数统计 -->
-  <script src="/static/countable.js"></script>
-
 </body>
 </html>
