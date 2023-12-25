@@ -873,8 +873,8 @@ if __name__ == '__main__':
 ### 3.3 内置模块：json
 
 ```
-v1 = '{"name":"程聪","age":99,"hobby":[11,22,33]}'
-v2 = "{'name':'程聪',"age":99}"
+v1 = '{"name":"程聪","age":99,"hobby":[11,22,33]}'  #标准的json格式内部是双引号
+v2 = "{'name':'程聪',"age":99}"                     #里面用单引号的 json.loads(v2) 会报错
 v3 = '{"name":"程聪","age":99,"hobby":(11,22,33)}'
 ```
 
@@ -904,9 +904,9 @@ for item in info['data']:
 ```python
 data_string = "{'name':'程聪','age':99}"
 
-result = eval(data_string)
-print(result)
-print(type(result))
+result = eval(data_string)   #用python代码运行
+print(result)                
+print(type(result))          #dict
 ```
 
 

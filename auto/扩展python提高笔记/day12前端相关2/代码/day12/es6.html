@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script>
+    var x1 = "alex";
+    info = {
+        x1: "武沛齐",
+        x2: function () {
+            console.log(this.x1);
+
+            setTimeout(function () {
+                console.log(this.x1);
+            }, 1000)
+
+            setTimeout(() => {
+                console.log(this.x1);
+            }, 2000)
+
+        },
+        x3(){
+            return 666
+        }
+    }
+    info.x2();
+    info.x3();
+
+</script>
+</body>
+</html>

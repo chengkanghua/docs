@@ -253,9 +253,8 @@ docker logs -f <容器名>
 
 安装完成以后，创建管理员。
 
->注意：
+>注意：账号密码记住 ：  kanghua 123
 >
->老师不知道各位同学的密码！！！自己设置的麻烦自己记一下哈。
 
 ![image-20220807084628321](assets/image-20220807084628321.png)
 
@@ -667,9 +666,39 @@ gitlab容器启动以后，需要等待几分钟，接着在浏览器访问登�
 
 #### 基本使用
 
->注意：
+>注意：记住账号密码。 root  root@123
 >
->老师不知道各位同学的密码！！！自己设置的麻烦自己记一下哈。
+
+忘记密码修改记录
+
+```bash
+(luffycity) root@ubuntu:/home/devops# docker exec -it gitlab /bin/bash
+
+root@2dc2fd6c60bf:/# gitlab-rails console
+--------------------------------------------------------------------------------
+ Ruby:         ruby 2.7.5p203 (2021-11-24 revision f69aeb8314) [x86_64-linux]
+ GitLab:       14.6.1 (661d663ab2b) FOSS
+ GitLab Shell: 13.22.1
+ PostgreSQL:   12.7
+--------------------------------------------------------------------------------
+
+
+Loading production environment (Rails 6.1.4.1)
+irb(main):008:0> user = User.where(id: 1).first
+=> #<User id:1 @root>
+irb(main):009:0> user.password = 'root@123'
+=> "root@123"
+irb(main):010:0> user.password_confirmation = 'root@123'
+=> "root@123"
+irb(main):011:0> user.save!
+=> true
+irb(main):012:0> quit
+
+参考： https://www.cnblogs.com/easonscx/p/12608486.html
+
+```
+
+
 
 刚安装完成的gitlab默认已经内置了一个超级管理员root，密码保存在文件配置目录下initial_root_password文件中。
 

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .message {
+            height: 300px;
+            border: 1px solid #dddddd;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="message" id="message"></div>
+<div>
+    <input type="text" placeholder="请输入" id="txt">
+    <input type="button" value="发送" onclick="sendMessage();">
+</div>
+
+<script>
+
+    function sendMessage() {
+        var text = $("#txt").val();
+
+        // 基于Ajax将用户输入的文本信息发送到后台（偷偷发请求）。
+        $.ajax({
+            url: '/send/msg/',
+            type: 'GET',
+            data: {
+                text: text
+            },
+            success: function (res) {
+                console.log("请求发送成功", res);
+            }
+        })
+    }
+
+    max_index = 0; // 3
+    // 每个2s向后台发送请求获取数据并展示在界面上。
+    setInterval(function () {
+        // 发送请求获取数据
+        $.ajax({
+            url: '/get/msg/',
+            data: {
+                index: max_index
+            },
+            type: "GET",
+            dataType:"JSON",
+            success: function (dataDict) {
+                max_index = dataDict.max_index;
+
+                $.each(dataDict.data, function (index, item) {
+                    console.log(index, item);
+                    // 将内容拼接成div标签，并添加到message区域。
+                    var tag = $("<div>");
+                    tag.text(item)  // <div>你好</div>
+                    $("#message").append(tag);
+                })
+            }
+        })
+
+    }, 2000)
+
+
+</script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</body>
+</html>
