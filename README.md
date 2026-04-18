@@ -2,7 +2,7 @@
 
 > An awesome project.
 
-<img src="_media/logo-200.svg" width="300px" data-no-zoom />
+<img src="_media/wx.jpg" width="300px" data-no-zoom />
 
 # 程康华 <small>0.1</small>
 
