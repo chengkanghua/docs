@@ -9,3 +9,4 @@
 - [9SpringCloud微服务项目交付](k8s-2023/9SpringCloud微服务项目交付.md)
 - [10基于Istio实现微服务治理](k8s-2023/10基于Istio实现微服务治理.md)
 - [README](k8s-2023/README.md)
+- [问题记录](k8s-2023/问题记录.md)
