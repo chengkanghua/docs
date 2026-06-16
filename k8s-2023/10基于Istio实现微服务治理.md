@@ -1163,7 +1163,7 @@ Ingress：对接ingress controller，实现外部流量进入集群内部，只�
 
 ##### [ingressgateway访问网格服务](http://49.7.203.222:2023/#/istio/visit-mesh-svc?id=ingressgateway访问网格服务)
 
-![img](10基于Istio实现微服务治理.assets/gateways.svg+xml)
+![img](10基于Istio实现微服务治理.assets/gateways.svg)
 
 对于入口流量管理，您可能会问： 为什么不直接使用 Kubernetes Ingress API ？ 原因是 Ingress API 无法表达 Istio 的路由需求。 Ingress 试图在不同的 HTTP 代理之间取一个公共的交集，因此只能支持最基本的 HTTP 路由，最终导致需要将代理的其他高级功能放入到注解（annotation）中，而注解的方式在多个代理之间是不兼容的，无法移植。
 

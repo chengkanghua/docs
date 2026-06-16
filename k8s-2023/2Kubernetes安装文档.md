@@ -13,11 +13,11 @@
 
 **本例为了演示slave节点的添加，会部署一台master+2台slave**，节点规划如下：
 
-| 主机名     | 节点ip        | 角色   | 部署组件                                                     |
-| ---------- | ------------- | ------ | ------------------------------------------------------------ |
-| k8s-master | 172.21.65.226 | master | etcd, kube-apiserver, kube-controller-manager, kubectl, kubeadm, kubelet, kube-proxy, flannel |
-| k8s-slave1 | 172.21.65.227 | slave  | kubectl, kubelet, kube-proxy, flannel                        |
-| k8s-slave2 | 172.21.65.228 | slave  | kubectl, kubelet, kube-proxy, flannel                        |
+| 主机名     | 节点ip       | 角色   | 部署组件                                                     |
+| ---------- | ------------ | ------ | ------------------------------------------------------------ |
+| k8s-master | 172.16.1.226 | master | etcd, kube-apiserver, kube-controller-manager, kubectl, kubeadm, kubelet, kube-proxy, flannel |
+| k8s-slave1 | 172.16.1.227 | slave  | kubectl, kubelet, kube-proxy, flannel                        |
+| k8s-slave2 | 172.16.1.228 | slave  | kubectl, kubelet, kube-proxy, flannel                        |
 
 ### [组件版本](http://49.7.203.222:2023/#/install/single-master/cluster-info?id=组件版本)
 
@@ -57,10 +57,10 @@ $ hostnamectl set-hostname k8s-slave2 #设置slave2节点的hostname
 - **添加hosts解析**
 
 ```python
-$ cat >>/etc/hosts<<EOF
-172.21.65.226 k8s-master
-172.21.65.227 k8s-slave1
-172.21.65.228 k8s-slave2
+cat >>/etc/hosts<<EOF
+172.16.1.226 k8s-master
+172.16.1.227 k8s-slave1
+172.16.1.228 k8s-slave2
 EOF
 ```
 
@@ -86,6 +86,8 @@ iptables -P FORWARD ACCEPT
 swapoff -a
 # 防止开机自动挂载 swap 分区
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+#或者
+#sed -ri '/ swap / s/(.*)/#\1/g' /etc/fstab
 ```
 
 - **关闭selinux和防火墙**
@@ -112,9 +114,12 @@ sysctl -p /etc/sysctl.d/k8s.conf
 - 设置yum源
 
 ```bash
-$ curl -o /etc/yum.repos.d/Centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-$ curl -o /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-$ cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+#配置yum源
+rm -rf /etc/yum.repos.d/*
+curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/Centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
@@ -124,7 +129,7 @@ repo_gpgcheck=0
 gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
         http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
 EOF
-$ yum clean all && yum makecache
+yum clean all && yum makecache
 ```
 
 ### [安装docker](http://49.7.203.222:2023/#/install/single-master/prepare?id=安装docker)
@@ -143,12 +148,20 @@ $ mkdir -p /etc/docker
 vi /etc/docker/daemon.json
 {
   "insecure-registries": [    
-    "172.21.65.226:5000" 
+    "172.16.1.226:5000" 
   ],                          
   "registry-mirrors" : [
     "https://8xpk5wnt.mirror.aliyuncs.com"
   ]
 }
+---------------------------
+cat > /etc/docker/daemon.json<<EOF
+{                         
+  "registry-mirrors" : [
+    "https://8xpk5wnt.mirror.aliyuncs.com"
+  ]
+}
+EOF
 ## 启动docker
 $ systemctl enable docker && systemctl start docker
 ```
@@ -204,7 +217,8 @@ $ systemctl enable kubelet
       152
       153       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   ...
-  
+  #145行修改
+  sed -i '145s#\"\"#\"/etc/containerd/certs.d\"#g' /etc/containerd/config.toml
   # 创建对应的目录
   mkdir -p /etc/containerd/certs.d/docker.io
   
@@ -224,10 +238,10 @@ $ systemctl enable kubelet
 
   ```bash
   # 此处目录必须和个人环境中实际的仓库地址保持一致
-  mkdir -p /etc/containerd/certs.d/172.21.65.226:5000
-  cat >/etc/containerd/certs.d/172.21.65.226:5000/hosts.toml <<EOF
-  server = "http://172.21.65.226:5000"
-  [host."http://172.21.65.226:5000"]
+  mkdir -p /etc/containerd/certs.d/172.16.1.226:5000
+  cat >/etc/containerd/certs.d/172.16.1.226:5000/hosts.toml <<EOF
+  server = "http://172.16.1.226:5000"
+  [host."http://172.16.1.226:5000"]
     capabilities = ["pull", "resolve", "push"]
     skip_verify = true
   EOF
@@ -257,7 +271,7 @@ bootstrapTokens:
   - authentication
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: 172.21.65.226   # 此处替换为k8s-master的ip地址
+  advertiseAddress: 172.16.1.226   # 此处替换为k8s-master的ip地址
   bindPort: 6443
 nodeRegistration:
   criSocket: unix:///var/run/containerd/containerd.sock
@@ -283,6 +297,24 @@ networking:
   podSubnet: 10.244.0.0/16              # 添加此行，用来分配k8s节点的pod ip
   serviceSubnet: 10.96.0.0/12
 scheduler: {}
+
+--------------------------------命令替换
+sed -ri 's#(advertiseAddress: ).*#\110.211.55.36#' kubeadm.yaml
+sed -ri 's#(name: ).*#\1k8s-master#' kubeadm.yaml
+sed -ri 's#(imageRepository: ).*#\1registry.aliyuncs.com/google_containers#' kubeadm.yaml
+sed -ri 's#(kubernetesVersion: ).*#\11.24.4#' kubeadm.yaml
+#sed -i '34a\ \ podSubnet: 10.244.0.0/16' kubeadm.yaml  #指定34行挤下一行添加
+sed -i '/dnsDomain:/a\ \ podSubnet: 10.244.0.0/16' kubeadm.yaml
+
+-------------------------------- 提前下载镜像到本地 配置 
+# 参考：https://blog.csdn.net/shanxuanang/article/details/124613577
+vi /etc/containerd/config.toml 
+[plugins."io.containerd.grpc.v1.cri"]
+  systemd_cgroup = true   #修改成true
+
+systemctl restart containerd
+
+# sed -i 's/systemd_cgroup = false/systemd_cgroup = true/g' /etc/containerd/config.toml 
 ```
 
 > 对于上面的资源清单的文档比较杂，要想完整了解上面的资源对象对应的属性，可以查看对应的 godoc 文档，地址: https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta3。
@@ -317,7 +349,7 @@ $ kubeadm config images pull --config kubeadm.yaml
 操作节点：只在master节点（`k8s-master`）执行，注意只在master节点执行！
 
 ```python
-$ kubeadm init --config kubeadm.yaml
+kubeadm init --config kubeadm.yaml
 ```
 
 若初始化成功后，最后会提示如下信息：
@@ -338,7 +370,7 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 172.21.65.226:6443 --token abcdef.0123456789abcdef \
+kubeadm join 172.16.1.226:6443 --token abcdef.0123456789abcdef \
     --discovery-token-ca-cert-hash sha256:1c4305f032f4bf534f628c32f5039084f4b103c922ff71b12a5f0f98d1ca9a4f
 ```
 
@@ -359,7 +391,7 @@ kubeadm join 172.21.65.226:6443 --token abcdef.0123456789abcdef \
 操作节点：所有的slave节点（`k8s-slave`）需要执行 在每台slave节点，执行如下命令，该命令是在kubeadm init成功后提示信息中打印出来的，需要替换成实际init后打印出的命令。
 
 ```python
-kubeadm join 172.21.65.226:6443 --token abcdef.0123456789abcdef \
+kubeadm join 172.16.1.226:6443 --token abcdef.0123456789abcdef \
     --discovery-token-ca-cert-hash sha256:1c4305f032f4bf534f628c32f5039084f4b103c922ff71b12a5f0f98d1ca9a4f
 ```
 
@@ -379,6 +411,7 @@ $ kubeadm token create --print-join-command
 
   ```bash
   wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  # wget https://gitee.com/chengkanghua/script/raw/master/k8s/kube-flannel.yml
   ```
 
 - 修改配置，指定网卡名称，大概在文件的159行，添加一行配置：
@@ -401,6 +434,11 @@ $ kubeadm token create --print-join-command
   162             cpu: "100m"
   163             memory: "50Mi"
   ...
+  # YAML 对缩进要求严格，只能使用空格进行缩进. 上面编辑的网卡记得用空格缩进
+  
+  
+  #命令修改
+  sed -i '/kube-subnet-mgr/a\ \ \ \ \ \ \ \ - --iface=eth0' kube-flannel.yml
   ```
 
 - 确认pod网段
@@ -449,9 +487,9 @@ kubectl taint node k8s-master node-role.kubernetes.io/control-plane:NoSchedule-
 
 ```bash
 $ yum install bash-completion -y
-$ source /usr/share/bash-completion/bash_completion
-$ source <(kubectl completion bash)
-$ echo "source <(kubectl completion bash)" >> ~/.bashrc
+source /usr/share/bash-completion/bash_completion
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
 ```
 
 
@@ -467,8 +505,9 @@ cd /etc/kubernetes/pki
 for i in $(ls *.crt); do echo "===== $i ====="; openssl x509 -in $i -text -noout | grep -A 3 'Validity' ; done
 
 mkdir backup_key; cp -rp ./* backup_key/
-git clone https://github.com/yuyicai/update-kube-cert.git
-cd update-kube-cert/ 
+#git clone https://github.com/yuyicai/update-kube-cert.git
+#cd update-kube-cert/ 
+wget https://gitee.com/chengkanghua/script/raw/master/k8s/update-kubeadm-cert.sh
 bash update-kubeadm-cert.sh all
 
 #若无法clone项目，可以手动在浏览器中打开后，复制update-kubeadm-cert.sh 脚本内容到机器中执行
@@ -541,13 +580,13 @@ ctr ns ls;
 ctr -n k8s.io container ls
 
 # 查看镜像列表
-ctrl -n k8s.io image ls
+ctr -n k8s.io image ls
 
 # 导入镜像
 ctr -n=k8s.io image import dashboard.tar
 
 # 从私有仓库拉取镜像，前提是/etc/containerd/certs.d下已经配置过该私有仓库的非安全认证
-ctr images pull --user admin:admin  --hosts-dir "/etc/containerd/certs.d"  172.21.65.226:5000/eladmin/eladmin-api:v1-rc1
+ctr images pull --user admin:admin  --hosts-dir "/etc/containerd/certs.d"  172.16.1.226:5000/eladmin/eladmin-api:v1-rc1
 
 # ctr命令无法查看容器的日志，也无法执行exec等操作
 ```
@@ -561,12 +600,33 @@ ctr images pull --user admin:admin  --hosts-dir "/etc/containerd/certs.d"  172.2
 `crictl` 命令默认使用`k8s.io` 这个名称空间，因此无需单独指定，使用前，需要先加一下配置文件：
 
 ```bash
-cat /etc/crictl.yaml
+cat > /etc/crictl.yaml <<EOF
 runtime-endpoint: unix:///run/containerd/containerd.sock
 image-endpoint: unix:///run/containerd/containerd.sock
 timeout: 10
 debug: false
+EOF
 ```
+
+```bash
+操作记录
+参考https://github.com/kubernetes-sigs/cri-tools/issues/845
+[root@k8s-slave1 ~]# crictl ps  #报错
+FATA[0000] listing containers: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial unix /var/run/dockershim.sock: connect: no such file or directory"
+[root@k8s-slave1 ~]# cat /etc/crictl.yaml
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 2
+debug: false
+pull-image-on-create: false
+
+systemctl restart containerd
+
+```
+
+
+
+
 
 常用操作：
 
@@ -578,7 +638,7 @@ crictl ps
 crictl images 
 
 # 删除镜像
-crictl rmi 172.21.65.226:5000/eladmin/eladmin-api:v1-rc1
+crictl rmi 172.16.1.226:5000/eladmin/eladmin-api:v1-rc1
 
 # 拉取镜像， 若拉取私有镜像，需要修改containerd配置添加认证信息，比较麻烦且不安全
 crictl pull nginx:alpine
@@ -613,6 +673,11 @@ wget https://github.com/containerd/nerdctl/releases/download/v0.23.0/nerdctl-0.2
 
 # 解压后，将nerdctl 命令拷贝至$PATH下即可
 cp nerdctl /usr/bin/
+
+---------------------浏览器下载
+https://gitee.com/chengkanghua/script/raw/master/k8s/nerdctl-0.23.0-linux-amd64.tar.gz
+tar xvf nerdctl-0.23.0-linux-amd64.tar.gz
+mv nerdctl /usr/bin/
 ```
 
 常用操作：
@@ -625,10 +690,10 @@ nerdctl -n k8s.io ps -a
 nerdctl -n k8s.io exec -ti e2cd02190005 sh
 
 # 登录镜像仓库
-nerdctl login 172.21.65.226:5000
+nerdctl login 172.16.1.226:5000
 
 # 拉取镜像,如果是想拉取了让k8s使用，一定加上-n k8s.io,否则会拉取到default空间中， k8s默认只使用k8s.io
-nerdctl -n k8s.io pull 172.21.65.226:5000/eladmin/eladmin-api:v1-rc1
+nerdctl -n k8s.io pull 172.16.1.226:5000/eladmin/eladmin-api:v1-rc1
 
 
 # 启动容器
@@ -658,7 +723,7 @@ nerdctl build . -t xxxx:tag -f Dockerfile
 
 
 
-## [部署dashboard](http://49.7.203.222:2023/#/install/single-master/dashboard?id=部署dashboard)
+## 部署dashboard
 
 - 部署服务
 
@@ -734,6 +799,13 @@ eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1rb2xHWHMwbWFPMjJaRzhleGRqaExnVi1BLVNRc2txaEhETmVp
 
 
 
+```bash
+#记得清理
+kubectl delete -f recommended.yaml
+```
+
+
+
 ## 清理集群
 
 如果你的集群安装过程中遇到了其他问题，我们可以使用下面的命令来进行重置：
@@ -745,14 +817,22 @@ ifconfig cni0 down && ip link delete cni0
 ifconfig flannel.1 down && ip link delete flannel.1
 rm -rf /run/flannel/subnet.env
 rm -rf /var/lib/cni/
-mv /etc/kubernetes/ /tmp
-mv /var/lib/etcd /tmp
-mv ~/.kube /tmp
+mv -f /etc/kubernetes/ /tmp
+mv -f /var/lib/etcd /tmp
+mv -f  ~/.kube /tmp
 iptables -F
 iptables -t nat -F
 ipvsadm -C
 ip link del kube-ipvs0
 ip link del dummy0
+
+
+rm -rf /var/lib/etcd/*
+rm -rf /etc/kubernetes/manifests/kube-apiserver.yaml
+rm -rf /etc/kubernetes/manifests/kube-controller-manager.yaml
+rm -rf /etc/kubernetes/manifests/kube-scheduler.yaml
+rm -rf /etc/kubernetes/manifests/etcd.yaml
+yum remove -y kubelet-1.24.4 kubeadm-1.24.4 kubectl-1.24.4 docker-ce
 ```
 
 
@@ -1015,8 +1095,8 @@ $ systemctl enable kubelet
 
   ```bash
   # 此处目录必须和个人环境中实际的仓库地址保持一致
-  mkdir -p /etc/containerd/certs.d/172.21.65.226:5000
-  cat >/etc/containerd/certs.d/172.21.65.226:5000/hosts.toml <<EOF
+  mkdir -p /etc/containerd/certs.d/172.16.1.226:5000
+  cat >/etc/containerd/certs.d/172.16.1.226:5000/hosts.toml <<EOF
   server = "http://172.21.51.67:5000"
   [host."http://172.21.51.67:5000"]
     capabilities = ["pull", "resolve", "push"]
@@ -1492,7 +1572,7 @@ ctrl -n k8s.io image ls
 ctr -n=k8s.io image import dashboard.tar
 
 # 从私有仓库拉取镜像，前提是/etc/containerd/certs.d下已经配置过该私有仓库的非安全认证
-ctr images pull --user admin:admin  --hosts-dir "/etc/containerd/certs.d"  172.21.65.226:5000/eladmin/eladmin-api:v1-rc1
+ctr images pull --user admin:admin  --hosts-dir "/etc/containerd/certs.d"  172.16.1.226:5000/eladmin/eladmin-api:v1-rc1
 
 # ctr命令无法查看容器的日志，也无法执行exec等操作
 ```

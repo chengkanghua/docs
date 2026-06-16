@@ -6,9 +6,11 @@
 
 需要一种轻量、高效的虚拟化能力
 
-![img](1走进Docker的世界.assets/1666340642482.jpg)
+<img src="./1走进Docker的世界.assets/1666340642482.jpg" alt="img" style="zoom: 50%;" />
 
-![image-20221122115845209](1走进Docker的世界.assets/image-20221122115845209.png)
+
+
+![image-20221122115845209](./1走进Docker的世界.assets/image-20221122115845209.png)
 
 Docker 公司位于旧金山,原名dotCloud，底层利用了Linux容器技术（LXC）（在操作系统中实现资源隔离与限制）。为了方便创建和管理这些容器，dotCloud 开发了一套内部工具，之后被命名为“Docker”。Docker就是这样诞生的。
 
@@ -20,7 +22,7 @@ Container Runtime：通过Linux内核虚拟化能力管理多个容器，多个�
 
 基于轻量的特性，解决软件交付过程中的环境依赖
 
-![img](1走进Docker的世界.assets/why1.png)
+![img](./1走进Docker的世界.assets/why1.png)
 
 *思考： 基于docker容器部署应用和虚拟机部署应用最大的区别？*
 
@@ -35,7 +37,7 @@ Container Runtime：通过Linux内核虚拟化能力管理多个容器，多个�
 
 基于操作系统内核，提供轻量级虚拟化功能的CS架构的软件产品。
 
-![img](1走进Docker的世界.assets/docker-engine.png)
+![img](./1走进Docker的世界.assets/docker-engine.png)
 
 ###### [版本管理](http://49.7.203.222:2023/#/docker/introduction?id=版本管理)
 
@@ -44,13 +46,13 @@ Container Runtime：通过Linux内核虚拟化能力管理多个容器，多个�
 - 每个月社区版还会通过 Edge 方式发布月度版
 - 从 2017 年第一季度开始，Docker 版本号遵循 YY.MM-xx 格式，类似于 Ubuntu 等项目。例如，2018 年 6 月第一次发布的社区版本为 18.06.0-ce
 
-![img](1走进Docker的世界.assets/docker-version.png)
+![img](./1走进Docker的世界.assets/docker-version.png)
 
 ###### [发展史](http://49.7.203.222:2023/#/docker/introduction?id=发展史)
 
 13年成立，15年开始，迎来了飞速发展。
 
-![img](1走进Docker的世界.assets/deplpment.png)
+![img](./1走进Docker的世界.assets/deplpment.png)
 
 Docker 1.8之前，使用[LXC](https://linuxcontainers.org/lxc/introduction/)，Docker在上层做了封装， 把LXC复杂的容器创建与使用方式简化为自己的一套命令体系。
 
@@ -62,7 +64,7 @@ OCI成立后，libcontainer 交给OCI组织来维护，但是libcontainer中只�
 
 Docker也做了架构调整。将容器运行时相关的程序从docker daemon剥离出来，形成了**containerd**。containerd向上为Docker Daemon提供了`gRPC接口`，使得Docker Daemon屏蔽下面的结构变化，确保原有接口向下兼容。向下通过`containerd-shim`结合`runC`，使得引擎可以独立升级，避免之前Docker Daemon升级会导致所有容器不可用的问题。
 
-![img](1走进Docker的世界.assets/containerd.png)
+![img](./1走进Docker的世界.assets/containerd.png)
 
 也就是说
 
@@ -88,24 +90,26 @@ Docker也做了架构调整。将容器运行时相关的程序从docker daemon�
 
 ```bash
 ## 若未配置，需要执行如下
-$ cat <<EOF >  /etc/sysctl.d/docker.conf
+cat <<EOF >  /etc/sysctl.d/docker.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward=1
 EOF
-$ sysctl -p /etc/sysctl.d/docker.conf
+modprobe  br_netfilter
+sysctl -p /etc/sysctl.d/docker.conf
 ```
 
 ###### [Yum安装配置docker](http://49.7.203.222:2023/#/docker/install?id=yum安装配置docker)
 
 ```bash
 ## 下载阿里源repo文件
-$ curl -o /etc/yum.repos.d/Centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-$ curl -o /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/Centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 
-$ yum clean all && yum makecache
+yum clean all && yum makecache
 ## yum安装
-$ yum install docker-ce-20.10.18 -y
+yum install docker-ce-20.10.18 -y
 ## 查看源中可用版本
 $ yum list docker-ce --showduplicates | sort -r
 ## 安装旧版本
@@ -114,12 +118,13 @@ $ yum list docker-ce --showduplicates | sort -r
 ## 配置源加速
 ## https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors
 mkdir -p /etc/docker
-vi /etc/docker/daemon.json
+cat > /etc/docker/daemon.json <<EOF
 {
   "registry-mirrors" : [
     "https://8xpk5wnt.mirror.aliyuncs.com"
   ]
 }
+EOF
 
 ## 设置开机自启
 systemctl enable docker  
@@ -142,9 +147,60 @@ systemctl status containerd
 
 
 
+docker 脚本化安装
+
+cat centos7-install-docker.sh
+
+```sh
+#!/usr/bin/bash
+set -x
+
+## 配置
+cat <<EOF > /etc/sysctl.d/docker.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward=1
+EOF
+modprobe  br_netfilter       #加载模块
+#modprobe  -r  br_netfilter   #移除
+sysctl -p /etc/sysctl.d/docker.conf
+
+#配置yum源
+rm -rf /etc/yum.repos.d/*
+curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/Centos-7.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+curl -o /etc/yum.repos.d/docker-ce.repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+yum clean all && yum makecache
+
+## yum安装
+yum install docker-ce-20.10.18 -y
+
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json<<EOF
+{
+  "registry-mirrors" : [
+    "https://8xpk5wnt.mirror.aliyuncs.com"
+  ]
+}
+EOF
+## 设置开机自启
+systemctl enable docker  
+systemctl daemon-reload
+
+## 启动docker
+systemctl start docker 
+
+
+```
+
+
+
+
+
 #### [核心要素及常用操作详解](http://49.7.203.222:2023/#/docker/common-operation?id=核心要素及常用操作详解)
 
-![img](1走进Docker的世界.assets/docker架构.png)
+![img](./1走进Docker的世界.assets/docker架构.png)
 
 三大核心要素：镜像(Image)、容器(Container)、仓库(Registry)
 
@@ -282,7 +338,7 @@ systemctl status containerd
 
 ###### [操作演示](http://49.7.203.222:2023/#/docker/common-operation?id=操作演示)
 
-![img](1走进Docker的世界.assets/常用命令.jpg)
+![img](./1走进Docker的世界.assets/常用命令.jpg)
 
 1. 查看所有镜像：
 
@@ -345,8 +401,8 @@ nginx         alpine              377c0837328f        2 weeks ago         19.7MB
 
    ```bash
    ## 镜像仓库给外部访问，不能通过localhost，尝试使用内网地址172.21.51.143:5000/nginx:alpine
-   docker tag nginx:alpine 172.21.51.143:5000/nginx:alpine
-   docker push 172.21.51.143:5000/nginx:alpine
+   docker tag nginx:alpine 172.16.1.226:5000/nginx:alpine
+   docker push 172.16.1.226:5000/nginx:alpine
    The push refers to repository [172.21.51.143:5000/nginx]
    Get https://172.21.51.143:5000/v2/: http: server gave HTTP response to HTTPS client
    ## docker默认不允许向http的仓库地址推送，如何做成https的，参考：https://docs.docker.com/registry/deploying/#run-an-externally-accessible-registry
@@ -357,18 +413,18 @@ nginx         alpine              377c0837328f        2 weeks ago         19.7MB
        "https://8xpk5wnt.mirror.aliyuncs.com"
      ],
      "insecure-registries": [
-        "172.21.51.143:5000"
+        "172.16.1.226:5000"
      ]
    }
    systemctl restart docker
-   docker push 172.21.51.143:5000/nginx:alpine
+   docker push 172.16.1.226:5000/nginx:alpine
    
    # 会提示认证失败 ，no basic auth credentials,需要登录
-   docker login 172.21.51.143:5000
+   docker login 172.16.1.226:5000
    
    ## 查看仓库内元数据
-   curl -u admin:admin -X GET http://172.21.51.143:5000/v2/_catalog
-   curl -u admin:admin  -X GET http://172.21.51.143:5000/v2/nginx/tags/list
+   curl -u admin:admin -X GET http://172.16.1.226:5000/v2/_catalog
+   curl -u admin:admin  -X GET http://172.16.1.226:5000/v2/nginx/tags/list
    ```
 
 5. 删除镜像
@@ -558,7 +614,12 @@ Dockerfile是一堆指令，在docker build的时候，按照该指令进行操�
   示例：
       ENTRYPOINT ["/usr/bin/wc","--help"]
   注意：
-      ENTRYPOINT与CMD非常类似，不同的是通过docker run执行的命令不会覆盖ENTRYPOINT，而docker run命令中指定的任何参数，都会被当做参数再次传递给ENTRYPOINT。Dockerfile中只允许有一个ENTRYPOINT命令，多指定时会覆盖前面的设置，而只执行最后的ENTRYPOINT指令
+      ENTRYPOINT与CMD非常类似，不同的是通过docker run ..image后面执行的命令不会覆盖ENTRYPOINT，、
+      而docker run命令中指定的任何参数，都会被当做参数再次传递给ENTRYPOINT。
+      Dockerfile中只允许有一个ENTRYPOINT命令，多指定时会覆盖前面的设置，而只执行最后的ENTRYPOINT指令
+      
+      如果镜像里指定了entrypoint，调试的时候需要取消掉添加参数--entrypoint=才可以替换掉，例如： docker run -ti --entrypoint='' nginx:alpine sh
+      同时写了cmd 和entrypoint，cmd的命令会当成参数传递给entrypoint;替换param1，param2
   ```
 
 - ENV
@@ -585,7 +646,7 @@ Dockerfile是一堆指令，在docker build的时候，按照该指令进行操�
       EXPOSE并不会让容器的端口访问到主机。要使其可访问，需要在docker run运行容器时通过-p来发布这些端口，或通过-P参数来发布EXPOSE导出的所有端口
   ```
 
-  ![img](1走进Docker的世界.assets/Dockerfile解释.png)
+  ![img](./1走进Docker的世界.assets/Dockerfile解释.png)
 
 - 基础环境镜像
 
@@ -692,7 +753,20 @@ $ docker exec -ti my-nginx /bin/sh
 
 #### [多阶构建](http://49.7.203.222:2023/#/docker/multi-build?id=多阶构建)
 
-https://gitee.com/agagin/springboot-app.git
+[程康华/springboot-app (gitee.com)](https://gitee.com/chengkanghua/springboot-app)
+
+操作记录
+
+```bash
+# 进容器测试
+[root@CentOS-2 ~]# docker run --rm -ti srinivasansekar/javamvn bash
+
+mkdir /opt;cd /opt;git clone git@gitee.com:chengkanghua/springboot-app.git
+mvn clean package -DskipTests=true  #构建jar包
+
+```
+
+
 
 原始构建：
 
@@ -709,8 +783,10 @@ $ docker build . -t sample:v1 -f Dockerfile
 
 多阶构建：
 
+说明： 把第一阶段(maven环境)构建的sample.jar包放入openjdk基础镜像里做成新的交付镜像。  
+
 ```dockerfile
-FROM maven as builder
+FROM srinivasansekar/javamvn as builder
 
 WORKDIR /opt/springboot-app
 COPY  . .
@@ -722,7 +798,7 @@ CMD [ "sh", "-c", "java -jar /sample.jar" ]
 $ docker build . -t sample:v2 -f Dockerfile.multi
 ```
 
-https://gitee.com/agagin/href-counter.git
+[程康华/href-counter (gitee.com)](https://gitee.com/chengkanghua/href-counter)
 
 原始构建：
 
@@ -793,10 +869,20 @@ $ docker build . -t href-counter:v2 -f Dockerfile.multi
 - 验证构建，最终采用`codemantn/vue-node`作为基础镜像
 
   ```bash
-  npm config set sass_binary_site https://npm.taobao.org/mirrors/node-sass/
-  npm config set registry https://registry.npm.taobao.org
+  docker run --rm -ti codemantn/vue-node sh
+  / # sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories #修改为国内源
+  / # apk update
+  / # apk add git
+  / # git clone --depth=1 https://gitee.com/agagin/eladmin-web.git
+  / # cd eladmin-web/
+  npm config set sass_binary_site https://npmmirror.com/mirror/sass
+  npm config set registry https://registry.npmmirror.com
   npm install
   npm run build:prod
+  
+  
+  ------------------------阿里最新npm地址
+  https://developer.aliyun.com/mirror/NPM
   ```
 
 - 运行环境采用`nginx:alpine`作为基础镜像，启动容器熟悉镜像的启动目录等信息
@@ -806,34 +892,48 @@ $ docker build . -t href-counter:v2 -f Dockerfile.multi
 因此，综合得到多阶构建的`Dockerfile`
 
 ```dockerfile
+cat > Dockerfile.multi<<EOF
 FROM codemantn/vue-node AS builder
-
 LABEL maintainer="inspur_lyx@hotmail.com"
-
 # config npm
-RUN npm config set sass_binary_site https://npm.taobao.org/mirrors/node-sass/ && \
-    npm config set registry https://registry.npm.taobao.org
-
+RUN npm config set sass_binary_site https://npmmirror.com/mirror/sass && \
+    npm config set registry https://registry.npmmirror.com
 WORKDIR /opt/eladmin-web
 COPY  . .
-
 # build
-RUN ls -l && npm install && npm run build:prod
-
+RUN ls -l && npm cache clean --force && npm install && npm run build:prod
 
 FROM nginx:alpine
-
 WORKDIR /usr/share/nginx/html
-
 COPY --from=builder /opt/eladmin-web/dist /usr/share/nginx/html/
-
 EXPOSE 80
+EOF
 ```
 
 构建：
 
 ```bash
-docker build . -t eladmin-web:v1 -f Dockerfile.multi
+git clone --depth=1 https://gitee.com/agagin/eladmin-web.git
+# git clone --depth=1 https://gitee.com/chengkanghua/eladmin-web.git  #备用地址
+cd eladmin-web
+# vim Dockerfile.multi #复制上面的dockerfile
+
+docker build --no-cache . -t eladmin-web:v1 -f Dockerfile.multi
+
+
+# docker login 172.16.1.226:5000
+docker tag eladmin-web:v1 172.16.1.226:5000/eladmin/eladmin-web:v1
+docker push 172.16.1.226:5000/eladmin/eladmin-web:v1
+
+------------------------报错
+ERROR: failed to solve: failed to compute cache key: failed to calculate checksum of ref a7f8f56c-ba92-40d7-9815-a706dbdfb3df::4uvrf4aud6rylp87qzti4cgt9: "/
+原因分析：
+问题可能出在 COPY --from=builder /opt/eladmin-web/dist /usr/share/nginx/html/ 这一步。如果 builder 阶段的相关内容发生了变化，例如构建目录结构、文件内容等，可能会导致无法正确计算缓存键和校验和。
+这可能是因为在开发过程中对源文件进行了修改，或者构建环境不稳定导致的。
+解决方法：
+尝试清理之前的构建缓存。可以使用 docker build --no-cache 命令重新构建镜像，这样可以强制 Docker 重新计算所有层的缓存键和校验和，避免因缓存问题导致的错误。
+
+
 ```
 
 ###### [后端容器化](http://49.7.203.222:2023/#/docker/containerization?id=后端容器化)
@@ -847,15 +947,17 @@ docker build . -t eladmin-web:v1 -f Dockerfile.multi
   ```bash
   docker search maven:alpine
   docker run --rm -ti aerialist7/maven-git sh
-  # git clone xxxxx
-  # mvn clean package...
+  # git clone --depth=1 https://gitee.com/agagin/eladmin.git
+  # mvn clean package
+  
+  
   ```
 
 得到的`Dockerfile`:
 
 ```dockerfile
+cat > Dockerfile.multi <<EOF
 FROM aerialist7/maven-git as builder
-
 WORKDIR /opt/eladmin
 COPY  . .
 RUN mvn clean package
@@ -864,20 +966,42 @@ FROM java:8u111
 WORKDIR /opt/eladmin
 COPY --from=builder /opt/eladmin/eladmin-system/target/eladmin-system-2.6.jar .
 CMD [ "sh", "-c", "java -Dspring.profiles.active=prod -jar eladmin-system-2.6.jar" ]
+EOF
 ```
 
 构建：
 
 ```bash
+git clone --depth=1 https://gitee.com/agagin/eladmin.git
+# git clone https://gitee.com/chengkanghua/eladmin.git  #备用地址
+cd eladmin
+# vim Dockerfile.multi #复制上面的dockerfile
 docker build . -t eladmin:v1 -f Dockerfile.multi
+
+docker tag eladmin:v1 172.16.1.226:5000/eladmin/eladmin-api:v1
+docker push 172.16.1.226:5000/eladmin/eladmin-api:v1
+
 ```
 
 ###### [准备mysql环境](http://49.7.203.222:2023/#/docker/containerization?id=准备mysql环境)
 
 ```bash
-docker run -d -p 3306:3306 --name mysql  -v /opt/mysql:/var/lib/mysql -e MYSQL_DATABASE=eladmin -e MYSQL_ROOT_PASSWORD=luffyAdmin! mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+docker run -d --restart=always -p 3306:3306 --name mysql  -v /opt/mysql:/var/lib/mysql -e MYSQL_DATABASE=eladmin -e MYSQL_ROOT_PASSWORD=luffyAdmin! mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
 ## 初始化sql
+docker cp eladmin.sql  mysql:/
+[root@CentOS-2 sql]# docker exec -it ebced213f73f /bin/bash
+root@ebced213f73f:/# mysql -uroot -pluffyAdmin!
+mysql> use eladmin
+mysql> source /eladmin.sql
+mysql> quit
+
+#外部连接数据库测试
+kanghuadeMacBook-Pro:~ kanghua$ mysql -uroot -p -h10.211.55.37
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2
+Server version: 5.7.36 MySQL Community Server (GPL)
 ```
 
 ###### [准备redis环境](http://49.7.203.222:2023/#/docker/containerization?id=准备redis环境)
@@ -890,10 +1014,17 @@ docker run -p 6379:6379 -d --restart=always redis:3.2 redis-server
 
 ```bash
 # 后端
-docker run --name eladmin-api -d -p 8000:8000 -e DB_HOST=172.21.51.143 -e DB_USER=root -e DB_PWD=luffyAdmin! -e REDIS_HOST=172.21.51.143 eladmin:v1
+docker run --name eladmin-api -d -p 8000:8000 -e DB_HOST=10.0.0.2 -e DB_USER=root -e DB_PWD=luffyAdmin! -e REDIS_HOST=10.0.0.2 eladmin:v1
+
+# curl http://127.0.0.1:8000/auth/code  
 
 # 前端
 docker run --name eladmin-web -d -p 8080:80  eladmin-web:v1
+
+#访问后端hosts配置 前端代码cat eladmin-web/.env.production
+bash-3.2# echo '10.0.0.2 eladmin.luffy.com' >>/etc/hosts
+# 浏览器访问 http://eladmin.luffy.com:8080/    admin 123456
+
 ```
 
 #### [Django应用容器化实践](http://49.7.203.222:2023/#/docker/containerization?id=django应用容器化实践)
@@ -916,7 +1047,7 @@ docker run --name eladmin-web -d -p 8080:80  eladmin-web:v1
 FROM centos:centos7.5.1804
 
 #MAINTAINER 维护者信息
-LABEL maintainer="inspur_lyx@hotmail.com"
+LABEL maintainer="chengkanghua@foxmail.com"
 
 #ENV 设置环境变量
 ENV LANG en_US.UTF-8
@@ -950,16 +1081,22 @@ CMD ["./run.sh"]
 执行构建：
 
 ```bash
+git clone https://gitee.com/agagin/python-demo.git
+cd python-demo
+vim Dockerfile #拷贝上面的dockerfile
 $ docker build . -t myblog:v1 -f Dockerfile
 ```
 
 ###### [创建数据库](http://49.7.203.222:2023/#/docker/containerization?id=创建数据库)
 
 ```bash
-$ docker exec -ti mysql bash
-#/ mysql -uroot -p
-#/ create database myblog;
+docker run -d -p 3306:3306 --name mysql  -v /opt/mysql:/var/lib/mysql -e MYSQL_DATABASE=myblog -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
+$ docker exec -ti mysql bash
+#/ mysql -uroot -pluffyAdmin!
+#/ create database myblog;
+exit
+exit
 ## navicator连接
 ```
 
@@ -967,22 +1104,27 @@ $ docker exec -ti mysql bash
 
 ```bash
 ## 启动容器
-$ docker run -d -p 8002:8002 --name myblog -e MYSQL_HOST=172.21.51.143 -e MYSQL_USER=root -e MYSQL_PASSWD=luffyAdmin!  myblog:v1 
+$ docker run -d -p 8002:8002 --name myblog -e MYSQL_HOST=10.211.55.37 -e MYSQL_USER=root -e MYSQL_PASSWD=luffyAdmin!  myblog:v1 
 
 ## migrate
 $ docker exec -ti myblog bash
 #/ python3 manage.py makemigrations
 #/ python3 manage.py migrate
-#/ python3 manage.py createsuperuser
+#/ python3 manage.py createsuperuser  # root 123
+#/ python3 manage.py collectstatic
+#/ exit
 
 ## 创建超级用户
 $ docker exec -ti myblog python3 manage.py createsuperuser
-
 ## 收集静态文件
-## $ docker exec -ti myblog python3 manage.py collectstatic
+$ docker exec -ti myblog python3 manage.py collectstatic
 ```
 
-访问172.21.51.143:8002/admin
+访问
+-前台
+10.211.55.37:8002/blog/index/   
+-后台 root 123
+10.211.55.37:8002/admin
 
 
 
@@ -1002,14 +1144,31 @@ docker优势：
 
 命名空间是全局资源的一种抽象，将资源放到不同的命名空间中，各个命名空间中的资源是相互隔离的。
 
-| **分类**           | **系统调用参数** | **相关内核版本**                                             |
-| ------------------ | ---------------- | ------------------------------------------------------------ |
-| Mount namespaces   | CLONE_NEWNS      | [Linux 2.4.19](http://lwn.net/2001/0301/a/namespaces.php3)   |
-| UTS namespaces     | CLONE_NEWUTS     | [Linux 2.6.19](http://lwn.net/Articles/179345/)              |
-| IPC namespaces     | CLONE_NEWIPC     | [Linux 2.6.19](http://lwn.net/Articles/187274/)              |
-| PID namespaces     | CLONE_NEWPID     | [Linux 2.6.24](http://lwn.net/Articles/259217/)              |
-| Network namespaces | CLONE_NEWNET     | [始于Linux 2.6.24 完成于 Linux 2.6.29](http://lwn.net/Articles/219794/) |
-| User namespaces    | CLONE_NEWUSER    | [始于 Linux 2.6.23 完成于 Linux 3.8](http://lwn.net/Articles/528078/) |
+| **分类**                   | **系统调用参数** | **相关内核版本**                                             |
+| -------------------------- | ---------------- | ------------------------------------------------------------ |
+| Mount namespaces           | CLONE_NEWNS      | [Linux 2.4.19](http://lwn.net/2001/0301/a/namespaces.php3)   |
+| UTS namespaces（hostname） | CLONE_NEWUTS     | [Linux 2.6.19](http://lwn.net/Articles/179345/)              |
+| IPC namespaces             | CLONE_NEWIPC     | [Linux 2.6.19](http://lwn.net/Articles/187274/)              |
+| PID namespaces （pid）     | CLONE_NEWPID     | [Linux 2.6.24](http://lwn.net/Articles/259217/)              |
+| Network namespaces（网络） | CLONE_NEWNET     | [始于Linux 2.6.24 完成于 Linux 2.6.29](http://lwn.net/Articles/219794/) |
+| User namespaces            | CLONE_NEWUSER    | [始于 Linux 2.6.23 完成于 Linux 3.8](http://lwn.net/Articles/528078/) |
+
+小笔记
+
+```
+IPC Namespace 详解 https://tinylab.org/ipc-namespace/
+进程间通讯的机制称为 IPC(Inter-Process Communication)。Linux 下有多种 IPC 机制：管道（PIPE）、命名管道（FIFO）、信号（Signal）、消息队列（Message queues）、信号量（Semaphore）、共享内存（Share Memory）、内存映射（Memory Map）、套接字（Socket）。
+
+Mnt Namespace 详解 https://tinylab.org/mnt-namespace/
+对 Linux 系统来说一切皆文件，Linux 使用树形的层次化结构来管理所有的文件对象。
+完整的 Linux 文件系统，是由多种设备、多种文件系统组成的一个混合的树形结构。我们首先从一个单独的块设备来分析其树形结构的构造。
+
+User namespaces https://tinylab.org/user-namespace/
+User namespace 的主要作用是隔离用户权限的
+
+```
+
+
 
 我们知道，docker容器对于操作系统来讲其实是一个进程，我们可以通过原始的方式来模拟一下容器实现资源隔离的基本原理：
 
@@ -1152,7 +1311,7 @@ lrwxrwxrwx 1 root root 0 Jun 24 12:51 uts -> uts:[4026534844]
 
 通过namespace可以保证容器之间的隔离，但是无法控制每个容器可以占用多少资源， 如果其中的某一个容器正在执行 CPU 密集型的任务，那么就会影响其他容器中任务的性能与执行效率，导致多个容器相互影响并且抢占资源。如何对多个容器的资源使用进行限制就成了解决进程虚拟资源隔离之后的主要问题。
 
-![img](1走进Docker的世界.assets/cgroup.png)
+![img](./1走进Docker的世界.assets/cgroup.png)
 
 Control Groups（简称 CGroups）
 
@@ -1237,19 +1396,19 @@ CMD python /app/app.py
 
 这里的 Dockerfile 包含4条命令，其中每一行就创建了一层，下面显示了上述Dockerfile构建出来的镜像运行的容器层的结构：
 
-![img](1走进Docker的世界.assets/container-layers.jpg)
+![img](./1走进Docker的世界.assets/container-layers.jpg)
 
 镜像就是由这些层一层一层堆叠起来的，镜像中的这些层都是只读的，当我们运行容器的时候，就可以在这些基础层至上添加新的可写层，也就是我们通常说的`容器层`，对于运行中的容器所做的所有更改（比如写入新文件、修改现有文件、删除文件）都将写入这个容器层。
 
 对容器层的操作，主要利用了写时复制（CoW）技术。CoW就是copy-on-write，表示只在需要写时才去复制，这个是针对已有文件的修改场景。 CoW技术可以让所有的容器共享image的文件系统，所有数据都从image中读取，只有当要对文件进行写操作时，才从image里把要写的文件复制到自己的文件系统进行修改。所以无论有多少个容器共享同一个image，所做的写操作都是对从image中复制到自己的文件系统中的复本上进行，并不会修改image的源文件，且多个容器操作同一个文件，会在每个容器的文件系统里生成一个复本，每个容器修改的都是自己的复本，相互隔离，相互不影响。使用CoW可以有效的提高磁盘的利用率。
 
-![img](1走进Docker的世界.assets/sharing-layers.jpg)
+![img](./1走进Docker的世界.assets/sharing-layers.jpg)
 
 **镜像中每一层的文件都是分散在不同的目录中的，如何把这些不同目录的文件整合到一起呢？**
 
 UnionFS 其实是一种为 Linux 操作系统设计的用于把多个文件系统联合到同一个挂载点的文件系统服务。 它能够将不同文件夹中的层联合（Union）到了同一个文件夹中，整个联合的过程被称为联合挂载（Union Mount）。
 
-![img](1走进Docker的世界.assets/aufs.png)
+![img](./1走进Docker的世界.assets/aufs.png)
 
 上图是AUFS的实现，AUFS是作为Docker存储驱动的一种实现，Docker 还支持了不同的存储驱动，包括 aufs、devicemapper、overlay2、zfs 和 Btrfs 等等，在最新的 Docker 中，overlay2 取代了 aufs 成为了推荐的存储驱动，但是在没有 overlay2 驱动的机器上仍然会使用 aufs 作为 Docker 的默认驱动。
 
@@ -1289,15 +1448,15 @@ docker容器是一块具有隔离性的虚拟系统，容器内可以有自己�
 
 交换机通信简图
 
-![img](1走进Docker的世界.assets/exchange1.x-ms-bmp)
+![img](./1走进Docker的世界.assets/exchange1.png)
 
 交换机网络通信流程：
 
-![img](1走进Docker的世界.assets/exchange2.png)
+![img](./1走进Docker的世界.assets/exchange2.png)
 
 网桥模式示意图
 
-![img](1走进Docker的世界.assets/docker-bridge.jpeg)
+![img](./1走进Docker的世界.assets/docker-bridge.jpeg)
 
 Linux 中，能够起到**虚拟交换机作用**的网络设备，是网桥（Bridge）。它是一个工作在**数据链路层**（Data Link）的设备，主要功能是**根据 MAC 地址将数据包转发到网桥的不同端口上**。 网桥在哪，查看网桥
 
@@ -1361,7 +1520,7 @@ $ brctl showmacs docker0
 $ ip a 
 ```
 
-![img](1走进Docker的世界.assets/bridge-network.png)
+![img](./1走进Docker的世界.assets/bridge-network.png)
 
 我们如何知道网桥上的这些虚拟网卡与容器端是如何对应？
 
@@ -1397,11 +1556,11 @@ $ docker run --name test -d -p 8088:80 nginx:alpine
 $ curl localhost:8088
 ```
 
-![img](1走进Docker的世界.assets/docker-bridge.jpeg)
+![img](./1走进Docker的世界.assets/docker-bridge.jpeg)
 
 端口映射如何实现的？先来回顾iptables链表图
 
-![img](1走进Docker的世界.assets/iptables.png)
+![img](./1走进Docker的世界.assets/iptables.png)
 
 > [https://www.zsythink.net/archives/category/%e8%bf%90%e7%bb%b4%e7%9b%b8%e5%85%b3/iptables](https://www.zsythink.net/archives/category/运维相关/iptables)
 
@@ -1436,7 +1595,7 @@ Chain DOCKER (2 references)
 
 此条规则就是对主机收到的目的端口为8088的tcp流量进行DNAT转换，将流量发往172.17.0.2:80，172.17.0.2地址是不是就是我们上面创建的Docker容器的ip地址，流量走到网桥上了，后面就走网桥的转发就ok了。 所以，外界只需访问172.21.51.143:8088就可以访问到容器中的服务了。
 
-![img](1走进Docker的世界.assets/021217_0051_1.png)
+![img](./1走进Docker的世界.assets/021217_0051_1.png)
 
 数据包在出口方向走POSTROUTING链，我们查看一下规则：
 
@@ -1493,9 +1652,9 @@ $ scp root@172.21.51.143:/root/*.cap /d/packages
 
 （wireshark合并包进行分析）
 
-![img](1走进Docker的世界.assets/docker-dnat.jpeg)
+![img](./1走进Docker的世界.assets/docker-dnat.jpeg)
 
-![img](1走进Docker的世界.assets/docker-snat.jpeg)
+![img](./1走进Docker的世界.assets/docker-snat.jpeg)
 
 进到容器内的包做DNAT，出去的包做SNAT，这样对外面来讲，根本就不知道机器内部是谁提供服务，其实这就和一个内网多个机器公用一个外网IP地址上网的效果是一样的，那这也属于NAT功能的一个常见的应用场景。
 
@@ -1513,7 +1672,7 @@ $ docker run --net host -d --name mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
 
 这个模式指定新创建的容器和已经存在的一个容器共享一个 Network Namespace，而不是和宿主机共享。新创建的容器不会创建自己的网卡，配置自己的 IP，而是和一个指定的容器共享 IP、端口范围等。同样，两个容器除了网络方面，其他的如文件系统、进程列表等还是隔离的。两个容器的进程可以通过 lo 网卡设备通信。
 
-![img](1走进Docker的世界.assets/docker-network-container.jpeg)
+![img](./1走进Docker的世界.assets/docker-network-container.jpeg)
 
 ```bash
 ## 启动测试容器，共享mysql的网络空间
@@ -1576,27 +1735,37 @@ $ ip netns exec $PID ip route add default via 172.17.0.1
 
 Kubelet 通过 CRI 和容器运行时进行通信，使得容器运行时能够像插件一样单独运行。可以说每个容器运行时都有自己的优势，这就允许用户更容易选择和替换自己的容器运行时。
 
-![img](1走进Docker的世界.assets/cri-k8s.webp)
+<img src="./1走进Docker的世界.assets/cri-k8s.webp" alt="img" style="zoom: 50%;" />
+
+<img src="./1走进Docker的世界.assets/image-20230211175313330.png" alt="image-20230211175313330" style="zoom:50%;" />
 
 ##### [CRI & OCI](http://49.7.203.222:2023/#/docker/containerd?id=cri-amp-oci)
 
-![img](1走进Docker的世界.assets/oci+cri.webp)
+<img src="./1走进Docker的世界.assets/oci+cri.webp" alt="img" style="zoom:50%;" />
+
+<img src="./1走进Docker的世界.assets/image-20230211175325544.png" alt="image-20230211175325544" style="zoom:50%;" />
 
 OCI（OpenContainerInitiative，开放容器计划）定义了创建容器的格式和运行时的开源行业标准，包括镜像规范（ImageSpecification）和运行时规范(RuntimeSpecification)。
 
 镜像规范定义了 OCI 镜像的标准。如图 2 所示，高层级运行时将会下载一个 OCI 镜像，并把它解压成 OCI 运行时文件系统包（filesystembundle）。
 
-运行时规范则描述了如何从 OCI 运行时文件系统包运行容器程序，并且定义它的配置、运行环境和生命周期。如何为新容器设置命名空间(namepsaces)和控制组(cgroups)，以及挂载根文件系统等等操作，都是在这里定义的。它的一个参考实现是 runC。我们称其为低层级运行时（Low-levelRuntime）。除 runC 以外，也有很多其他的运行时遵循 OCI 标准，例如 kata-runtime。
+运行时规范则描述了如何从 OCI 运行时文件系统包运行容器程序，并且定义它的配置、运行环境和生命周期。如何为新容器设置命名空间(namepsaces)和控制组(cgroups)，以及挂载根文件系统等等操作，都是在这里定义的。它的一个参考实现是 runC。我们称其为低层级运行时（Low- levelRuntime）。除 runC 以外，也有很多其他的运行时遵循 OCI 标准，例如 kata-runtime。
 
 ##### [为什么弃用Docker](http://49.7.203.222:2023/#/docker/containerd?id=为什么弃用docker)
 
 目前 docker 仍是 kubernetes 默认的容器运行时。那为什么会选择换掉 docker 呢？主要的原因是它的复杂性。
 
-如图 3 所示，我们总结了 docker,containerd 以及 cri-o 的详细调用层级。Docker 的多层封装和调用，导致其在可维护性上略逊一筹，增加了线上问题的定位难度（貌似除了重启 docker，我们就毫无他法了）。Containerd 和 cri-o 的方案比起 docker 简洁很多。因此我们更偏向于选用更加简单和纯粹的 containerd 和 cri-o 作为我们的容器运行时。 ![img](1走进Docker的世界.assets/kubelet-cri.webp)
+如图 3 所示，我们总结了 docker,containerd 以及 cri-o 的详细调用层级。Docker 的多层封装和调用，导致其在可维护性上略逊一筹，增加了线上问题的定位难度（貌似除了重启 docker，我们就毫无他法了）。Containerd 和 cri-o 的方案比起 docker 简洁很多。因此我们更偏向于选用更加简单和纯粹的 containerd 和 cri-o 作为我们的容器运行时。
+
+ ![img](./1走进Docker的世界.assets/kubelet-cri.webp)
+
+![image-20230211154055811](./1走进Docker的世界.assets/image-20230211154055811.png)
 
 我们对 containerd 和 cri-o 进行了一组性能测试，包括创建、启动、停止和删除容器，以比较它们所耗的时间。如图 4 所示，containerd 在各个方面都表现良好，除了启动容器这项。从总用时来看，containerd 的用时还是要比 cri-o 要短的。
 
-![img](1走进Docker的世界.assets/runcPerformance.webp)
+![img](./1走进Docker的世界.assets/runcPerformance.webp)
+
+![image-20230211154113593](./1走进Docker的世界.assets/image-20230211154113593.png)
 
 从功能性来讲，containerd 和 cri-o 都符合 CRI 和 OCI 的标准。从稳定性来说，单独使用 containerd 和 cri-o 都没有足够的生产环境经验。但庆幸的是，containerd 一直在 docker 里使用，而 docker 的生产环境经验可以说比较充足。可见在稳定性上 containerd 略胜一筹。所以我们最终选用了 containerd
 
@@ -1624,7 +1793,7 @@ https://blog.csdn.net/Michaelwubo/article/details/122745348 https://www.cnblogs.
 
 #### [本章小结](http://49.7.203.222:2023/#/docker/summary?id=本章小结)
 
-![img](1走进Docker的世界.assets/Docker.png)
+![img](./1走进Docker的世界.assets/Docker.png)
 
 1. 为了解决软件交付过程中的环境依赖，同时提供一种更加轻量的虚拟化技术，Docker出现了。
 2. 2013年诞生，15年开始迅速发展，从17.03月开始，使用时间日期管理版本，稳定版以每季度为准。

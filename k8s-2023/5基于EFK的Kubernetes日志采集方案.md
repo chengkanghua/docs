@@ -48,9 +48,9 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 - 在应用程序的 pod 中，包含专门记录日志的 sidecar 容器。
 - 将日志直接从应用程序中推送到日志记录后端。
 
-##### [使用节点级日志代理](http://49.7.203.222:2023/#/logging/arct?id=使用节点级日志代理)
+##### [使用节点级日志代理]
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/logging-with-node-agent.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/logging-with-node-agent.png)
 
 优势：
 
@@ -67,10 +67,10 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
   思路：在pod中启动一个sidecar容器，把容器内的日志文件吐到标准输出，由宿主机中的日志收集agent进行采集。
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/logging-with-streaming-sidecar.png)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/logging-with-streaming-sidecar.png)
 
   ```bash
-  $ cat count-pod.yaml
+  cat <<\EOF count-pod.yaml
   apiVersion: v1
   kind: Pod
   metadata:
@@ -109,9 +109,10 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
     volumes:
     - name: varlog
       emptyDir: {}
-      
-  $ kubectl apply -f counter-pod.yaml
-  $ kubectl logs -f counter -c count-log-1
+  EOF
+  
+  kubectl apply -f counter-pod.yaml
+  kubectl logs -f counter -c count-log-1
   ```
 
   优势：
@@ -126,7 +127,7 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
 - ###### [方式二：sidecar 容器运行一个日志代理，配置该日志代理以便从应用容器收集日志。](http://49.7.203.222:2023/#/logging/arct?id=方式二：sidecar-容器运行一个日志代理，配置该日志代理以便从应用容器收集日志。)
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/logging-with-sidecar-agent.png)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/logging-with-sidecar-agent.png)
 
   思路：直接在业务Pod中使用sidecar的方式启动一个日志收集的组件（比如fluentd），这样日志收集可以将容器内的日志当成本地文件来进行收取。
 
@@ -136,7 +137,7 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
 ##### [从应用中直接暴露日志目录](http://49.7.203.222:2023/#/logging/arct?id=从应用中直接暴露日志目录)
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/logging-from-application.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/logging-from-application.png)
 
 ##### [企业日志方案选型](http://49.7.203.222:2023/#/logging/arct?id=企业日志方案选型)
 
@@ -162,7 +163,7 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
 ##### [EFK架构工作流程](http://49.7.203.222:2023/#/logging/fluentd-concept?id=efk架构工作流程)
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/EFK-architecture.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/EFK-architecture.png)
 
 - Elasticsearch
 
@@ -180,7 +181,7 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
   一个针对日志的收集、处理、转发系统。通过丰富的插件系统，可以收集来自于各种系统或应用的日志，转化为用户指定的格式后，转发到用户所指定的日志存储系统之中。
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/fluentd-architecture.jpg)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/fluentd-architecture.jpg)
 
   Fluentd 通过一组给定的数据源抓取日志数据，处理后（转换成结构化的数据格式）将它们转发给其他服务，比如 Elasticsearch、对象存储、kafka等等。Fluentd 支持超过300个日志存储和分析服务，所以在这方面是非常灵活的。主要运行步骤如下
 
@@ -192,7 +193,7 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
 ###### [Fluentd架构](http://49.7.203.222:2023/#/logging/fluentd-concept?id=fluentd架构)
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/what-is-fluentd.jpg)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/what-is-fluentd.jpg)
 
 为什么推荐使用fluentd作为k8s体系的日志收集工具？
 
@@ -200,17 +201,17 @@ https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
 - 将日志文件JSON化
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/log-as-json.png)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/log-as-json.png)
 
 - 可插拔架构设计
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/pluggable.png)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/pluggable.png)
 
 - 极小的资源占用
 
   基于C和Ruby语言， 30-40MB，13,000 events/second/core
 
-  ![img](5基于EFK的Kubernetes日志采集方案.assets/c-and-ruby.png)
+  ![img](./5基于EFK的Kubernetes日志采集方案.assets/c-and-ruby.png)
 
 - 极强的可靠性
 
@@ -361,7 +362,7 @@ record：真实的日志内容，json对象
 Input -> filter 1 -> ... -> filter N -> Buffer -> Output
 ```
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/buffer-internal-and-parameters.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/buffer-internal-and-parameters.png)
 
 因为每个事件数据量通常很小，考虑数据传输效率、稳定性等方面的原因，所以基本不会每条事件处理完后都会立马写入到output端，因此fluentd建立了缓冲模型，模型中主要有两个概念：
 
@@ -436,7 +437,27 @@ $ tail -f access.log
 ```bash
 # https://github.com/fluent/fluentd-kubernetes-daemonset
 $ docker run -u root --rm -ti --entrypoint='' fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch-amd64 bash
-/ # fluentd -c fluent.conf
+
+cat <<EOF >fluent.conf
+<source>
+    @type tail
+    path /var/log/nginx/access.log
+    pos_file /var/log/nginx/nginx_access.posg
+    tag nginx_access
+    format none
+    @log_level trace
+</source>
+<match  nginx_access>
+    @type stdout
+</match>
+EOF
+/ # fluentd -c fluent.conf  # 终端监听/var/log/nginx/access.log 日志数据,有新数据会输出到标准输出
+
+#另一个窗口操作 写入日志信息 
+[root@k8s-master ~]# docker ps
+CONTAINER ID   IMAGE      COMMAND      CREATE      STATUS      PORTS              NAMES
+65405228cb17   fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch-amd64   "bash"          
+[root@k8s-master ~]# docker exec -ti 65405228cb17 sh
 / # echo '53.49.146.149 1561620585.973 0.005 502 [27/Jun/2019:15:29:45 +0800] 178.73.215.171 33337 GET https' >>/var/log/nginx/access.log
 
 
@@ -473,6 +494,8 @@ $ tail -f access.log
 *fluent.conf*
 
 ```bash
+
+cat <<EOF >fluent.conf
 <source>
     @type tail
     path /var/log/nginx/access.log
@@ -489,6 +512,13 @@ $ tail -f access.log
 <match  nginx_access>
   @type stdout
 </match>
+EOF
+
+#修改配置后重新运行
+root@65405228cb17:/home/fluent# fluentd -c fluent.conf
+
+#另一个窗口,模拟产生日志
+/ # echo '53.49.146.149 1561620585.973 0.005 502 [27/Jun/2019:15:29:45 +0800] 178.73.215.171 33337 GET https' >>/var/log/nginx/access.log
 ```
 
 输出结果：
@@ -502,6 +532,7 @@ $ tail -f access.log
 ###### [实践三：使用ruby实现日志字段的转换及自定义处理](http://49.7.203.222:2023/#/logging/fluentd-practice?id=实践三：使用ruby实现日志字段的转换及自定义处理)
 
 ```bash
+cat <<\EOF > fluent.conf
 <source>
     @type tail
     path /var/log/nginx/access.log
@@ -527,6 +558,13 @@ $ tail -f access.log
 <match  nginx_access>
   @type stdout
 </match>
+EOF
+
+#修改配置后重新运行
+root@65405228cb17:/home/fluent# fluentd -c fluent.conf
+
+#另一个窗口,模拟产生日志
+/ # echo '53.49.146.149 1561620585.973 0.005 502 [27/Jun/2019:15:29:45 +0800] 178.73.215.171 33337 GET https' >>/var/log/nginx/access.log
 ```
 
 输出结果：
@@ -551,7 +589,7 @@ Input -> filter 1 -> ... -> filter N -> Buffer -> Output
 `application.yml`的内容为：
 
 ```bash
-$ cat application.yml
+cat <<\EOF > application.yml 
 spring:
   application:
     name: svca-service
@@ -566,6 +604,8 @@ spring:
         max-interval: 10000
         multiplier: 2
         max-attempts: 10
+EOF
+
 ```
 
 该配置文件在k8s中可以通过configmap来管理，通常我们有如下两种方式来管理配置文件：
@@ -574,16 +614,16 @@ spring:
 
   ```bash
   # 通过文件直接创建
-  $ kubectl -n default create configmap application-config --from-file=application.yml
+  kubectl -n default create configmap application-config --from-file=application.yml
   
   # 会生成配置文件，查看内容，configmap的key为文件名字
-  $ kubectl -n default get cm application-config -oyaml
+  kubectl -n default get cm application-config -oyaml
   ```
 
 - 通过yaml文件直接创建
 
   ```bash
-  $ cat application-config.yaml
+  cat <<\EOF > application-config.yaml
   apiVersion: v1
   kind: ConfigMap
   metadata:
@@ -605,6 +645,7 @@ spring:
               max-interval: 10000
               multiplier: 2
               max-attempts: 10
+  EOF
   
   # 创建configmap
   $ kubectl apply -f application-config.yaml
@@ -613,7 +654,7 @@ spring:
 准备一个`demo-deployment.yaml`文件，挂载上述configmap到`/etc/application/`中
 
 ```bash
-$ cat demo-deployment.yaml
+cat <<\EOF > demo-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -639,18 +680,28 @@ spec:
         volumeMounts:
         - mountPath: "/etc/application"
           name: config
+EOF
+
 ```
 
 创建并查看：
 
 ```bash
 $ kubectl apply -f demo-deployment.yaml
+
+kubectl get po
+kubectl exec demo-67c7c99d47-vvltn -- cat /etc/application/application.yml
+
 ```
 
 修改configmap文件的内容，观察pod中是否自动感知变化：
 
 ```bash
 $ kubectl edit cm application-config
+
+[root@k8s-master helm3]# kubectl edit cm application-config  #修改了端口 8889
+Edit cancelled, no changes made.
+[root@k8s-master helm3]# kubectl exec demo-67c7c99d47-vvltn -- cat /etc/application/application.yml # 30秒之后查看也改变了
 ```
 
 > 整个configmap文件直接挂载到pod中，若configmap变化，pod会自动感知并拉取到pod内部。
@@ -662,7 +713,7 @@ $ kubectl edit cm application-config
 假如有多个配置文件，都需要挂载到pod内部，且都在一个目录中
 
 ```bash
-$ cat application.yml
+cat <<\EOF > application.yml
 spring:
   application:
     name: svca-service
@@ -677,8 +728,9 @@ spring:
         max-interval: 10000
         multiplier: 2
         max-attempts: 10
+EOF
 
-$ cat supervisord.conf
+cat <<\EOF > supervisord.conf
 [unix_http_server]
 file=/var/run/supervisor.sock
 chmod=0700
@@ -691,22 +743,24 @@ loglevel=info
 pidfile=/var/run/supervisord.pid
 childlogdir=/var/cluster_conf_agent/logs/supervisor
 nodaemon=false
+EOF
+
 ```
 
 同样可以使用两种方式创建：
 
 ```bash
-$ kubectl delete cm application-config
+ kubectl delete cm application-config
 
-$ kubectl create cm application-config --from-file=application.yml --from-file=supervisord.conf
+ kubectl create cm application-config --from-file=application.yml --from-file=supervisord.conf
 
-$ kubectl get cm application-config -oyaml
+ kubectl get cm application-config -oyaml
 ```
 
 观察Pod已经自动获取到最新的变化
 
 ```bash
-$ kubectl exec demo-55c649865b-gpkgk ls /etc/application/
+$ kubectl exec demo-55c649865b-gpkgk -- ls /etc/application/
 application.yml
 supervisord.conf
 ```
@@ -714,7 +768,7 @@ supervisord.conf
 此时，是挂载到pod内的空目录中`/etc/application`，假如想挂载到pod已存在的目录中，比如：
 
 ```bash
-$  kubectl exec   demo-55c649865b-gpkgk ls /etc/profile.d
+$  kubectl exec   demo-55c649865b-gpkgk -- ls /etc/profile.d
 color_prompt
 locale
 ```
@@ -722,7 +776,7 @@ locale
 更改deployment的挂载目录：
 
 ```bash
-$ cat demo-deployment.yaml
+cat <<\EOF > demo-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -748,6 +802,8 @@ spec:
         volumeMounts:
         - mountPath: "/etc/profile.d"
           name: config
+EOF
+
 ```
 
 重建pod
@@ -756,7 +812,7 @@ spec:
 $ kubectl apply -f demo-deployment.yaml
 
 # 查看pod内的/etc/profile.d目录，发现已有文件被覆盖
-$ kubectl exec demo-77d685b9f7-68qz7 ls /etc/profile.d
+$ kubectl exec demo-77d685b9f7-68qz7 -- ls /etc/profile.d 
 application.yml
 supervisord.conf
 ```
@@ -771,7 +827,7 @@ supervisord.conf
 configmap保持不变，修改deployment文件：
 
 ```bash
-$ cat demo-deployment.yaml
+cat <<\EOF > demo-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -806,17 +862,20 @@ spec:
         - mountPath: "/etc/profile.d/supervisord.conf"
           name: config
           subPath: supervisord
+EOF
+
+          
 ```
 
 测试挂载：
 
 ```bash
-$ kubectl apply -f demo-deployment.yaml
+kubectl apply -f demo-deployment.yaml
 
-$ kubectl exec demo-78489c754-shjhz ls /etc/application
+# kubectl exec demo-78489c754-shjhz -- ls /etc/application
 application.yml
 
-$ kubectl exec demo-78489c754-shjhz ls /etc/profile.d/
+# kubectl exec demo-78489c754-shjhz -- ls /etc/profile.d/
 supervisord.conf
 color_prompt
 locale
@@ -841,6 +900,7 @@ locale
 使用Deployment创建多副本的pod的情况：
 
 ```yaml
+cat <<\EOF > deploy-nginx.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -863,11 +923,13 @@ spec:
         image: nginx:alpine
         ports:
         - containerPort: 80
+EOF
 ```
 
 使用StatefulSet创建多副本pod的情况：
 
 ```yaml
+cat <<\EOF > statefulset-nginx.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -891,11 +953,13 @@ spec:
         image: nginx:alpine
         ports:
         - containerPort: 80
+EOF
 ```
 
 无头服务Headless Service
 
 ```yaml
+cat <<\EOF > service-nginx.yaml
 kind: Service
 apiVersion: v1
 metadata:
@@ -909,8 +973,31 @@ spec:
     port: 80
     targetPort: 80
   clusterIP: None
-$ kubectl -n default exec  -ti nginx-statefulset-0 sh
-/ # curl nginx-statefulset-2.nginx
+EOF
+
+kubectl create -f deploy-nginx.yaml
+kubectl create -f statefulset-nginx.yaml
+kubectl create -f service-nginx.yaml
+
+[root@k8s-master ~]# kubectl get po -owide
+NAME                                READY   STATUS    RESTARTS   AGE   IP            NODE          
+nginx-deployment-5bbbc49956-2p7sj   1/1     Running   0          31s   10.244.2.53   k8s-slave2   
+nginx-deployment-5bbbc49956-6ktgw   1/1     Running   0          31s   10.244.1.59   k8s-slave1   
+nginx-deployment-5bbbc49956-fv67r   1/1     Running   0          31s   10.244.0.17   k8s-master   
+nginx-statefulset-0                 1/1     Running   0          30s   10.244.1.60   k8s-slave1   
+nginx-statefulset-1                 1/1     Running   0          28s   10.244.2.54   k8s-slave2   
+nginx-statefulset-2                 1/1     Running   0          26s   10.244.0.18   k8s-master   
+
+[root@k8s-master ~]# kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   6d4h
+nginx        ClusterIP   None         <none>        80/TCP    2m56s
+
+$ kubectl -n default exec -ti nginx-statefulset-0 -- sh
+/ # curl nginx-statefulset-2.nginx     #statefulset副本之间 通过pod名称.service的name 可以互相通信
+
+
+
 ```
 
 ###### [部署并验证](http://49.7.203.222:2023/#/logging/deploy-efk?id=部署并验证)
@@ -918,6 +1005,7 @@ $ kubectl -n default exec  -ti nginx-statefulset-0 sh
 *es-config.yaml*
 
 ```yaml
+cat <<\EOF > es-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -930,11 +1018,14 @@ data:
     network.host: 0.0.0.0
     discovery.seed_hosts: "es-svc-headless"
     cluster.initial_master_nodes: "elasticsearch-0,elasticsearch-1,elasticsearch-2"
+EOF
+
 ```
 
 *es-svc-headless.yaml*
 
 ```yaml
+cat <<\EOF > es-svc-headless.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -950,11 +1041,14 @@ spec:
   - name: in
     port: 9300
     protocol: TCP
+EOF
+
 ```
 
 *es-statefulset.yaml*
 
 ```yaml
+cat <<\EOF > es-statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -1036,11 +1130,14 @@ spec:
       resources:
         requests:
           storage: 5Gi
+EOF
+
 ```
 
 *es-svc.yaml*
 
 ```yaml
+cat <<\EOF > es-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -1055,16 +1152,18 @@ spec:
   - name: out
     port: 9200
     protocol: TCP
-```
+EOF
 
 ```
+
+```bash
 $ kubectl create namespace logging
 
 ## 部署服务
-$ kubectl apply -f es-config.yaml
-$ kubectl apply -f es-svc-headless.yaml
-$ kubectl apply -f es-statefulset.yaml
-$ kubectl apply -f es-svc.yaml
+kubectl apply -f es-config.yaml
+kubectl apply -f es-svc-headless.yaml
+kubectl apply -f es-statefulset.yaml
+kubectl apply -f es-svc.yaml
 
 ## 等待片刻，查看一下es的pod，状态变为running
 $ kubectl -n logging get po -o wide  
@@ -1108,6 +1207,7 @@ $ curl 10.104.226.175:9200
 *kibana.yaml*
 
 ```yaml
+cat <<\EOF > kibana-all.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1194,17 +1294,35 @@ spec:
             name: kibana
             port:
               number: 5601
-```
+EOF
 
 ```
-$ kubectl apply -f kibana.yaml  
+
+```bash
+$ kubectl apply -f kibana-all.yaml  
 deployment.apps/kibana created
 service/kibana created  
 ingress/kibana created
 
-## 配置域名解析 kibana.luffy.com，并访问服务进行验证，若可以访问，说明连接es成功
+[root@k8s-master ~]# kubectl -n logging get ingress
+NAME     CLASS   HOSTS              ADDRESS   PORTS   AGE
+kibana   nginx   kibana.luffy.com             80      40s
+[root@k8s-master ~]# kubectl -n logging get svc
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+es-svc            ClusterIP   10.109.208.147   <none>        9200/TCP   10h
+es-svc-headless   ClusterIP   None             <none>        9300/TCP   10h
+kibana            ClusterIP   10.108.109.8     <none>        5601/TCP   47s
+[root@k8s-master ~]# kubectl -n logging get po
+NAME                      READY   STATUS    RESTARTS        AGE
+elasticsearch-0           1/1     Running   1 (6m21s ago)   10m
+elasticsearch-1           1/1     Running   1 (6m22s ago)   10m
+elasticsearch-2           1/1     Running   0               10m
+kibana-7df699c857-v2rvk   1/1     Running   0               78s
 
-
+## 配置域名解析 
+# hosts
+10.0.0.226 kibana.luffy.com
+# kibana.luffy.com，并访问服务进行验证，若可以访问，说明连接es成功
 # GET /_cat/health?v
 # GET /_cat/indices
 ```
@@ -1227,19 +1345,20 @@ https://github.com/fluent/fluentd-kubernetes-daemonset#use-cri-parser-for-contai
 *fluentd-config-tail-container-parse.yaml*
 
 ```bash
-$ cat tail_container_parse.conf
+cat <<\EOF > tail_container_parse.conf
 # configuration example
 <parse>
   @type cri
 </parse>
-
+EOF
 # 创建configmap，后面挂载给fluentd使用，适配containerd的日志格式
-$ kubectl -n logging create configmap tail-container-parse --from-file=tail_container_parse.conf
+kubectl -n logging create configmap tail-container-parse --from-file=tail_container_parse.conf
 ```
 
 *fluentd-rbac.yaml*
 
 ```yaml
+cat <<\EOF > fluentd-rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1286,6 +1405,8 @@ roleRef:
   kind: ClusterRole
   name: fluentd-es
   apiGroup: ""
+EOF
+
 ```
 
 daemonset定义文件，注意点：
@@ -1297,6 +1418,7 @@ daemonset定义文件，注意点：
 *fluentd-daemonset.yaml*
 
 ```yaml
+cat <<\EOF > fluentd-daemonset.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -1377,19 +1499,23 @@ spec:
           items:
           - key: tail_container_parse.conf
             path: tail-container-parse
-```
+EOF
 
 ```
+
+```bash
 ## 给slave1打上标签，进行部署fluentd日志采集服务
-$ kubectl label node k8s-slave1 fluentd=true  
-$ kubectl label node k8s-slave2 fluentd=true
+kubectl label node k8s-slave1 fluentd=true  
+kubectl label node k8s-slave2 fluentd=true
 
 # 创建服务
-$ kubectl apply -f fluentd-rbac.yaml
-$ kubectl apply -f fluentd-daemonset.yaml  
+kubectl apply -f fluentd-rbac.yaml
+kubectl apply -f fluentd-daemonset.yaml  
 
 ## 然后查看一下pod是否正常运行
-$ kubectl -n logging get po -o wide
+kubectl -n logging get po -o wide
+
+
 ```
 
 
@@ -1402,13 +1528,15 @@ $ kubectl -n logging get po -o wide
 
 登录kibana界面，按照截图的顺序操作：
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/kibana-op1.png)
+logstash-*
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/kibana-op2.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/kibana-op1.png)
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/kibana-op3.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/kibana-op2.png)
 
-![img](5基于EFK的Kubernetes日志采集方案.assets/kibana-op4.png)
+![img](./5基于EFK的Kubernetes日志采集方案.assets/kibana-op3.png)
+
+![img](./5基于EFK的Kubernetes日志采集方案.assets/kibana-op4.png)
 
 *思考：日志中出现了很多kubernetes的元数据信息，这些数据从哪采集而来*
 
@@ -1417,4 +1545,22 @@ $ kubectl -n logging get po -o wide
 到这里，我们就在 Kubernetes 集群上成功部署了 EFK ，要了解如何使用 Kibana 进行日志数据分析，可以参考 Kibana 用户指南文档：https://www.elastic.co/guide/en/kibana/current/index.html
 
 
+
+
+
+测试资源有限, 释放资源
+
+```bash
+dlete -f demo-deployment.yaml
+kubectl delete cm application-config
+
+kubectl delete -f es-config.yaml
+kubectl delete -f es-svc-headless.yaml
+kubectl delete -f es-statefulset.yaml
+kubectl delete -f es-svc.yaml
+kubectl delete -f kibana-all.yaml  
+
+kubectl delete -f fluentd-rbac.yaml
+kubectl delete -f fluentd-daemonset.yaml  
+```
 

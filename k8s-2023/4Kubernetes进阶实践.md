@@ -10,14 +10,34 @@
 wget https://github.com/etcd-io/etcd/releases/download/v3.5.3/etcd-v3.5.3-linux-amd64.tar.gz
 
 # 也可以从百度云盘下载
-链接: https://pan.baidu.com/s/1eRrzyKk0VWBe8jSd0qdmYg 提取码: 6c7f
+# 链接: https://pan.baidu.com/s/1eRrzyKk0VWBe8jSd0qdmYg 提取码: 6c7f
+
+tar zxvf etcd-v3.5.3-linux-amd64.tar.gz
+cp etcd-v3.5.3-linux-amd64/etcd* /usr/bin/
+etcdctl version
 ```
 
 查看etcd集群的成员节点：
 
 ```bash
-$ export ETCDCTL_API=3
-$ etcdctl --endpoints=https://[127.0.0.1]:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key member list -w table
+# export ETCDCTL_API=3  #早期的操作版本是2
+# kubectl -n kube-system get pod -owide |grep etcd-k8s-master  # etcd容器位置
+etcd-k8s-master 1/1  Running  1 (27h ago)  46h  172.16.1.226 k8s-master <none> <none>
+
+
+# etcdctl --endpoints=https://[127.0.0.1]:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key member list -w table
++------------------+---------+------------+---------------------------+---------------------------+------------+
+|        ID        | STATUS  |    NAME    |        PEER ADDRS         |       CLIENT ADDRS        | IS LEARNER |
++------------------+---------+------------+---------------------------+---------------------------+------------+
+| 9f08b1f0dadeb95d | started | k8s-master | https://172.16.1.226:2380 | https://172.16.1.226:2379 |      false |
++------------------+---------+------------+---------------------------+---------------------------+------------+
+
+
+--cacert #根证书
+--cert   #签发的证书
+--key    #签发的证书key
+
+# ll /etc/kubernetes/pki/  #证书位置
 
 $ alias etcdctl='etcdctl --endpoints=https://[127.0.0.1]:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key'
 
@@ -42,19 +62,24 @@ $ etcdctl get luffy
 查看所有key值：
 
 ```bash
-$  etcdctl get / --prefix --keys-only
+$  etcdctl get / --prefix --keys-only  #只打印前缀 key
 ```
 
 查看具体的key对应的数据：
 
 ```bash
 $ etcdctl get /registry/pods/jenkins/sonar-postgres-7fc5d748b6-gtmsb
+# 数据是压缩过的额, 可读性差
+etcdctl get /registry/secrets/luffy/registry-172-16-1-226  
+etcdctl get /registry/services/endpoints/luffy/mysql
 ```
 
 list-watch:
 
 ```bash
 $ etcdctl watch /luffy/ --prefix
+
+#再另一个窗口添加数据, 上一个窗口都能收到.
 $ etcdctl put /luffy/key1 val1
 ```
 
@@ -62,22 +87,57 @@ $ etcdctl put /luffy/key1 val1
 
 ```bash
 $ etcdctl snapshot save `hostname`-etcd_`date +%Y%m%d%H%M`.db
+
 ```
 
 恢复快照：
 
 1. 停止etcd和apiserver
 
+   ```bash
+   [root@k8s-master ~]# kubectl -n kube-system get pod |grep apiserver
+   kube-apiserver-k8s-master            1/1     Running   2 (27m ago)   47h
+   
+   #ll /etc/kubernetes/manifests/   # 资源位置
+   -rw------- 1 root root 2294 Oct 17 17:14 etcd.yaml
+   -rw------- 1 root root 3367 Oct 17 17:14 kube-apiserver.yaml
+   -rw------- 1 root root 2878 Oct 17 17:14 kube-controller-manager.yaml
+   -rw------- 1 root root 1464 Oct 17 17:14 kube-scheduler.yaml
+   # mv /etc/kubernetes/manifests/kube-apiserver.yaml /opt/
+   
+   # kubectl get po   #上面移走了apiserver 就停止了
+   The connection to the server 172.16.1.226:6443 was refused - did you specify the right host or port?
+   
+   # systemctl status kubelet -l
+   # grep staticPodPath /var/lib/kubelet/config.yaml
+   staticPodPath: /etc/kubernetes/manifests   #这个目录是一个静态pod路径
+   
+   
+   ```
+
+   
+
 2. 移走当前数据目录
 
    ```bash
-   $ mv /var/lib/etcd/ /tmp
+   mv /var/lib/etcd/ /tmp
    ```
 
 3. 恢复快照
 
    ```bash
-   $ etcdctl snapshot restore `hostname`-etcd_`date +%Y%m%d%H%M`.db --data-dir=/var/lib/etcd/
+   etcdctl snapshot restore `hostname`-etcd_`date +%Y%m%d%H%M`.db --data-dir=/var/lib/etcd/
+   
+   [root@k8s-master ~]# ll k8s-master*.db  #变量名会根据时间变化改变, 先查看一下
+   -rw------- 1 root root 2981920 Oct 19 17:12 k8s-master-etcd_202410191712.db
+   
+   etcdctl snapshot restore k8s-master-etcd_202410191712.db --data-dir=/var/lib/etcd/
+   
+   mv  /opt/kube-apiserver.yaml /etc/kubernetes/manifests/
+   
+   kubectl get po  #已经恢复可以查看
+   kubectl -n kube-system get pods
+   
    ```
 
 4. 集群恢复
@@ -89,6 +149,16 @@ $ etcdctl snapshot save `hostname`-etcd_`date +%Y%m%d%H%M`.db
    很多情况下，会出现namespace删除卡住的问题，此时可以通过操作etcd来删除数据：
 
    ```bash
+   [root@k8s-master ~]# kubectl create ns test
+   namespace/test created
+   [root@k8s-master ~]# kubectl delete ns test
+   
+   #另一个窗口查看
+   [root@k8s-master ~]# kubectl get ns
+   NAME                   STATUS        AGE
+   test                   Terminating   7s  #如果一直卡住 Terminating 的状态 删除不掉 ,怎么办?
+   
+   
    # 查询namespace相关的元数据
    $ etcdctl get / --prefix --keys-only|grep namespace
    /registry/clusterrolebindings/system:controller:namespace-controller
@@ -104,21 +174,33 @@ $ etcdctl snapshot save `hostname`-etcd_`date +%Y%m%d%H%M`.db
    
    # 比如eladmin这个名称空间无法删除，则可以通过命令删除
    $ etcdctl delete /registry/namespaces/eladmin
+   
    ```
 
-###### [锦囊妙计](http://49.7.203.222:2023/#/kubernetes-advanced/etcd?id=锦囊妙计)
+###### 锦囊妙计
 
 由于ETCD中存储了k8s集群全部的业务数据，考虑最坏的情况，当etcd节点的机器故障，机器无法恢复怎么办？
 
 在新机器中将备份数据恢复至数据目录中：
 
 ```bash
-export ETCDCTL_API=3
-etcdctl snapshot restore k8s-master-etcd_202211052008.db --data-dir=/root/etcd/data
-name="etcd-single"
-host="172.21.65.227"
-cluster="etcd1=http://172.21.65.227:2380"
+# python -m SimpleHTTPServer 8008  #基于当前目录启动了一个http服务
+# wget http://10.0.0.2:8008/eladmin.sql #下载内容
+scp k8s-master-etcd_202410191712.db root@10.0.0.2:/root/
+scp /usr/bin/etcdctl root@10.0.0.2:/usr/bin/
 
+# 新机器上安装etcdctl 命令; etcdctl恢复数据是不需要认证的
+export ETCDCTL_API=3
+mkdir /root/etcd/data
+etcdctl snapshot restore k8s-master-etcd_202410191712.db --data-dir=/root/etcd/data
+ll /root/etcd/data  #查看恢复的数据
+
+#在bash设置变量; docker启动时候需要用掉
+name="etcd-single"
+host="172.16.1.2"
+cluster="etcd1=http://172.16.1.2:2380"
+
+#启动etcd 容器
 docker run -d --privileged=true \
 -p 2379:2379 \
 -p 2380:2380 \
@@ -144,10 +226,11 @@ quay.io/coreos/etcd:v3.5.0 \
 
 # 验证集群
 export ETCDCTL_API=3
-export ETCD_ENDPOINTS=172.21.65.227:2379
+export ETCD_ENDPOINTS=172.16.1.2:2379
 etcdctl --endpoints=$ETCD_ENDPOINTS -w table member list
 etcdctl --endpoints=$ETCD_ENDPOINTS -w table endpoint status
-etcdctl --endpoints=$ETCD_ENDPOINTS get / --prefix --keys-only
+etcdctl --endpoints=$ETCD_ENDPOINTS get / --prefix --keys-only #可以看到所有数据
+
 ```
 
 集群中某些特定的namespace被删除了数据，该如何增量恢复？
@@ -164,30 +247,34 @@ $ etcdctl --endpoints=$ETCD_ENDPOINTS get /registry/services/specs/luffy/mysql
 # 可以基于源码构建，也可以直接下载构建好的二进制文件
 
 # 基于源码构建,由于源码比较大，github下载很慢，因此直接从下面网盘地址获取源码：
-# 链接: https://pan.baidu.com/s/1zOv97hGyy-gCEBRqVsz1Yg 提取码: x8t7 
+# 链接: https://pan.baidu.com/s/1zOv97hGyy-gCEBRqVsz1Yg?pwd=x8t7 提取码: x8t7 
 
-$ docker run -d --name go-builder  golang:1.17 sleep 30000
-$ docker cp origin-master go-builder:/go
+# git clone https://gitee.com/chengkanghua/origin.git  #已同步到了gitee,推荐使用这个地址
+
+$ docker run -d --name go-builder  golang:1.23 sleep 30000
+# docker cp origin-master go-builder:/go
 $ docker exec -ti go-builder bash
-# cd /go/origin-master
+# git clone https://gitee.com/chengkanghua/origin.git
+# cd origin
 # go env -w GOPROXY=https://goproxy.cn,direct
 # CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build tools/etcdhelper/etcdhelper.go
 
-$ docker cp go-builder:/go/origin-master/etcdhelper .
+$ docker cp go-builder:/go/origin/etcdhelper .
 $ cp etcdhelper /usr/bin/
 
 
 ## 上述构建好的etcdhelper文件，也可以直接通过网盘下载：
-## 链接: https://pan.baidu.com/s/1NJDy08nzuSlImAw5mXJZ-Q 提取码: 5i55
+## 链接: https://pan.baidu.com/s/1NJDy08nzuSlImAw5mXJZ-Q?pwd=5i55 提取码: 5i55
 ```
 
 `etcdhelper`如何使用？
 
 ```bash
 export ETCDCTL_API=3
-export ETCD_ENDPOINTS=172.21.65.227:2379
+export ETCD_ENDPOINTS=172.16.1.2:2379
 etcdhelper -endpoint $ETCD_ENDPOINTS ls
-etcdhelper -endpoint $ETCD_ENDPOINTS get /registry/services/specs/luffy/mysql
+etcdhelper -endpoint $ETCD_ENDPOINTS get /registry/services/specs/luffy/mysql #返回的是json数据
+
 ```
 
 如何批量操作？
@@ -199,22 +286,39 @@ etcdhelper -endpoint $ETCD_ENDPOINTS get /registry/services/specs/luffy/mysql
 
 # 通过etcdctl或者luffy相关的资源存储的key
 export ETCDCTL_API=3
-export ETCD_ENDPOINTS=172.21.65.227:2379
+export ETCD_ENDPOINTS=172.16.1.2:2379
 etcdctl --endpoints=$ETCD_ENDPOINTS get / --prefix --keys-only|grep luffy >keys.txt
 
 # 使用脚本利用etcdhelper将key转换成为json文件
-cat key_to_json.sh
+cat <<\EOF > key_to_json.sh
 #!/bin/bash
-
 i=0
 export ETCDCTL_API=3
-export ETCD_ENDPOINTS=172.21.65.227:2379
+export ETCD_ENDPOINTS=172.16.1.2:2379
 for line in `cat keys.txt`
 do
    etcdhelper -endpoint $ETCD_ENDPOINTS   get $line >$i.json
    sed -i '1d' $i.json
    let 'i+=1'
 done
+EOF
+
+# sh key_to_json.sh
+# ll *.json | awk '{print $9}'|sort -V
+0.json
+1.json
+2.json
+3.json
+4.json
+5.json
+6.json
+7.json
+8.json
+9.json
+10.json
+11.json
+
+
 ```
 
 有了json文件，需要将json转为yaml
@@ -222,21 +326,29 @@ done
 ```bash
 docker exec -ti go-builder  bash
 # git clone https://gitee.com/agagin/json2yaml-go.git
+# git clone https://gitee.com/chengkanghua/json2yaml-go.git #备用地址
+# cd json2yaml-go/
 # go env -w GOPROXY=https://goproxy.cn,direct
 # GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o json2yaml json2yaml.go
 # pwd
-# /go/src/json2yaml-go
+# /go/json2yaml-go
 
-docker cp go-builder:/go/src/json2yaml-go/json2yaml .
+docker cp go-builder:/go/json2yaml-go/json2yaml .
 
-./json2yaml -jp .
+./json2yaml -jp .   #所有的json文件转换成了 yaml文件
+
+mkdir yaml
+mv *.yaml yaml
+kubectl -f yaml/  #直接在新的k8s恢复了
+
+
 ```
 
 
 
-# [Kubernetes调度器](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=kubernetes调度)
+# Kubernetes调度器
 
-###### [为何要控制Pod应该如何调度](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=为何要控制pod应该如何调度)
+###### 为何要控制Pod应该如何调度
 
 - 集群中有些机器的配置高（SSD，更好的内存等），我们希望核心的服务（比如说数据库）运行在上面
 - 某两个服务的网络传输很频繁，我们希望它们最好在同一台机器上
@@ -244,7 +356,7 @@ docker cp go-builder:/go/src/json2yaml-go/json2yaml .
 
 Kubernetes Scheduler 的作用是将待调度的 Pod 按照一定的调度算法和策略绑定到集群中一个合适的 Worker Node 上，并将绑定信息写入到 etcd 中，之后目标 Node 中 kubelet 服务通过 API Server 监听到 Scheduler 产生的 Pod 绑定事件获取 Pod 信息，然后下载镜像启动容器。
 
-![img](4Kubernetes进阶实践.assets/kube-scheduler-1.jpg)
+<img src="./4Kubernetes进阶实践.assets/kube-scheduler-1.jpg" alt="img" style="zoom: 67%;" />
 
 ###### [调度的过程](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=调度的过程)
 
@@ -255,15 +367,57 @@ Scheduler 提供的调度流程分为预选 (Predicates) 和优选 (Priorities) 
 
 经过预选筛选和优选打分之后，K8S选择分数最高的 Node 来运行 Pod，如果最终有多个 Node 的分数最高，那么 Scheduler 将从当中随机选择一个 Node 来运行 Pod。
 
-![img](4Kubernetes进阶实践.assets/kube-scheduler-process.png)
+<img src="./4Kubernetes进阶实践.assets/kube-scheduler-process.png" alt="img" style="zoom: 50%;" />
 
 预选：
 
-![img](4Kubernetes进阶实践.assets/kube-scheduler-pre.jpg)
+<img src="./4Kubernetes进阶实践.assets/kube-scheduler-pre.jpg" alt="img" style="zoom: 67%;" />
+
+| 名称                              | 描述                                                         | 默认 |
+| --------------------------------- | ------------------------------------------------------------ | ---- |
+| MatchlnterPodAffinity             | 检查Pod和其他Pod是否符合亲和性规则                           | 是   |
+| CheckVolumeBinding                | 检查PVC和PV是否符合要求                                      | 是   |
+| CheckNodeCondition                | 检查Node是否Ready、网络是否可用、是否OutOfDisk               | 是   |
+| GeneralPredicates                 | 检查Pod数量上限、CPU、内存、GPU等资源是否符合要求            | 是   |
+| HostName                          | 检查Node名称是否和Pod中指定的nodeName一致                    | 否   |
+| PodFitsHostPorts                  | 检查Pod内每一个容器所需的HostPort是否已被其它容器占用        | 否   |
+| MatchNodeSelector                 | 检查Node是否包含Pod标签选择器指定的标签                      | 否   |
+| PodFitsResources                  | 检查Node的CPU和内存是否满足Pod需求                           | 否   |
+| NoDiskConflict                    | 检查Pod的Volume和Node上每个Pod的OPolume是否冲突              | 是   |
+| PodToleratesNode Taints           | 检查Pod的Tolerations是否与Node的Taints匹配                   | 是   |
+| CheckNodeUnschedulable            | 检查Node是否是可调度的                                       | 否   |
+| PodToleratesNodeNo Execute Taints | Pod是否容忍Node上有NoExecute污点                             | 否   |
+| CheckNodeLabelPresence            | 检查Node中是否有Scheduler配置的标签                          | 否   |
+| CheckServiceAffinity              | 检查Node是否包含策略指定的标签,或待调度Pod在同 一个Service和Namespace下的其它Pod的标签的亲和性 | 否   |
+| MaxCSIVolumeCount                 | 检查挂载了多少CSI卷,是否超过限制                             | 是   |
+| NoVolumeZoneConflict              | 检查给定Zone限制前提下,Node是否和待调度Pod存在 卷冲突        | 是   |
+| CheckNodeMemory Pressure          | 检查Node是否内存过载,只有QoS是Best-effort的Pod需要检查       | 是   |
+| CheckNodeDiskPressure             | 检查Node是否硬盘过载                                         | 是   |
+| CheckNodePIDPressure              | 检查Node的PID数量是否压力过大                                | 是   |
 
 优选：
 
-![img](4Kubernetes进阶实践.assets/kube-scheduler-pro.jpg)
+<img src="./4Kubernetes进阶实践.assets/kube-scheduler-pro.jpg" alt="img" style="zoom: 25%;" />
+
+
+
+| 名称                              | 描述                                                         | 默认 | 默认权重 |
+| --------------------------------- | ------------------------------------------------------------ | ---- | -------- |
+| EqualPriority                     | 所有节点标记相同的分数                                       | 否   | 1        |
+| MostRequestedPriority             | 计算Node的CPU和内存利用率                                    | 否   | 1        |
+| RequestedToCapacity RatioPriority | 将Node CPU和内存利用率映射成分数,利用率为0则计10分,利用率为100则计0分 | 否   | 1 - 10   |
+| SelectorSpreadPriority            | 属于相同Service或者RC的Pod在Node上均匀分布                   | 是   | 1        |
+| ServiceSpreadingPriority          | 属于相同Service的Pod在Node上均匀分布                         | 否   | 1        |
+| InterPodAffinityPriority          | 根据Affnity和Anti - Affnity进行加分减分                      | 是   | 1        |
+| LeastRequestedPriority            | 计算Pod需要的CPU和内存占当前节点可用资源的百分比,百分比最小的最优 | 是   | 1        |
+| BalancedResource Allocation       | 计算Node CPU和内存使用率最均衡的最优                         | 是   | 1        |
+| NodePreferAvoidPodsPriority       | 根据Node的Annotation scheduler alpha kubernetes io/preferAvoidPods,这个Annotation会禁止RC或者ReplicaSet的Pod调度在该Node上 | 是   | 10000    |
+| NodeAffinityPriority              | 根据Affnity计分                                              | 是   | 1        |
+| Taint TolerationPriority          | 根据Toleration和Taints是否匹配计分                           | 是   | 1        |
+| ImageLocalityPriority             | 根据Node是否具备Pod运行的环境来计分                          | 是   | 1        |
+| ResourceLimitsPriority            | 根据Pod的资源限制进行计分                                    | 否   | 1        |
+
+
 
 ###### [NodeSelector](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=nodeselector)
 
@@ -298,7 +452,7 @@ spec:
 ...
 ```
 
-###### [nodeAffinity](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=nodeaffinity)
+###### nodeAffinity
 
 Pod -> Node的标签
 
@@ -314,7 +468,7 @@ preferredDuringSchedulingIgnoredDuringExecution：软策略，如果你没有满
 spec:
       containers:
       - name: eladmin-api
-        image: 172.21.65.226:5000/eladmin-api:v1
+        image: 172.16.1.226:5000/eladmin-api:v1
         ports:
         - containerPort: 8000
       affinity:
@@ -365,6 +519,7 @@ Pod -> Pod的标签
 - 可以允许同一个node节点中调度两个`eladmin-web`的副本，前提是尽量把pod分散部署在集群中
 
 ```yaml
+# 如果某个节点中，存在了app=eladmin-web的label的pod，那么 调度器一定不要给我调度过去
 ...
     spec:
       affinity:
@@ -379,8 +534,9 @@ Pod -> Pod的标签
             topologyKey: kubernetes.io/hostname
       containers:
 ...
-# 如果某个节点中，存在了app=eladmin-web的label的pod，那么 调度器一定不要给我调度过去
 
+
+# 如果某个节点中，存在了app=eladmin-web的label的pod，那么调度器尽量不要调度过去
 ...
     spec:
       affinity:
@@ -397,7 +553,7 @@ Pod -> Pod的标签
               topologyKey: kubernetes.io/hostname
       containers:
 ...
-# 如果某个节点中，存在了app=eladmin-web的label的pod，那么调度器尽量不要调度过去
+
 ```
 
 > https://kubernetes.io/zh/docs/concepts/scheduling-eviction/assign-pod-node/
@@ -433,9 +589,9 @@ $ kubectl taint node [node_name] key=value:[effect]
      kubectl taint nodes node_name key-
  
  示例：
-     kubectl taint node k8s-master smoke=true:NoSchedule
-     kubectl taint node k8s-master smoke:NoExecute-
-     kubectl taint node k8s-master smoke-
+     kubectl taint node k8s-master smoke=true:NoSchedule  #设置污点
+     kubectl taint node k8s-master smoke:NoExecute-       #去除污点
+     kubectl taint node k8s-master smoke-                 #去除污点
 ```
 
 污点演示：
@@ -450,7 +606,8 @@ $ kubectl taint node k8s-slave2 smoke=true:NoSchedule
 
 ## 扩容eladmin-web的Pod，观察新Pod的调度情况
 $ kuebctl -n luffy scale deploy eladmin-web --replicas=3
-$ kubectl -n luffy get po -w    ## pending
+$ kubectl -n luffy get po -w    ## pending  三个节点都有污点无法调度
+  kubectl -n luffy describe pod pending的pod的name  #查看对应warning的信息,
 ```
 
 Pod容忍污点示例：
@@ -460,7 +617,7 @@ Pod容忍污点示例：
 spec:
       containers:
       - name: eladmin-web
-        image: 172.21.65.226:5000/eladmin/eladmin-web:v2
+        image: 172.16.1.226:5000/eladmin/eladmin-web:v2
       tolerations: #设置容忍性
       - key: "smoke" 
         operator: "Equal"  #不指定operator，默认为Equal
@@ -470,21 +627,56 @@ spec:
         operator: "Exists"  #如果操作符为Exists，那么value属性可省略,不指定operator，默认为Equal
       #意思是这个Pod要容忍的有污点的Node的key是smoke Equal true,效果是NoSchedule，
       #tolerations属性下各值必须使用引号，容忍的值都是设置Node的taints时给的值。
+
+# 效果: k8s-slave1和k8s-slave2都可能会被调度过去,他们两个node的污点是 drunk smoke, 不会调度到k8s-master
+```
+
+```bash
 spec:
       containers:
       - name: eladmin-web
-        image: 172.21.65.226:5000/eladmin/eladmin-web:v2
+        image: 172.16.1.226:5000/eladmin/eladmin-web:v2
       tolerations:
         - operator: "Exists"
+        
+#效果: 所有污点都可以容忍,所有node都可能会调度过去
 ```
+
+
 
 > NoExecute
 
 ###### [Cordon](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=cordon)
 
 ```bash
-$ kubectl cordon k8s-slave2
-$ kubectl drain k8s-slave2
+
+# 停止调度  # 单词cordon 警戒线 ;旧有的pod不会受到影响，仍正常对外提供服务
+# 影响最小，只会将node调为SchedulingDisabled
+# 之后再发创建pod，不会被调度到该节点
+$ kubectl cordon k8s-slave2 
+# kubectl describe node k8s-slave2|grep -i taint #可以查看到添加了一个不可调度的污点
+# 恢复调度
+$ kubectl uncordon k8s-node2 
+
+
+# drain 驱逐节点
+# 首先，驱逐node上的pod，其他节点重新创建
+# 接着，将节点调为** SchedulingDisabled**
+$ kubectl drain k8s-slave2   
+
+drain的参数
+--force
+当一些pod不是经 ReplicationController, ReplicaSet, Job, DaemonSet 或者 StatefulSet 管理的时候,就需要用--force来强制执行 (例如:kube-proxy)
+ 
+ 
+--ignore-daemonsets
+忽略DaemonSet管理下的Pod
+# 若node节点上存在daemonsets控制器创建的pod,则需要使用--ignore-daemonsets忽略错误错误警告
+# kubectl drain k8s-slave2 --ignore-daemonsets
+
+--delete-local-data
+如果有mount local volumn的pod，会强制杀掉该pod并把料清除掉
+另外如果跟本身的配置讯息有冲突时，drain就不会执行
 ```
 
 ###### [Pod驱逐策略](http://49.7.203.222:2023/#/kubernetes-advanced/scheduler?id=pod驱逐策略)
@@ -510,6 +702,8 @@ K8S 有个特色功能叫 pod eviction，它在某些场景下如节点 NotReady
      ```
 
      即各pod可以独立设置驱逐容忍时间。
+     
+     ![image-20241020132548617](./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241020132548617.png)
 
 2. Kubelet: 周期性检查本节点资源，当资源不足时，按照优先级驱逐部分 pod
 
@@ -519,15 +713,11 @@ K8S 有个特色功能叫 pod eviction，它在某些场景下如节点 NotReady
    - `imagefs.available`：镜像存储盘的可用空间
    - `imagefs.inodesFree`：镜像存储盘的inodes可用数量
 
+# Kubernetes认证与授权
 
+###### APIServer安全控制
 
-
-
-# [Kubernetes认证与授权](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=kubernetes认证与授权)
-
-###### [APIServer安全控制](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=apiserver安全控制)
-
-![image-20221122085209765](4Kubernetes进阶实践.assets/image-20221122085209765.png)
+<img src="./4Kubernetes进阶实践.assets/image-20221122085209765.png" alt="image-20221122085209765" style="zoom: 67%;" />
 
 - Authentication：身份认证
 
@@ -647,6 +837,13 @@ To start using your cluster, you need to run the following as a regular user:
 
 ```bash
 $ echo xxxxxxxxxxxxxx |base64 -d > kubectl.crt
+
+# 解码证书
+grep client-certificate-data ~/.kube/config |awk -F' ' '{print $2}' |base64 -d > kubectl.crt
+grep client-key-data ~/.kube/config |awk -F' ' '{print $2}' |base64 -d > kubectl.key
+
+ll /etc/kubernetes/pki/ca.crt  #这个根证书
+grep certificate-authority-data  ~/.kube/config |awk -F' ' '{print $2}' |base64 -d #根证书一样
 ```
 
 说明在认证阶段，`apiserver`会首先使用`--client-ca-file`配置的CA证书去验证kubectl提供的证书的有效性,基本的方式 ：
@@ -677,7 +874,7 @@ Certificate:
 
 kubeadm在init初始引导集群启动过程中，创建了许多默认的RBAC规则， 在k8s有关RBAC的官方文档中，我们看到下面一些`default clusterrole`列表:
 
-![img](4Kubernetes进阶实践.assets/kubeadm-default-clusterrole-list.png)
+![img](./4Kubernetes进阶实践.assets/kubeadm-default-clusterrole-list.png)
 
 其中第一个cluster-admin这个cluster role binding绑定了system:masters group，这和authentication环节传递过来的身份信息不谋而合。 沿着system:masters group对应的cluster-admin clusterrolebinding“追查”下去，真相就会浮出水面。
 
@@ -715,7 +912,7 @@ PolicyRule:
 
 非资源类，如查看集群健康状态。
 
-![img](4Kubernetes进阶实践.assets/how-kubectl-be-authorized.png)
+![img](./4Kubernetes进阶实践.assets/how-kubectl-be-authorized.png)
 
 ###### [RBAC](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=rbac)
 
@@ -791,6 +988,7 @@ RBAC模式引入了4个资源类型：
     kind: Role #这里可以是Role或者ClusterRole,若是ClusterRole，则权限也仅限于rolebinding的内部
     name: pod-reader # match the name of the Role or ClusterRole you wish to bind to
     apiGroup: rbac.authorization.k8s.io
+    
   ```
 
 *注意：rolebinding既可以绑定role，也可以绑定clusterrole，当绑定clusterrole的时候，subject的权限也会被限定于rolebinding定义的namespace内部，若想跨namespace，需要使用clusterrolebinding*
@@ -836,7 +1034,25 @@ RBAC模式引入了4个资源类型：
     apiGroup: rbac.authorization.k8s.io
   ```
 
-![img](4Kubernetes进阶实践.assets/rbac-2.jpg)
+![image-20241020165305022](./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241020165305022.png)
+
+
+
+<img src="./4Kubernetes进阶实践.assets/rbac-2.jpg" alt="img" style="zoom: 67%;" />
+
+
+
+![image-20241020165439548](./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241020165439548.png)
+
+
+
+![image-20241020230020796](./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241020230020796.png)
+
+
+
+
+
+
 
 ###### [kubelet的认证授权](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=kubelet的认证授权)
 
@@ -855,12 +1071,25 @@ $ systemctl status kubelet
    Memory: 60.5M
    CGroup: /system.slice/kubelet.service
            └─851 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf
+           
+           
+systemctl status kubelet -l 
+[root@k8s-master ~]# grep  client /etc/kubernetes/kubelet.conf
+    client-certificate: /var/lib/kubelet/pki/kubelet-client-current.pem
+    client-key: /var/lib/kubelet/pki/kubelet-client-current.pem
+    
+openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -text
+[root@k8s-master ~]# openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -text |grep  Subject:
+        Subject: O=system:nodes, CN=system:node:k8s-master
+
 ```
 
 查看`/etc/kubernetes/kubelet.conf`，解析证书：
 
 ```bash
-$ echo xxxxx |base64 -d >kubelet.crt
+
+grep certificate-authority-data /etc/kubernetes/kubelet.conf |awk -F' ' '{print $2}' |base64 -d  >kubelet.crt 
+
 $ openssl x509 -in kubelet.crt -text
 Certificate:
     Data:
@@ -878,6 +1107,9 @@ Certificate:
 
 ```bash
 Subject: O=system:nodes, CN=system:node:k8s-master
+
+O 当成 Group:system:nodes
+CN 当成用户 
 ```
 
 我们知道，k8s会把O作为Group来进行请求，因此如果有权限绑定给这个组，肯定在clusterrolebinding的定义中可以找得到。因此尝试去找一下绑定了system:nodes组的clusterrolebinding
@@ -955,47 +1187,55 @@ $ openssl genrsa -out luffy.key 2048
 $ openssl req -new -key luffy.key -out luffy.csr -subj "/O=admin:luffy/CN=luffy-admin"
 
 # 证书拓展属性
-$ cat extfile.conf
+cat <<EOF > extfile.conf
 [ v3_ca ]
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = clientAuth
+EOF
 
 # 生成luffy.crt证书
 $ openssl x509 -req -in luffy.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -sha256 -out luffy.crt -extensions v3_ca -extfile extfile.conf -days 3650
+
 ```
 
 配置kubeconfig文件：
 
 ```bash
 # 创建kubeconfig文件，指定集群名称和地址
-$ kubectl config set-cluster luffy-cluster --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://172.21.65.226:6443 --kubeconfig=luffy.kubeconfig
+kubectl config set-cluster luffy-cluster --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://172.16.1.226:6443 --kubeconfig=luffy.kubeconfig
 
 # 为kubeconfig文件添加认证信息
-$ kubectl config set-credentials luffy-admin --client-certificate=luffy.crt --client-key=luffy.key --embed-certs=true --kubeconfig=luffy.kubeconfig
+kubectl config set-credentials luffy-admin --client-certificate=luffy.crt --client-key=luffy.key --embed-certs=true --kubeconfig=luffy.kubeconfig
 
 # 为kubeconfig添加上下文配置
-$ kubectl config set-context luffy-context --cluster=luffy-cluster --user=luffy-admin --kubeconfig=luffy.kubeconfig
+kubectl config set-context luffy-context --cluster=luffy-cluster --user=luffy-admin --kubeconfig=luffy.kubeconfig
 
 # 设置默认的上下文
-$ kubectl config use-context luffy-context --kubeconfig=luffy.kubeconfig
+kubectl config use-context luffy-context --kubeconfig=luffy.kubeconfig
+
+
 ```
 
 验证：
 
 ```bash
 # 设置当前kubectl使用的config文件
-$ export KUBECONFIG=luffy.kubeconfig
+export KUBECONFIG=luffy.kubeconfig
 
 # 当前不具有任何权限，因为没有为用户或者组设置RBAC规则
-$ kubectl get po
+# kubectl get po
 Error from server (Forbidden): pods is forbidden: User "luffy-admin" cannot list resource "pods" in API group "" in the namespace "default"
+
+#修改回来
+export KUBECONFIG=~/.kube/config
+kubectl get po
 ```
 
 为luffy-admin用户添加luffy命名空间访问权限：
 
 ```bash
 # 定义role，具有luffy命名空间的所有权限
-$ cat luffy-admin-role.yaml
+cat <<EOF  > luffy-admin-role.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -1005,9 +1245,10 @@ rules:
 - apiGroups: ["*"] # "" 指定核心 API 组
   resources: ["*"]
   verbs: ["*"]
-  
+EOF
+
 #定义rolebinding，为luffy用户绑定luffy-admin这个role，这样luffy用户就有操作luffy命名空间的所有权限
-$ cat luffy-admin-rolebinding.yaml
+cat <<EOF > luffy-admin-rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -1021,6 +1262,18 @@ roleRef:
   kind: Role #this must be Role or ClusterRole
   name: luffy-admin # 这里的名称必须与你想要绑定的 Role 或 ClusterRole 名称一致
   apiGroup: rbac.authorization.k8s.io
+EOF
+
+# user group不是k8s资源,不需要创建
+export KUBECONFIG=~/.kube/config
+kubectl create -f luffy-admin-role.yaml
+kubectl create -f luffy-admin-rolebinding.yaml
+
+
+export KUBECONFIG=luffy.kubeconfig
+kubectl get pods  #没有权限,
+kubectl -n luffy get pods   #查看luffy 命名空间权限ok
+
 ```
 
 ###### [Service Account及K8S Api调用](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=service-account及k8s-api调用)
@@ -1041,7 +1294,7 @@ kubectl -n ingress-nginx get deployment ingress-nginx-controller -oyaml
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
-      serviceAccount: ingress-nginx
+      serviceAccount: ingress-nginx     #*******
       serviceAccountName: ingress-nginx
       terminationGracePeriodSeconds: 300
       volumes:
@@ -1089,7 +1342,15 @@ PolicyRule:
 *思考：如何使用ServiceAccount调用k8s的接口？*
 
 ```bash
-$ kubectl -n ingress-nginx exec -ti ingress-nginx-controller-555746c4b4-cwwg9 -- bash
+kubectl -n ingress-nginx get serviceaccounts
+
+# kubectl -n ingress-nginx get po
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-2dqdt        0/1     Completed   0          20h
+ingress-nginx-admission-patch-74hm5         0/1     Completed   0          20h
+ingress-nginx-controller-5cf5b685c5-l5v95   1/1     Running     0          7h42m
+
+$ kubectl -n ingress-nginx exec -ti ingress-nginx-controller-5cf5b685c5-l5v95 -- sh
 bash-5.1$ df -h
 Filesystem                Size      Used Available Use% Mounted on
 overlay                  74.0G      9.6G     64.4G  13% /
@@ -1112,21 +1373,22 @@ tmpfs                     7.8G         0      7.8G   0% /proc/scsi
 tmpfs                     7.8G         0      7.8G   0% /sys/firmware
 
 cat /run/secrets/kubernetes.io/serviceaccount/token
-eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjk5Njk2MjI3LCJpYXQiOjE2NjgxNjAyMjcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJpbmdyZXNzLW5naW54IiwicG9kIjp7Im5hbWUiOiJpbmdyZXNzLW5naW54LWNvbnRyb2xsZXItNTU1NzQ2YzRiNC1jd3dnOSIsInVpZCI6ImY4NjEzNjI3LWQyNWItNDU5MC05NjNmLTZhNGZhNDBmODJhNyJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiaW5ncmVzcy1uZ2lueCIsInVpZCI6ImJhMDNjODQyLWM4MDctNDY3My05NzRmLTA2ZWM2ZjA5MTE3YiJ9LCJ3YXJuYWZ0ZXIiOjE2NjgxNjM4MzR9LCJuYmYiOjE2NjgxNjAyMjcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDppbmdyZXNzLW5naW54OmluZ3Jlc3MtbmdpbngifQ.iCPjYEi_x2WWpAF4X5uEfgxG0eGeQ5hoVPTR8c6xgHkm2SpAuBHk1bf6jQgJO_UJZ5rM-DP2hkK2wETNtXnWi3k5bt5HrXcIIZrGwh9UC8D1mMGJbQ0oUkmLr9wvvwtj153AzBtkS7KFn5j0PWx987HcCyRmEtr06QSnLH7-1Y29n9AYYOlNHTUpUDyN8v-zLDA_Oua6qQPf8oHgpTSd7M-LQXAumFUNCi50l9FI2RdPsQG8ko0vKAAqESf9pML_qbMQpwOjYlCfB0quDb6WAbvtvsj1IKwlF7dlymzUJKCqiF8ZVq5VNuQS8FhlVt1G5B1N9M7luPcGTCzQq6wmFQ
+eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzYxMTMyNDM3LCJpYXQiOjE3Mjk1OTY0MzcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJpbmdyZXNzLW5naW54IiwicG9kIjp7Im5hbWUiOiJpbmdyZXNzLW5naW54LWNvbnRyb2xsZXItNWNmNWI2ODVjNS1sNXY5NSIsInVpZCI6Ijc0YjQwM2IxLTAzYzAtNGNjNC04YjRlLTE5NWU2OWYzZmNmYSJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiaW5ncmVzcy1uZ2lueCIsInVpZCI6IjUzM2ZiMWRhLWUxYzYtNGExYy1iNDUwLWU1ZjAwZWM2ZGRjZiJ9LCJ3YXJuYWZ0ZXIiOjE3Mjk2MDAwNDR9LCJuYmYiOjE3Mjk1OTY0MzcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDppbmdyZXNzLW5naW54OmluZ3Jlc3MtbmdpbngifQ.maHtg5BLj7OrgawRYwS2UPCreFd3i_XhlJ3jJbvmhqvfv6losJHjCwtD4ZUvUUCt6THwyUNKk-pPx_bAjyVR2_WhhcaQjkm2PFtjHb2bqXyKoRwjNms-smn4bsaVfUa_mfQ82mh-FsbZ28SZ023t6CoCGZlkANbJ4ihtYEV8eBXRqOSI_kKsQlXUnqQgbkOxgrAjaV8qtdGvm9P5qay4xXgc-PiT13iK4gxJ0COal6V76I-lBBz343Qumb2ZNM-0H85MGenUkqp2fmErvtXyeuV7Qkop6uhR_SUskx7vEEFHi_BgcgNFvX2wVVwWSEGoDK6YA0mLFCZExBV_VLW1UQ
+
 ```
 
 Pod中若指定了`serviceAccount`，则k8s自动为Pod挂载`/run/secrets/kubernetes.io/serviceaccount/token`这个文件，文件内容为token信息，业务程序可以使用该token进行k8s api的调用，同时，该token的访问权限与对应的`serviceAccount`的权限一致。
 
 ```bash
-curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjk5Njk2MjI3LCJpYXQiOjE2NjgxNjAyMjcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJpbmdyZXNzLW5naW54IiwicG9kIjp7Im5hbWUiOiJpbmdyZXNzLW5naW54LWNvbnRyb2xsZXItNTU1NzQ2YzRiNC1jd3dnOSIsInVpZCI6ImY4NjEzNjI3LWQyNWItNDU5MC05NjNmLTZhNGZhNDBmODJhNyJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiaW5ncmVzcy1uZ2lueCIsInVpZCI6ImJhMDNjODQyLWM4MDctNDY3My05NzRmLTA2ZWM2ZjA5MTE3YiJ9LCJ3YXJuYWZ0ZXIiOjE2NjgxNjM4MzR9LCJuYmYiOjE2NjgxNjAyMjcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDppbmdyZXNzLW5naW54OmluZ3Jlc3MtbmdpbngifQ.iCPjYEi_x2WWpAF4X5uEfgxG0eGeQ5hoVPTR8c6xgHkm2SpAuBHk1bf6jQgJO_UJZ5rM-DP2hkK2wETNtXnWi3k5bt5HrXcIIZrGwh9UC8D1mMGJbQ0oUkmLr9wvvwtj153AzBtkS7KFn5j0PWx987HcCyRmEtr06QSnLH7-1Y29n9AYYOlNHTUpUDyN8v-zLDA_Oua6qQPf8oHgpTSd7M-LQXAumFUNCi50l9FI2RdPsQG8ko0vKAAqESf9pML_qbMQpwOjYlCfB0quDb6WAbvtvsj1IKwlF7dlymzUJKCqiF8ZVq5VNuQS8FhlVt1G5B1N9M7luPcGTCzQq6wmFQ" https://172.21.65.226:6443/api/v1/nodes
+curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzYxMTMyNDM3LCJpYXQiOjE3Mjk1OTY0MzcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJpbmdyZXNzLW5naW54IiwicG9kIjp7Im5hbWUiOiJpbmdyZXNzLW5naW54LWNvbnRyb2xsZXItNWNmNWI2ODVjNS1sNXY5NSIsInVpZCI6Ijc0YjQwM2IxLTAzYzAtNGNjNC04YjRlLTE5NWU2OWYzZmNmYSJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoiaW5ncmVzcy1uZ2lueCIsInVpZCI6IjUzM2ZiMWRhLWUxYzYtNGExYy1iNDUwLWU1ZjAwZWM2ZGRjZiJ9LCJ3YXJuYWZ0ZXIiOjE3Mjk2MDAwNDR9LCJuYmYiOjE3Mjk1OTY0MzcsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDppbmdyZXNzLW5naW54OmluZ3Jlc3MtbmdpbngifQ.maHtg5BLj7OrgawRYwS2UPCreFd3i_XhlJ3jJbvmhqvfv6losJHjCwtD4ZUvUUCt6THwyUNKk-pPx_bAjyVR2_WhhcaQjkm2PFtjHb2bqXyKoRwjNms-smn4bsaVfUa_mfQ82mh-FsbZ28SZ023t6CoCGZlkANbJ4ihtYEV8eBXRqOSI_kKsQlXUnqQgbkOxgrAjaV8qtdGvm9P5qay4xXgc-PiT13iK4gxJ0COal6V76I-lBBz343Qumb2ZNM-0H85MGenUkqp2fmErvtXyeuV7Qkop6uhR_SUskx7vEEFHi_BgcgNFvX2wVVwWSEGoDK6YA0mLFCZExBV_VLW1UQ" https://172.16.1.226:6443/api/v1/nodes
 ```
 
-![img](4Kubernetes进阶实践.assets/rbac.jpg)
+![img](./4Kubernetes进阶实践.assets/rbac.jpg)
 
 只允许访问luffy命名空间的pod资源：
 
 ```bash
-$ cat luffy-admin-rbac.yaml
+cat <<EOF > luffy-admin-rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -1157,21 +1419,34 @@ roleRef:
   kind: Role #这里可以是Role或者ClusterRole,若是ClusterRole，则权限也仅限于rolebinding的内部
   name: pods-reader-writer
   apiGroup: rbac.authorization.k8s.io
+EOF
+
+kubectl create -f luffy-admin-rbac.yaml
+  
 ```
 
 演示权限：
 
 ```bash
 $ kubectl -n luffy create token luffy-pods-admin
-eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MTY2MDYxLCJpYXQiOjE2NjgxNjI0NjEsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiZGY3ZjRiZTAtMTI2Yy00ZTExLWJlNWYtZWZhYjk4NGY2OWZkIn19LCJuYmYiOjE2NjgxNjI0NjEsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.ZVO9smO5milPXJWkA9YLeSNMTBTNbqHFyO2YJipQ0BGAlTRkprsfnnS6Xod-1nP2bQmb1xdDiLhi2lhqoAGiornfV573eggbuYdB-xgqnD9cFP-PZzzUJ3G5Up-CUtkjO6kY1ljUa5s8TuTfqIpkbniaKUPciZSgLy4ozRbjOotrnZqpw6dKIuDRBFl26CvztNf3LvxinbeWeJv1dRPHzi90qKEopx2HR3PHBrcs7NuHk5c0He7Bjs1RsVvL1uOVYLXLIYgcnIZra1W8uMcff4-klinEYFo_g_CszTYx-MGLPcSLaHMcNw_qmXsVeq92JA-EooSDzF8XRQqZyLAe2g
-$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MTY2MDYxLCJpYXQiOjE2NjgxNjI0NjEsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiZGY3ZjRiZTAtMTI2Yy00ZTExLWJlNWYtZWZhYjk4NGY2OWZkIn19LCJuYmYiOjE2NjgxNjI0NjEsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.ZVO9smO5milPXJWkA9YLeSNMTBTNbqHFyO2YJipQ0BGAlTRkprsfnnS6Xod-1nP2bQmb1xdDiLhi2lhqoAGiornfV573eggbuYdB-xgqnD9cFP-PZzzUJ3G5Up-CUtkjO6kY1ljUa5s8TuTfqIpkbniaKUPciZSgLy4ozRbjOotrnZqpw6dKIuDRBFl26CvztNf3LvxinbeWeJv1dRPHzi90qKEopx2HR3PHBrcs7NuHk5c0He7Bjs1RsVvL1uOVYLXLIYgcnIZra1W8uMcff4-klinEYFo_g_CszTYx-MGLPcSLaHMcNw_qmXsVeq92JA-EooSDzF8XRQqZyLAe2g" https://172.21.65.226:6443/api/v1/namespaces/luffy/pods?limit=500
+eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxNzc2LCJpYXQiOjE3Mjk1OTgxNzYsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTgxNzYsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.gXv1E1MvyrVBmzLeRt_DAG3gXvE7vHAZivsoSgxQ4ZVOTMJSqZ5JRIaDUjWkHdaGuqGYtnGbA9rYBJqD9yEJkv4_QCHReLO_DkDbMsuh2Rc8XvGQHMC4W2gdaKqhcnQkGrF6LGUWk9OUnUlAdJTk63B-drsbSYIyWH6fLxNqjBX_CZDdf7-6rscXjhqW9keR5Gs7rd16aVSRsRc9A6LMSb8cC-mJc8r2-RjIg9upzZ08BrbbsoQrJ_6YqarWFZI2uaU2jVNZ_sGWgs1TaXvz9GDK6ysFJNYA3K5cd6aHBFDsEpW6VqU07qKGnzJu3oC3TGhZjZgEH3YBXSsSjsj1-A
 
-# https://172.21.65.226:6443/api/v1/nodes
+$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxNzc2LCJpYXQiOjE3Mjk1OTgxNzYsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTgxNzYsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.gXv1E1MvyrVBmzLeRt_DAG3gXvE7vHAZivsoSgxQ4ZVOTMJSqZ5JRIaDUjWkHdaGuqGYtnGbA9rYBJqD9yEJkv4_QCHReLO_DkDbMsuh2Rc8XvGQHMC4W2gdaKqhcnQkGrF6LGUWk9OUnUlAdJTk63B-drsbSYIyWH6fLxNqjBX_CZDdf7-6rscXjhqW9keR5Gs7rd16aVSRsRc9A6LMSb8cC-mJc8r2-RjIg9upzZ08BrbbsoQrJ_6YqarWFZI2uaU2jVNZ_sGWgs1TaXvz9GDK6ysFJNYA3K5cd6aHBFDsEpW6VqU07qKGnzJu3oC3TGhZjZgEH3YBXSsSjsj1-A" https://172.16.1.226:6443/api/v1/namespaces/luffy/pods?limit=500
+
+# https://172.16.1.226:6443/api/v1/nodes
+
+
+# 根据用户名反查权限有啥
+kubectl get clusterolebindings.rbac.authorization.k8s.io -oyaml|grep system:masters
+
+kubectl get clusterolebindings.rbac.authorization.k8s.io -oyaml|grep -n15 system:masters
+
+
 ```
 
 ###### [认证、鉴权图鉴](http://49.7.203.222:2023/#/kubernetes-advanced/auth?id=认证、鉴权图鉴)
 
-![img](4Kubernetes进阶实践.assets/AUTH.jpg)
+![img](./4Kubernetes进阶实践.assets/AUTH.jpg)
 
 
 
@@ -1189,7 +1464,7 @@ $ kubectl -n luffy scale deployment eladmin-web --replicas=2
 
 但是这个过程是手动操作的。在实际项目中，我们需要做到是的是一个自动化感知并自动扩容的操作。Kubernetes 也为提供了这样的一个资源对象：Horizontal Pod Autoscaling（Pod 水平自动伸缩），简称[HPA](https://v1-14.docs.kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 
-![img](4Kubernetes进阶实践.assets/hpa2.jpg)
+<img src="./4Kubernetes进阶实践.assets/hpa2.jpg" alt="img" style="zoom:67%;" />
 
 基本原理：HPA 通过监控分析控制器控制的所有 Pod 的负载变化情况来确定是否需要调整 Pod 的副本数量
 
@@ -1217,6 +1492,8 @@ Depending on your cluster setup, you may also need to change flags passed to the
 
 ```bash
 $ wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
+
+# https://gitee.com/chengkanghua/script/raw/master/k8s/components.yaml   #备用地址
 ```
 
 修改args参数：
@@ -1228,11 +1505,11 @@ $ wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.
 134       - args:
 135         - --cert-dir=/tmp
 136         - --secure-port=4443
-            - --kubelet-insecure-tls
+            - --kubelet-insecure-tls   # 增加
 137         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
 138         - --kubelet-use-node-status-port
 139         - --metric-resolution=15s
-140         image: bitnami/metrics-server:0.6.1
+140         image: bitnami/metrics-server:0.6.1  # 修改成国内地址
 141         imagePullPolicy: IfNotPresent
 ...
 ```
@@ -1245,6 +1522,12 @@ $ kubectl apply -f components.yaml
 $ kubectl -n kube-system get pods
 
 $ kubectl top nodes
+
+[root@k8s-master ~]# kubectl top nodes
+NAME         CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+k8s-master   201m         10%    1336Mi          71%
+k8s-slave1   84m          2%     1163Mi          61%
+k8s-slave2   87m          2%     489Mi           26%
 ```
 
 ##### [HPA实践](http://49.7.203.222:2023/#/kubernetes-advanced/hpa?id=hpa实践)
@@ -1256,41 +1539,45 @@ HPA的实现有两个版本：
 
 ###### [基于CPU和内存的动态伸缩](http://49.7.203.222:2023/#/kubernetes-advanced/hpa?id=基于cpu和内存的动态伸缩)
 
-![img](4Kubernetes进阶实践.assets/hpa.png)
+<img src="./4Kubernetes进阶实践.assets/hpa.png" alt="img" style="zoom:50%;" />
 
 创建hpa对象：
 
 ```bash
 # 方式一
-$ cat hpa-eladmin-web.yaml
+cat <<EOF > hpa-eladmin-web.yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: hpa-eladmin-web
   namespace: luffy
 spec:
-  maxReplicas: 3
+  maxReplicas: 3  # 最大副本数为 3
   minReplicas: 1
-  scaleTargetRef:
+  scaleTargetRef:  #定义自动扩缩容的目标资源
     apiVersion: apps/v1
     kind: Deployment
     name: eladmin-web
-  metrics:
-    - type: Resource
+  metrics:  #触发自动扩缩容的指标
+    - type: Resource #基于资源使用情况的指标
       resource:
-        name: memory
+        name: memory  #内存使用情况
         target:
-          type: Utilization
-          averageUtilization: 80
+          type: Utilization  #扩缩容的目标类型是资源利用率
+          averageUtilization: 80 # 当内存平均利用率达到 80% 时触发扩缩容操作
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: 80
+EOF
+kubectl create -f hpa-eladmin-web.yaml
 
 # 方式二
 $ kubectl -n luffy autoscale deployment eladmin-web --cpu-percent=80 --min=1 --max=3
+
+
 ```
 
 > Deployment对象必须配置requests的参数，不然无法获取监控数据，也无法通过HPA进行动态伸缩
@@ -1300,16 +1587,34 @@ $ kubectl -n luffy autoscale deployment eladmin-web --cpu-percent=80 --min=1 --m
 ```bash
 $ yum -y install httpd-tools
 $ kubectl -n luffy get svc eladmin-web
-eladmin-web   ClusterIP   10.109.94.95   <none>        80/TCP    2d18h
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+eladmin-web   ClusterIP   10.103.92.160   <none>        80/TCP    3h42m
+
 
 # 为了更快看到效果，先调整副本数为1
 $ kubectl -n luffy scale deploy eladmin-web --replicas=1
 
 # 模拟1000个用户并发访问页面10万次
-$ ab -n 100000 -c 1000 http://10.109.94.95:80/
+$ ab -n 100000 -c 1000 http://10.103.92.160:80/
 
-$ kubectl get hpa
+$ kubectl -n luffy get hpa
+[root@k8s-master ~]# kubectl -n luffy get hpa -w
+NAME              REFERENCE                TARGETS          MINPODS   MAXPODS   REPLICAS   AGE
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 2%/80%   1         3         1          3m7s
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 2%/80%   1         3         1          3m36s
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 390%/80%   1         3         1          3m40s
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 66%/80%    1         3         3          3m55s
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 2%/80%     1         3         3          4m10s
+hpa-eladmin-web   Deployment/eladmin-web   1%/80%, 2%/80%     1         3         3          4m25s
+
 $ kubectl -n luffy get pods
+[root@k8s-master ~]# kubectl -n luffy get pods
+NAME                           READY   STATUS    RESTARTS      AGE
+eladmin-api-7f7686858f-5t546   1/1     Running   0             9h
+eladmin-web-7f46789b7-d9z48    1/1     Running   0             163m
+eladmin-web-7f46789b7-jfxvx    0/1     Running   0             33s
+eladmin-web-7f46789b7-z2j5k    0/1     Running   0             33s
+
 ```
 
 压力降下来后，会有默认5分钟的`scaledown`的时间，可以通过`controller-manager`的如下参数设置：
@@ -1328,11 +1633,11 @@ The value for this option is a duration that specifies how long the autoscaler h
 
 除了基于 CPU 和内存来进行自动扩缩容之外，我们还可以根据自定义的监控指标来进行。这个我们就需要使用 `Prometheus Adapter`，Prometheus 用于监控应用的负载和集群本身的各种指标，`Prometheus Adapter` 可以帮我们使用 Prometheus 收集的指标并使用它们来制定扩展策略，这些指标都是通过 APIServer 暴露的，而且 HPA 资源对象也可以很轻易的直接使用。
 
-![img](4Kubernetes进阶实践.assets/custom-hpa.webp)
+<img src="./4Kubernetes进阶实践.assets/custom-hpa.webp" alt="img" style="zoom: 50%;" />
 
 架构图：
 
-![img](4Kubernetes进阶实践.assets/hpa-prometheus-custom.png)
+<img src="./4Kubernetes进阶实践.assets/hpa-prometheus-custom.png" alt="img" style="zoom: 67%;" />
 
 ##### [实现原理篇](http://49.7.203.222:2023/#/kubernetes-advanced/hpa?id=实现原理篇)
 
@@ -1346,9 +1651,9 @@ The value for this option is a duration that specifies how long the autoscaler h
 `Metrics Server` 可以通过标准的 Kubernetes API 把监控数据暴露出来，比如获取某一Pod的监控数据：
 
 ```bash
-https://172.21.65.226:6443/apis/metrics.k8s.io/v1beta1/namespaces/<namespace-name>/pods/<pod-name>
+https://172.16.1.226:6443/apis/metrics.k8s.io/v1beta1/namespaces/<namespace-name>/pods/<pod-name>
 
-# https://172.21.65.226:6443/api/v1/namespaces/luffy/pods?limit=500
+# https://172.16.1.226:6443/api/v1/namespaces/luffy/pods?limit=500
 ```
 
 集群中安装了`metrics-server`就可以用上述接口获取Pod的基础监控数据了，如：
@@ -1356,16 +1661,16 @@ https://172.21.65.226:6443/apis/metrics.k8s.io/v1beta1/namespaces/<namespace-nam
 ```bash
 # 获取eladmin-api的pod的监控数据
 $ kubectl -n luffy get pod
-eladmin-api-6b5d9664d8-gj87w   1/1     Running   0          5d19h
+eladmin-api-7f7686858f-5t546  1/1     Running   0          5d19h
 
 # 则请求的接口应该是 
-https://172.21.65.226:6443/apis/metrics.k8s.io/v2/namespaces/luffy/pods/eladmin-api-6b5d9664d8-gj87w
+https://172.16.1.226:6443/apis/metrics.k8s.io/v2/namespaces/luffy/pods/eladmin-api-7f7686858f-5t546
 
 # 我们知道调用apiserver需要认证和鉴权流程，因此，前篇我们已经在luffy名称空间下创建了名为luffy-pods-admin的serviceaccount，并赋予了luffy名称空间的pods的操作权限，因此可以使用该serviceaccount的token来进行认证
 $ kubectl -n luffy create token luffy-pods-admin
-eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI4Mzg5LCJpYXQiOjE2NjgyMjQ3ODksImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiNjAzYWEzMDYtNDljZi00Y2UxLWI1OGYtMGNmMjUzYTI4YmY2In19LCJuYmYiOjE2NjgyMjQ3ODksInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.HywSHWpsq9yHraUsPwehpaJKWWZFIQY2xE3mZBcVbbXA6ZerEjBzy1q_7VwonNMyUDo_kgK_vM0CVWKDFbESXqG-tbYd6LLD_PNvL8WyEZsKfiK2LYBiTNOAXnUqReUNt9XD_oHVoaEfeEpIO1WPONnmdcOLl_OBa7sdWFH8iT42hVufOHjYELJrOF8PG741BvtMuAIohYwFgO76G8dTWEaOYCX9Rg8n9jJQTqhMvm1fvW6c0V558q63e3oi7OFFR_V90dg4PYbBMAVMrKrrGAogEPnBhHFiY8YKF9lECzTyoVIxOphyvS5M9noU6G_W3-0w7gsMYGrXQVw7xlywNg
+eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxOTQyLCJpYXQiOjE3Mjk1OTgzNDIsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTgzNDIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.vdQUkcZ_Zrxp08pG4mjSBY-R3kGpOwjd1zhRvgKINIdM-xVj0hUO5Y6IVl4yMdEg14HPQpHCbl_vOoURQ0Iyke7ItAT3PJhfxzhHjZxJwg-PdTkWQhq7welBav2-5ms59GDJVr5Y_h2vCymTV1eWGNrNDfCpWKdoW0XaktuE4c5wFLZaoRDRqmFZq8KQtJGuokZW04FbvCGhFGaGoiO4sdSkMXtwaoWUy7YAMJYO6ljqxHpNCKDThj3ZuGo30JM9kheNhikhUGxraAZ5hvR9cpURliggF36AmMI6gNtPXJ4cCazyuED1V0pQFhq-JeWSYyxV6OXBreKKjBrkNCVgkQ
 
-$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI4Mzg5LCJpYXQiOjE2NjgyMjQ3ODksImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiNjAzYWEzMDYtNDljZi00Y2UxLWI1OGYtMGNmMjUzYTI4YmY2In19LCJuYmYiOjE2NjgyMjQ3ODksInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.HywSHWpsq9yHraUsPwehpaJKWWZFIQY2xE3mZBcVbbXA6ZerEjBzy1q_7VwonNMyUDo_kgK_vM0CVWKDFbESXqG-tbYd6LLD_PNvL8WyEZsKfiK2LYBiTNOAXnUqReUNt9XD_oHVoaEfeEpIO1WPONnmdcOLl_OBa7sdWFH8iT42hVufOHjYELJrOF8PG741BvtMuAIohYwFgO76G8dTWEaOYCX9Rg8n9jJQTqhMvm1fvW6c0V558q63e3oi7OFFR_V90dg4PYbBMAVMrKrrGAogEPnBhHFiY8YKF9lECzTyoVIxOphyvS5M9noU6G_W3-0w7gsMYGrXQVw7xlywNg" https://172.21.65.226:6443/apis/metrics.k8s.io/v1beta1/namespaces/luffy/pods/eladmin-api-6b5d9664d8-gj87w
+$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxOTQyLCJpYXQiOjE3Mjk1OTgzNDIsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTgzNDIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.vdQUkcZ_Zrxp08pG4mjSBY-R3kGpOwjd1zhRvgKINIdM-xVj0hUO5Y6IVl4yMdEg14HPQpHCbl_vOoURQ0Iyke7ItAT3PJhfxzhHjZxJwg-PdTkWQhq7welBav2-5ms59GDJVr5Y_h2vCymTV1eWGNrNDfCpWKdoW0XaktuE4c5wFLZaoRDRqmFZq8KQtJGuokZW04FbvCGhFGaGoiO4sdSkMXtwaoWUy7YAMJYO6ljqxHpNCKDThj3ZuGo30JM9kheNhikhUGxraAZ5hvR9cpURliggF36AmMI6gNtPXJ4cCazyuED1V0pQFhq-JeWSYyxV6OXBreKKjBrkNCVgkQ" https://172.16.1.226:6443/apis/metrics.k8s.io/v1beta1/namespaces/luffy/pods/eladmin-api-7f7686858f-5t546
 {
   "kind": "PodMetrics",
   "apiVersion": "metrics.k8s.io/v1beta1",
@@ -1394,7 +1699,7 @@ $ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ
 
 目前的采集流程：
 
-![img](4Kubernetes进阶实践.assets/k8s-hpa-ms.png)
+![img](./4Kubernetes进阶实践.assets/k8s-hpa-ms.png)
 
 ###### [kubelet的指标采集](http://49.7.203.222:2023/#/kubernetes-advanced/hpa?id=kubelet的指标采集)
 
@@ -1407,9 +1712,10 @@ $ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ
 
 ```bash
 $ kubectl -n kube-system create token metrics-server
-eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI4ODY0LCJpYXQiOjE2NjgyMjUyNjQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJtZXRyaWNzLXNlcnZlciIsInVpZCI6IjE4MDJmNGVkLWFjMDYtNDcwYS04YmExLWM0MDJjODgwMjI2OCJ9fSwibmJmIjoxNjY4MjI1MjY0LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06bWV0cmljcy1zZXJ2ZXIifQ.Wz3kRbwoCJr2v_Gh5gG9oTMcZOPAgUPcSCmS-Nv7TB7a0aiYzSAqlH2PIqDt1wsv_bmNlpg2QifuDF1lnd5FmBmPCsY-zJX-uW-MStAQaCjfV8iBDmlThIP20srpmMf-z6JzkAlIF7JTTeuv03AkZg50FVKvu_2Zk-lm9gEwUhWgXns3oSnhTCWFHh2rOwnNq3IwcypTrRGWBEt5e9BQ6HWWMiCkkZ0WfgATXAAzYsmzRMIp2ZXntoqYEJGLEwgqJNLPVFpCdSn_C3Ft_2Mnfex84uSH0SL08fD5KP23SibWcPyOHIsSrsuPqA03JF-XW_JjRQyhOZsadSjvTBSSMQ
+eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxOTk4LCJpYXQiOjE3Mjk1OTgzOTgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJtZXRyaWNzLXNlcnZlciIsInVpZCI6IjExOGIzYjk3LTdlZGItNDM1Mi1iMmFkLWEyMTM3ZDViMzYzNyJ9fSwibmJmIjoxNzI5NTk4Mzk4LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06bWV0cmljcy1zZXJ2ZXIifQ.MfEvmClWhz4l4DcfhAcsH23EEBA3NYkLzEP5_mW9-12PyFHFYd0kqUa0hzCZTYIqJoZCk5sUJWjgofHCQP_cj5c3rucBPDnzV_VoX6SH8qTZDajyHr3jA-uy_lCizgNj7yYNYaYe9VmPKRInBvLBzxeR2PyW23X53IT7CrP6YrOvi2J306zBGCIOe_tkOB7saocbBCRWUeJXpmRUzwZ2GodHREuVF5E-weMB29aPeBIWn_dWFBSVH5ZjajP_f5ylOi6px2b02J0_Ap-0myjqHWaYCrYcoAbqwJUbDe0pjx4vwGjqm3TyzL6MzzEO9J4ruwkVsusc1RV72kxPr4QIGw
 
-$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI4ODY0LCJpYXQiOjE2NjgyMjUyNjQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJtZXRyaWNzLXNlcnZlciIsInVpZCI6IjE4MDJmNGVkLWFjMDYtNDcwYS04YmExLWM0MDJjODgwMjI2OCJ9fSwibmJmIjoxNjY4MjI1MjY0LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06bWV0cmljcy1zZXJ2ZXIifQ.Wz3kRbwoCJr2v_Gh5gG9oTMcZOPAgUPcSCmS-Nv7TB7a0aiYzSAqlH2PIqDt1wsv_bmNlpg2QifuDF1lnd5FmBmPCsY-zJX-uW-MStAQaCjfV8iBDmlThIP20srpmMf-z6JzkAlIF7JTTeuv03AkZg50FVKvu_2Zk-lm9gEwUhWgXns3oSnhTCWFHh2rOwnNq3IwcypTrRGWBEt5e9BQ6HWWMiCkkZ0WfgATXAAzYsmzRMIp2ZXntoqYEJGLEwgqJNLPVFpCdSn_C3Ft_2Mnfex84uSH0SL08fD5KP23SibWcPyOHIsSrsuPqA03JF-XW_JjRQyhOZsadSjvTBSSMQ" https://localhost:10250/metrics
+$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAxOTk4LCJpYXQiOjE3Mjk1OTgzOTgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJtZXRyaWNzLXNlcnZlciIsInVpZCI6IjExOGIzYjk3LTdlZGItNDM1Mi1iMmFkLWEyMTM3ZDViMzYzNyJ9fSwibmJmIjoxNzI5NTk4Mzk4LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06bWV0cmljcy1zZXJ2ZXIifQ.MfEvmClWhz4l4DcfhAcsH23EEBA3NYkLzEP5_mW9-12PyFHFYd0kqUa0hzCZTYIqJoZCk5sUJWjgofHCQP_cj5c3rucBPDnzV_VoX6SH8qTZDajyHr3jA-uy_lCizgNj7yYNYaYe9VmPKRInBvLBzxeR2PyW23X53IT7CrP6YrOvi2J306zBGCIOe_tkOB7saocbBCRWUeJXpmRUzwZ2GodHREuVF5E-weMB29aPeBIWn_dWFBSVH5ZjajP_f5ylOi6px2b02J0_Ap-0myjqHWaYCrYcoAbqwJUbDe0pjx4vwGjqm3TyzL6MzzEO9J4ruwkVsusc1RV72kxPr4QIGw" https://localhost:10250/metrics
+
 ```
 
 kubelet虽然提供了 metric 接口，但实际监控逻辑由内置的cAdvisor模块负责，早期的时候，cadvisor是单独的组件，从k8s 1.12开始，cadvisor 监听的端口在k8s中被删除，所有监控数据统一由Kubelet的API提供。
@@ -1420,17 +1726,17 @@ cgroup文件中的值是监控数据的最终来源
 
 Metrics数据流：
 
-![img](4Kubernetes进阶实践.assets/hap-flow.webp)
+<img src="./4Kubernetes进阶实践.assets/hap-flow.webp" alt="img" style="zoom: 67%;" />
 
 *思考：Metrics Server是独立的一个服务，只能服务内部实现自己的api，是如何做到通过标准的kubernetes 的API格式暴露出去的*
 
 [kube-aggregator](https://github.com/kubernetes/kube-aggregator)
 
-###### [kube-aggregator聚合器及Metric-Server的实现](http://49.7.203.222:2023/#/kubernetes-advanced/hpa?id=kube-aggregator聚合器及metric-server的实现)
+###### [kube-aggregator聚合器及Metric-Server的实现]
 
 kube-aggregator是对 apiserver 的api的一种拓展机制，它允许开发人员编写一个自己的服务，并把这个服务注册到k8s的api里面，即扩展 API 。
 
-![img](4Kubernetes进阶实践.assets/kube-aggregation.webp)
+<img src="./4Kubernetes进阶实践.assets/kube-aggregation.webp" alt="img" style="zoom: 33%;" />
 
 看下metric-server的实现：
 
@@ -1455,37 +1761,37 @@ spec:
 
 # 会往apiserver里注册一个
 # proxyPath := "/apis/" + apiService.Spec.Group + "/" + apiService.Spec.Version
-# https://172.21.65.226:6443/apis/metrics.k8s.io/v1beta1 
+# https://172.16.1.226:6443/apis/metrics.k8s.io/v1beta1 
 # => https://metrics-server:443/apis/metrics.k8s.io/v1beta1 
 
 $ kubectl -n kube-system get svc metrics-server
 NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
-metrics-server   ClusterIP   10.106.62.186   <none>        443/TCP   13h
+metrics-server   ClusterIP   10.99.99.169   <none>        443/TCP   13h
 
 $ kubectl -n luffy create token luffy-pods-admin
-eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI5OTMyLCJpYXQiOjE2NjgyMjYzMzIsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiNjAzYWEzMDYtNDljZi00Y2UxLWI1OGYtMGNmMjUzYTI4YmY2In19LCJuYmYiOjE2NjgyMjYzMzIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.LeKFaXBeaAsyHd06JFc6exenNtfuBadjUj3YtqgHiBMmhNds4zmB9_ysvI4p04W6Kov37YTZg4WSj_AqpsplfCVVg8h-3kAQfPC6cHG5oBN-VUsMC80lu-MZsBTI4C5in7WgddFyFqFMxXL_-TdpguYohOJ6NC90z3IGLCKy8pS5mOCUA34o1_9x5P3JM5e--R-NIbwZmdESkfHejiaENCau_cwP2L2lxmU364kppSrcX_kGLybT7nMV-Bg6Q_-pt0JZVtP5C5NZUuLN0Mtmsd9me8LJFyPDX4fkWtXwZraqiRDx_OTgbckIwQAIDseFEu8ikVBYZ2p6qPCvtIgsMQ
+eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAyNTY4LCJpYXQiOjE3Mjk1OTg5NjgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTg5NjgsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.PZ1_EQPrkarajwt29cFYeK7xeozv6W-X8yuCAz38TNQbl3LMi--1-1mpmcd-DlhnbZz3R2bYtWIen1F4dWYmqyt3uNX0BgNwfo4KRcfB9hZFneV86KFNoGb5HY7ZZ_KH5SVwpCtZ4l8zitGHnjftqHaajAcNQ9MJGnQM9yTT7Vm1c0ItA1Pfibt9jQdFjMpAGrwhnCeGVZvsVsk16DpusC0yRCEElNgcz9_bIHH7UBUAZead96N744OxqDoCdnms43stEMQPp4JngtqtFnUApB7EtR07ZKHXpf631QkBeH25LaLNYvd9btVwwYzoGDXauexffSUGmcNUfO9bKPeHLw
 
-$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ2ZncxQVNxUlZyWHhCTkkwb01IbjNKUnFwZ18wUUxkVGcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4MjI5OTMyLCJpYXQiOjE2NjgyMjYzMzIsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiNjAzYWEzMDYtNDljZi00Y2UxLWI1OGYtMGNmMjUzYTI4YmY2In19LCJuYmYiOjE2NjgyMjYzMzIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.LeKFaXBeaAsyHd06JFc6exenNtfuBadjUj3YtqgHiBMmhNds4zmB9_ysvI4p04W6Kov37YTZg4WSj_AqpsplfCVVg8h-3kAQfPC6cHG5oBN-VUsMC80lu-MZsBTI4C5in7WgddFyFqFMxXL_-TdpguYohOJ6NC90z3IGLCKy8pS5mOCUA34o1_9x5P3JM5e--R-NIbwZmdESkfHejiaENCau_cwP2L2lxmU364kppSrcX_kGLybT7nMV-Bg6Q_-pt0JZVtP5C5NZUuLN0Mtmsd9me8LJFyPDX4fkWtXwZraqiRDx_OTgbckIwQAIDseFEu8ikVBYZ2p6qPCvtIgsMQ" https://10.106.62.186/apis/metrics.k8s.io/v1beta1/namespaces/luffy/pods/eladmin-api-6b5d9664d8-gj87w
+$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI5NjAyNTY4LCJpYXQiOjE3Mjk1OTg5NjgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJsdWZmeSIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJsdWZmeS1wb2RzLWFkbWluIiwidWlkIjoiMTFlNzFiNWMtODQzZS00NzIzLWJiZmItNjNlMGE5NjFhMDU0In19LCJuYmYiOjE3Mjk1OTg5NjgsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpsdWZmeTpsdWZmeS1wb2RzLWFkbWluIn0.PZ1_EQPrkarajwt29cFYeK7xeozv6W-X8yuCAz38TNQbl3LMi--1-1mpmcd-DlhnbZz3R2bYtWIen1F4dWYmqyt3uNX0BgNwfo4KRcfB9hZFneV86KFNoGb5HY7ZZ_KH5SVwpCtZ4l8zitGHnjftqHaajAcNQ9MJGnQM9yTT7Vm1c0ItA1Pfibt9jQdFjMpAGrwhnCeGVZvsVsk16DpusC0yRCEElNgcz9_bIHH7UBUAZead96N744OxqDoCdnms43stEMQPp4JngtqtFnUApB7EtR07ZKHXpf631QkBeH25LaLNYvd9btVwwYzoGDXauexffSUGmcNUfO9bKPeHLw" https://10.99.99.169/apis/metrics.k8s.io/v1beta1/namespaces/luffy/pods/eladmin-api-7f7686858f-5t546
 {
   "kind": "PodMetrics",
   "apiVersion": "metrics.k8s.io/v1beta1",
   "metadata": {
-    "name": "eladmin-api-6b5d9664d8-gj87w",
+    "name": "eladmin-api-7f7686858f-5t546",
     "namespace": "luffy",
-    "creationTimestamp": "2022-11-12T04:12:27Z",
+    "creationTimestamp": "2024-10-22T12:10:28Z",
     "labels": {
       "app": "eladmin-api",
-      "pod-template-hash": "6b5d9664d8"
+      "pod-template-hash": "7f7686858f"
     }
   },
-  "timestamp": "2022-11-12T04:12:19Z",
-  "window": "15.425s",
+  "timestamp": "2024-10-22T12:10:10Z",
+  "window": "18.654s",
   "containers": [
     {
       "name": "eladmin-api",
       "usage": {
-        "cpu": "1569859n",
-        "memory": "3800032Ki"
+        "cpu": "9658847n",
+        "memory": "793472Ki"
       }
     }
   ]
@@ -1498,9 +1804,9 @@ $ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IktJeWtHUFlydXZ
 
 # 对接外部存储
 
-#### [kubernetes对接分部式存储](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=kubernetes对接分部式存储)
+#### kubernetes对接分部式存储
 
-##### [PV与PVC快速入门](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=pv与pvc快速入门)
+##### PV与PVC快速入门
 
 k8s存储的目的就是保证Pod重建后，数据不丢失。简单的数据持久化的下述方式：
 
@@ -1587,7 +1893,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   nfs:
     path: /data/k8s
-    server: 172.21.65.226
+    server: 172.16.1.226
 ```
 
 - capacity，存储能力， 目前只支持存储空间的设置， 就是我们这里的 storage=1Gi，不过未来可能会加入 IOPS、吞吐量等指标的配置。
@@ -1596,7 +1902,7 @@ spec:
   - ReadOnlyMany（ROX）：只读权限，可以被多个节点挂载
   - ReadWriteMany（RWX）：读写权限，可以被多个节点挂载
 
-![img](4Kubernetes进阶实践.assets/pv-access-mode.webp)
+![img](./4Kubernetes进阶实践.assets/pv-access-mode.webp)
 
 - persistentVolumeReclaimPolicy，pv的回收策略, 目前只有 NFS 和 HostPath 两种类型支持回收策略
   - Retain（保留）- 保留数据，需要管理员手工清理数据
@@ -1606,6 +1912,8 @@ spec:
 因为PV是直接对接底层存储的，就像集群中的Node可以为Pod提供计算资源（CPU和内存）一样，PV可以为Pod提供存储资源。因此PV不是namespaced的资源，属于集群层面可用的资源。Pod如果想使用该PV，需要通过创建PVC挂载到Pod中。
 
 PVC全写是PersistentVolumeClaim（持久化卷声明），PVC 是用户存储的一种声明，创建完成后，可以和PV实现一对一绑定。对于真正使用存储的用户不需要关心底层的存储实现细节，只需要直接使用 PVC 即可。
+
+<img src="./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241022225423472.png" alt="image-20241022225423472" style="zoom: 80%;" />
 
 ```yaml
 apiVersion: v1
@@ -1647,36 +1955,36 @@ spec:
 
 ###### [环境准备](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=环境准备)
 
-服务端：172.21.65.227
+服务端：172.16.1.227
 
 ```bash
-$ yum -y install nfs-utils rpcbind
+yum -y install nfs-utils rpcbind
 
 # 共享目录
-$ mkdir -p /data/k8s && chmod 755 /data/k8s
+mkdir -p /data/k8s && chmod 755 /data/k8s
 
-$ echo '/data/k8s  *(insecure,rw,sync,no_root_squash)'>>/etc/exports
+echo '/data/k8s  *(insecure,rw,sync,no_root_squash)'>>/etc/exports
 
-$ systemctl enable rpcbind && systemctl start rpcbind
-$ systemctl enable nfs && systemctl start nfs
+systemctl enable rpcbind && systemctl start rpcbind
+systemctl enable nfs && systemctl start nfs
 ```
 
 客户端：k8s集群slave节点
 
 ```bash
-$ yum -y install nfs-utils rpcbind
-$ mkdir /nfsdata
-$ mount -t nfs 172.21.65.227:/data/k8s /nfsdata
+yum -y install nfs-utils rpcbind
+mkdir /nfsdata
+mount -t nfs 172.16.1.227:/data/k8s /nfsdata #这里挂载是测试, 可以不挂载
 ```
 
 ###### [PV与PVC演示](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=pv与pvc演示)
 
 ```bash
 # 在nfs-server机器中创建
-$ mkdir /data/k8s/nginx
+mkdir -p /data/k8s/nginx
 
 # 把/data/k8s/nginx 目录作为数据卷给k8s集群中的Pod使用
-$ cat pv-nfs.yaml
+cat <<EOF > pv-nfs.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1689,9 +1997,10 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   nfs:
     path: /data/k8s/nginx
-    server: 172.21.65.227
+    server: 172.16.1.227
+EOF
 
-$ kubectl create -f pv-nfs.yaml
+kubectl create -f pv-nfs.yaml
 
 $ kubectl get pv
 NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS  
@@ -1706,7 +2015,7 @@ nfs-pv   1Gi        RWO            Retain           Available
 - Failed（失败）： 表示该 PV 的自动回收失败
 
 ```bash
-$ cat pvc.yaml
+cat <<EOF > pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -1718,14 +2027,16 @@ spec:
   resources:
     requests:
       storage: 1Gi
+EOF
 
-$ kubectl create -f pvc.yaml
+kubectl create -f pvc.yaml
+
 $ kubectl get pvc
 NAME      STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-pvc-nfs   Bound    nfs-pv   1Gi        RWO                           3s
+pvc-nfs   Bound    nfs-pv   1Gi        RWX                          5s
 $ kubectl get pv
 NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             
-nfs-pv   1Gi        RWO            Retain           Bound    default/pvc-nfs             
+nfs-pv   1Gi        RWX            Retain           Bound    default/pvc-nfs             
 
 #访问模式，storage大小（pvc大小需要小于pv大小），以及 PV 和 PVC 的 storageClassName 字段必须一样，这样才能够进行绑定。
 
@@ -1738,7 +2049,7 @@ $ ls /nfsdata
 创建Pod挂载pvc
 
 ```bash
-$ cat deployment.yaml
+cat <<EOF > deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1767,26 +2078,47 @@ spec:
       - name: www
         persistentVolumeClaim:              #指定pvc
           claimName: pvc-nfs
-          
-          
-$ kubectl create -f deployment.yaml
+EOF
+
+kubectl create -f deployment.yaml
 
 # 查看容器/usr/share/nginx/html目录
 
+[root@k8s-master ~]# kubectl get pvc
+NAME      STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+pvc-nfs   Bound    nfs-pv   1Gi        RWX                           18m
+
+[root@k8s-master ~]# kubectl get pv
+NAME     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM     STORAGECLASS   REASON   AGE
+nfs-pv   1Gi        RWX            Retain           Bound    default/pvc-nfs                  9m7s
+
+[root@k8s-master ~]# kubectl get po
+NAME                       READY   STATUS    RESTARTS      AGE
+nfs-pvc-79f876c88d-cd4dc   1/1     Running   0             97s
+[root@k8s-master ~]# kubectl exec -ti nfs-pvc-79f876c88d-cd4dc -- sh
+/ # ls /usr/share/nginx/html #这个目录就是挂载的nfs
+
 # 删除pvc
+kubectl delete deploy nfs-pvc
+kubectl delete pvc pvc-nfs
+kubectl delete pv nfs-pv
+
 ```
 
 ###### [storageClass实现动态挂载](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=storageclass实现动态挂载)
 
 创建pv及pvc过程是手动，且pv与pvc一一对应，手动创建很繁琐。因此，通过storageClass + provisioner的方式来实现通过PVC自动创建并绑定PV。
 
-![img](4Kubernetes进阶实践.assets/storage-class.png)
+<img src="./4Kubernetes%E8%BF%9B%E9%98%B6%E5%AE%9E%E8%B7%B5.assets/image-20241023092630377.png" alt="image-20241023092630377" style="zoom:50%;" />
+
+<img src="./4Kubernetes进阶实践.assets/storage-class.png" alt="img" style="zoom: 33%;" />
 
 部署： https://github.com/kubernetes-retired/external-storage
 
 *provisioner.yaml*
 
 ```yaml
+cat <<EOF >provisioner.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1821,19 +2153,22 @@ spec:
             - name: PROVISIONER_NAME
               value: luffy.com/nfs
             - name: NFS_SERVER
-              value: 172.21.65.227
+              value: 172.16.1.227
             - name: NFS_PATH  
               value: /data/k8s
       volumes:
         - name: nfs-client-root
           nfs:
-            server: 172.21.65.227
+            server: 172.16.1.227
             path: /data/k8s
+EOF
+
 ```
 
 *rbac.yaml*
 
 ```yaml
+cat <<EOF > rbac.yaml
 kind: ServiceAccount
 apiVersion: v1
 metadata:
@@ -1897,40 +2232,50 @@ roleRef:
   kind: Role
   name: leader-locking-nfs-client-provisioner
   apiGroup: rbac.authorization.k8s.io
+EOF
 ```
 
 *storage-class.yaml*
 
 ```yaml
+cat <<EOF >storage-class.yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"   # 设置为default StorageClass
   name: nfs
-provisioner: luffy.com/nfs
+provisioner: luffy.com/nfs  #和驱动器名字一样
 parameters:
   archiveOnDelete: "true"
+EOF
+
 ```
 
 创建上述资源：
 
 ```bash
-$ kubectl create namespace nfs-provisioner
-$ kubectl create -f rbac.yaml
-$ kubectl create -f provisioner.yaml
-$ kubectl create -f storage-class.yaml
+kubectl create namespace nfs-provisioner
+kubectl create -f provisioner.yaml
+kubectl create -f rbac.yaml
+kubectl create -f storage-class.yaml
 
 # 等待pod启动成功
 $ kubectl -n nfs-provisioner get pod 
 nfs-client-provisioner-6cfb58c597-rmc45   1/1     Running   0          27s  
+
+# kubectl get storageclass
+NAME            PROVISIONER     RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+nfs (default)   luffy.com/nfs   Delete          Immediate           false                  11h
+
 ```
 
 验证使用`storageclass`自动创建并绑定pv
 
 *pvc.yaml*
 
-```yaml
+```bash
+cat <<EOF >pvc.yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -1942,6 +2287,130 @@ spec:
     requests:
       storage: 1Mi
   storageClassName: nfs
+EOF
+
+kubectl apply -f pvc.yaml
+
+[root@k8s-master ~]# kubectl -n nfs-provisioner get po
+NAME                                     READY   STATUS    RESTARTS   AGE
+nfs-client-provisioner-647dd55455-wzdd2   1/1     Running   0          3m51s
+
+[root@k8s-master ~]# kubectl get pvc
+NAME    STATUS VOLUME                               CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+pvc-nfs Bound  pvc-f5e75fcd-5226-4efc-a772-ee946f11c260  1Gi        RWX           nfs       1s
+test-claim Bound  pvc-1dc41736-9197-422c-a99a-6fbb2389123d  1Mi     RWX       nfs          7s
+
+[存储服务器 ~]# ll /data/k8s/
+total 0
+drwxrwxrwx 2 root root 6 Oct 22 22:37 default-pvc-nfs-pvc-f5e75fcd-5226-4efc-a772-ee946f11c260
+drwxrwxrwx 2 root root 6 Oct 23 09:50 default-test-claim-pvc-1dc41736-9197-422c-a99a-6fbb2389123d
+
+
+
+kubectl -n nfs-provisioner logs -f nfs-client-provisioner-647dd55455-wzdd2
+
+
+# 把之前mysql的数据改成pvc方式
+cat <<EOF >mysql-pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql
+  namespace: luffy
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs
+EOF
+
+kubectl create -f mysql-pvc.yaml
+
+kubectl -n luffy get pvc
+
+#打包mysql数据
+# cd /opt/mysql/ ; tar zcf mysql.tar *
+#启动一个简单http
+# python -m SimpleHTTPServer 9099
+
+[存储服务器 ~]# wget k8s-master:9099/mysql.tar
+# tar zxvf mysql.tar
+# tar zxvf mysql.tar -C /data/k8s/luffy-mysql-pvc-02ec7c1b-b3fc-412b-a58f-5dd1d3e2820c/
+
+#修改deployment-mysql.yaml 文件
+cat <<EOF > deployment-mysql.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: luffy
+spec:
+  replicas: 1    #指定Pod副本数
+  selector:        #这个选择器可以去掉了 因为用了共享的pvc存储
+    matchLabels:
+      app: mysql
+  strategy:
+      type: Recreate
+  template:
+    metadata:
+      labels:    #给Pod打label,必须和上方的matchLabels匹配
+        app: mysql
+        from: luffy
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        args:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eladmin-secret
+              key: DB_PWD
+        - name: MYSQL_DATABASE
+          value: "eladmin"
+        resources:
+          requests:
+            memory: 200Mi
+            cpu: 50m
+          limits:
+            memory: 1Gi
+            cpu: 500m
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-data   #新增加的
+        persistentVolumeClaim:
+          claimName: mysql
+      nodeSelector:   # 使用节点选择器将Pod调度到指定label的节点
+        mysql: "true"
+EOF
+kubectl apply -f deployment-mysql.yaml
+
+[root@k8s-master ~]# kubectl -n luffy exec -ti mysql-85ff4769c9-csd9x -- sh
+sh-4.2# mysql -uroot -pluffyAdmin!
+mysql> show databases;
+mysql> use eladmin;
+mysql> show tables;
+
+
 ```
 
 ##### [安装容器管理平台](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=安装容器管理平台)
@@ -1954,28 +2423,45 @@ spec:
 
 - 前置要求
 
-  要求集群中存在默认的`StorageClass`，上篇中我们把nfs设置为了集群默认的存储类，因此满足要求。
+  - 要求集群中存在默认的`StorageClass`，上篇中我们把nfs设置为了集群默认的存储类，因此满足要求。
+  - 集群安装metrics-server
 
   https://kubesphere.com.cn/docs/v3.3/installing-on-kubernetes/introduction/prerequisites/
 
 - 下载初始化安装文件
 
   ```bash
+  mkdir kubesphere ;cd kubesphere
   wget https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/kubesphere-installer.yaml
   wget https://github.com/kubesphere/ks-installer/releases/download/v3.3.1/cluster-configuration.yaml
+  wget https://raw.githubusercontent.com/kubesphere/notification-manager/master/config/bundle.yaml
+  
+  #备用地址
+  wget https://gitee.com/chengkanghua/script/raw/master/k8s/bundle.yaml
+  wget https://gitee.com/chengkanghua/script/raw/master/k8s/cluster-configuration.yaml
+  wget https://gitee.com/chengkanghua/script/raw/master/k8s/kubesphere-installer.yaml
+  
+  
+  # 修改配置为外部监控,  如果是干净的K8S(没有安装其他的监控,可以不用修改)
+  # vim cluster-configuration.yaml
+  42     monitoring:
+  43       type: external  
+  44       endpoint: http://prometheus.monitor:9090 
+  
   ```
 
 - 安装
 
   ```bash
-  kubectl apply -f kubesphere-installer.yaml
-  kubectl apply -f cluster-configuration.yaml
-  
+  kubectl create -f kubesphere-installer.yaml
+  kubectl create -f cluster-configuration.yaml
+  kubectl create -f bundle.yaml
   # 查看安装器日志
-  kubectl -n kubesphere-system get pod
-  ks-installer-746f68548d-fc5tk   1/1     Running   0          2m4s
+  # kubectl -n kubesphere-system get pod
+  ks-installer-746f68548d-mcgvh   1/1     Running   0          2m4s
+  # 查看日志,显示安装整个过程
+  # kubectl -n  kubesphere-system logs -f ks-installer-746f68548d-mcgvh
   
-  kubectl -n  kubesphere-system logs -f ks-installer-746f68548d-fc5tk
   ```
 
 - 卸载
@@ -1983,6 +2469,15 @@ spec:
   ```bash
   # 如果想卸载kubesphere
   https://github.com/kubesphere/ks-installer/blob/release-3.3/scripts/kubesphere-delete.sh
+  wget https://gitee.com/chengkanghua/script/raw/master/k8s/kubesphere-delete.sh
+  
+  kubectl delete -f kubesphere-installer.yaml
+  kubectl delete -f cluster-configuration.yaml
+  kubectl delete -f bundle.yaml
+  
+  
+  # sh kubesphere-delete.sh
+  
   ```
 
 ##### [对接Ceph存储实践](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=对接ceph存储实践)
@@ -2016,7 +2511,7 @@ I/O size (minimum/optimal): 512 bytes / 512 bytes
 
 ## 执行下述命令
 HOSTNAME=k8s-slave2
-echo "172.21.65.228 $HOSTNAME" >>/etc/hosts
+echo "172.16.1.228 $HOSTNAME" >>/etc/hosts
 yum install -y epel-release
 
 cat <<EOF > /etc/yum.repos.d/ceph.repo
@@ -2099,16 +2594,16 @@ ceph -s
 # ceph auth get-key client.admin
 AQCdaG9jP09dJBAAZsl58WHL/xLNvUq7IXh1zQ==
 
-mount -t ceph 172.21.65.228:6789:/ /mnt/cephfs -o name=admin,secret=AQCdaG9jP09dJBAAZsl58WHL/xLNvUq7IXh1zQ==
+mount -t ceph 172.16.1.228:6789:/ /mnt/cephfs -o name=admin,secret=AQCdaG9jP09dJBAAZsl58WHL/xLNvUq7IXh1zQ==
 ```
 
-![img](4Kubernetes进阶实践.assets/ceph-art.png)
+<img src="./4Kubernetes进阶实践.assets/ceph-art.png" alt="img" style="zoom:50%;" />
 
 ###### [storageClass实现动态挂载](http://49.7.203.222:2023/#/kubernetes-advanced/pv?id=storageclass实现动态挂载-1)
 
 创建pv及pvc过程是手动，且pv与pvc一一对应，手动创建很繁琐。因此，通过storageClass + provisioner的方式来实现通过PVC自动创建并绑定PV
 
-![img](4Kubernetes进阶实践.assets/storage-class.png)
+<img src="./4Kubernetes进阶实践.assets/storage-class.png" alt="img" style="zoom: 33%;" />
 
 NFS，ceph-rbd，cephfs均提供了对应的provisioner
 
@@ -2226,7 +2721,7 @@ metadata:
   name: dynamic-cephfs
 provisioner: ceph.com/cephfs
 parameters:
-    monitors: 172.21.65.228:6789
+    monitors: 172.16.1.228:6789
     adminId: admin
     adminSecretName: ceph-admin-secret
     adminSecretNamespace: "kube-system"
@@ -2318,7 +2813,7 @@ k8s的pod的挂载盘通常的格式为：
 
 ##### [容器网络回顾](http://49.7.203.222:2023/#/kubernetes-advanced/cni?id=容器网络回顾)
 
-![img](4Kubernetes进阶实践.assets/docker-bridge.jpeg)
+<img src="./4Kubernetes进阶实践.assets/docker-bridge.jpeg" alt="img" style="zoom: 80%;" />
 
 Docker 创建一个容器的时候，会执行如下操作：
 
@@ -2358,7 +2853,7 @@ CNI的具体实现有很多种：
 
 > k8s本身不提供cni的实现，因此安装完k8s集群后，需要单独安装网络组件
 
-![img](4Kubernetes进阶实践.assets/kubelet-cni-process.jpg)
+<img src="./4Kubernetes进阶实践.assets/kubelet-cni-process.jpg" alt="img" style="zoom: 25%;" />
 
 1. Pod调度到k8s的节点k8s-slave1中
 2. slave1的kubelet调用containerd创建Pod
@@ -2383,7 +2878,7 @@ CNI的具体实现有很多种：
 
 更细致的CNI调用过程：
 
-![img](4Kubernetes进阶实践.assets/cni-network.webp)
+<img src="./4Kubernetes进阶实践.assets/cni-network.webp" alt="img" style="zoom: 45%;" />
 
 - Flannel CNI
 
@@ -2403,12 +2898,28 @@ CNI的具体实现有很多种：
 
 经过Pod网络配置后，本机的Pod应该是这样的：
 
-![img](4Kubernetes进阶实践.assets/pod-local.png)
+<img src="./4Kubernetes进阶实践.assets/pod-local.png" alt="img" style="zoom: 33%;" />
 
 思考：
 
 - flannel插件和kube-flannel的Pod什么关系
 - 跨主机的Pod间如何实现通信
+
+```bash
+flannel插件和kube-flannel的Pod什么关系:
+Flannel 是一种为 Kubernetes 提供容器网络覆盖的网络插件。它负责为集群中的各个节点分配子网，并确保不同节点上的容器可以通过 IP 地址相互通信。
+kube-flannel的 Pod 是 Flannel 在 Kubernetes 集群中的具体实现形式。当你在 Kubernetes 集群中部署 Flannel 网络插件时，它会以 Pod 的形式运行在每个节点上。这个 Pod 通常包含一个容器，负责配置节点的网络接口、设置路由规则以及实现容器间的跨节点通信。
+
+
+跨主机的 Pod 间实现通信的方式：
+使用虚拟网络：Flannel 为每个节点分配一个子网，并通过创建一个覆盖网络（overlay network）来实现跨节点的通信。这个覆盖网络通常是基于虚拟网络技术，如 VXLAN（Virtual Extensible LAN）。
+IP 封装：当一个 Pod 在节点 A 上要与另一个在节点 B 上的 Pod 通信时，数据包会被封装在一个新的 IP 数据包中，源地址为节点 A 的 IP 地址，目标地址为节点 B 的 IP 地址。这个封装后的数据包会通过底层网络传输到节点 B。
+解封装和路由：在节点 B 上，kube-flannel的 Pod 会解封装数据包，提取出原始的 Pod 间通信数据包，并根据内部的路由表将数据包转发到目标 Pod 所在的容器网络接口。
+Kubernetes 服务发现：Kubernetes 还提供了服务发现机制，使得跨节点的 Pod 可以通过服务的名称和端口来进行通信，而无需直接知道目标 Pod 的具体 IP 地址。Kubernetes 的服务通过在每个节点上创建一个代理（通常是 kube-proxy）来实现负载均衡和服务发现，进一步简化了跨节点的 Pod 通信。
+
+```
+
+
 
 ##### [kube-flannel的作用](http://49.7.203.222:2023/#/kubernetes-advanced/cni?id=kube-flannel的作用)
 
@@ -2432,7 +2943,7 @@ $ kubectl -n kube-flannel get pod kube-flannel-ds-gdvpx -oyaml
 
 跨主机间的通信流程：
 
-![img](4Kubernetes进阶实践.assets/pods-network.webp)
+<img src="./4Kubernetes进阶实践.assets/pods-network.webp" alt="img" style="zoom: 50%;" />
 
 flannel的网络有多种后端实现：
 
@@ -2444,13 +2955,17 @@ flannel的网络有多种后端实现：
 不特殊指定的话，默认会使用vxlan技术作为Backend，可以通过如下查看：
 
 ```bash
+
 $ kubectl -n kube-flannel exec  kube-flannel-ds-amd64-cb7hs cat /etc/kube-flannel/net-conf.json
+<span -v-pre>
 {
   "Network": "10.244.0.0/16",
   "Backend": {
     "Type": "vxlan"
   }
 }
+</span>
+
 ```
 
 使用vxlan作为后端实现时，flanneld进程的作用：
@@ -2458,11 +2973,11 @@ $ kubectl -n kube-flannel exec  kube-flannel-ds-amd64-cb7hs cat /etc/kube-flanne
 - 启动flannel.1作为VTEP设备，用来封包、解包，实现跨主机通信
 - 监听宿主机的Pod CIDR，维护本机路由表
 
-###### [vxlan介绍及点对点通信的实现](http://49.7.203.222:2023/#/kubernetes-advanced/cni?id=vxlan介绍及点对点通信的实现)
+###### [vxlan介绍及点对点通信的实现]
 
 VXLAN 全称是虚拟可扩展的局域网（ Virtual eXtensible Local Area Network），它是一种 overlay 技术，通过三层的网络来搭建虚拟的二层网络。
 
-![img](4Kubernetes进阶实践.assets/vxlan.png)
+![img](./4Kubernetes进阶实践.assets/vxlan.png)
 
 它创建在原来的 IP 网络（三层）上，只要是三层可达（能够通过 IP 互相通信）的网络就能部署 vxlan。在每个端点上都有一个 vtep 负责 vxlan 协议报文的封包和解包，也就是在虚拟报文上封装 vtep 通信的报文头部。物理网络上可以创建多个 vxlan 网络，这些 vxlan 网络可以认为是一个隧道，不同节点的虚拟机能够通过隧道直连。每个 vxlan 网络由唯一的 VNI 标识，不同的 vxlan 可以不相互影响。
 
@@ -2471,13 +2986,13 @@ VXLAN 全称是虚拟可扩展的局域网（ Virtual eXtensible Local Area Netw
 
 演示：在k8s-slave1和k8s-slave2两台机器间，利用vxlan的点对点能力，实现虚拟二层网络的通信
 
-![img](4Kubernetes进阶实践.assets/vxlan-p2p-1.jpg)
+<img src="./4Kubernetes进阶实践.assets/vxlan-p2p-1.jpg" alt="img" style="zoom:50%;" />
 
-`172.21.65.227`节点：
+`172.16.1.227`节点：
 
 ```bash
-# 创建vTEP设备，对端指向172.21.65.228节点，指定VNI及underlay网络使用的网卡
-$ ip link add vxlan20 type vxlan id 20 remote 172.21.65.228 dstport 4789 dev eth0
+# 创建vTEP设备，对端指向172.16.1.228节点，指定VNI及underlay网络使用的网卡
+$ ip link add vxlan20 type vxlan id 20 remote 172.16.1.228 dstport 4789 dev eth0
 
 $ ip -d link show vxlan20
 
@@ -2488,11 +3003,11 @@ $ ip link set vxlan20 up
 $ ip addr add 10.245.1.3/24 dev vxlan20
 ```
 
-`172.21.65.228`节点：
+`172.16.1.228`节点：
 
 ```bash
-# 创建VTEP设备，对端指向172.21.65.227节点，指定VNI及underlay网络使用的网卡
-$ ip link add vxlan20 type vxlan id 20 remote 172.21.65.227 dstport 4789 dev eth0
+# 创建VTEP设备，对端指向172.16.1.227节点，指定VNI及underlay网络使用的网卡
+$ ip link add vxlan20 type vxlan id 20 remote 172.16.1.227 dstport 4789 dev eth0
 
 # 启动设备
 $ ip link set vxlan20 up 
@@ -2501,7 +3016,7 @@ $ ip link set vxlan20 up
 $ ip addr add 10.245.2.5/24 dev vxlan20
 ```
 
-在`172.21.65.227`节点：
+在`172.16.1.227`节点：
 
 ```bash
 $ ping 10.245.2.5
@@ -2510,14 +3025,14 @@ $ ping 10.245.2.5
 
 $ ip route add 10.245.2.0/24 dev vxlan20
 
-# 在172.21.65.228机器
+# 在172.16.1.228机器
 $ ip route add 10.245.1.0/24 dev vxlan20
 
 # 再次ping
 $ ping 10.245.2.5
 ```
 
-![img](4Kubernetes进阶实践.assets/vxlan-p2p-2.jpg)
+<img src="./4Kubernetes进阶实践.assets/vxlan-p2p-2.jpg" alt="img" style="zoom: 67%;" />
 
 隧道是一个逻辑上的概念，在 vxlan 模型中并没有具体的物理实体相对应。隧道可以看做是一种虚拟通道，vxlan 通信双方（图中的虚拟机）认为自己是在直接通信，并不知道底层网络的存在。从整体来说，每个 vxlan 网络像是为通信的虚拟机搭建了一个单独的通信通道，也就是隧道。
 
@@ -2526,14 +3041,14 @@ $ ping 10.245.2.5
 虚拟机的报文通过 vtep 添加上 vxlan 以及外部的报文层，然后发送出去，对方 vtep 收到之后拆除 vxlan 头部然后根据 VNI 把原始报文发送到目的虚拟机。
 
 ```bash
-# 查看172.21.65.227主机路由
+# 查看172.16.1.227主机路由
 $ route -n
 10.0.51.0       0.0.0.0         255.255.255.0   U     0      0        0 vxlan20
 10.0.52.0       0.0.0.0         255.255.255.0   U     0      0        0 vxlan20
 
 # 到了vxlan的设备后，
 $ ip -d link show vxlan20
-    vxlan id 20 remote 172.21.65.228 dev eth0 srcport 0 0 dstport 4789 ...
+    vxlan id 20 remote 172.16.1.228 dev eth0 srcport 0 0 dstport 4789 ...
 ```
 
 清理：
@@ -2587,7 +3102,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 $ ip -d link show flannel.1
 602: flannel.1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 qdisc noqueue state UNKNOWN mode DEFAULT group default
     link/ether 1a:ef:13:b7:44:9c brd ff:ff:ff:ff:ff:ff promiscuity 0
-    vxlan id 1 local 172.21.65.226 dev eth0 srcport 0 0 dstport 8472 nolearning ageing 300 noudpcsum noudp6zerocsumtx noudp6zerocsumrx addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535
+    vxlan id 1 local 172.16.1.226 dev eth0 srcport 0 0 dstport 8472 nolearning ageing 300 noudpcsum noudp6zerocsumtx noudp6zerocsumrx addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535
 
 # 该转发到哪里，通过etcd查询数据，然后本地缓存，流量不用走多播发送
 $ bridge fdb show dev flannel.1
@@ -2609,7 +3124,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 
 实际的请求图：
 
-![img](4Kubernetes进阶实践.assets/flannel-actual.png)
+<img src="./4Kubernetes进阶实践.assets/flannel-actual.png" alt="img" style="zoom: 50%;" />
 
 ###### [利用host-gw模式提升集群网络性能](http://49.7.203.222:2023/#/kubernetes-advanced/cni?id=利用host-gw模式提升集群网络性能)
 
@@ -2617,7 +3132,7 @@ vxlan模式适用于三层可达的网络环境，对集群的网络要求很宽
 
 网络插件的目的其实就是将本机的cni0网桥的流量送到目的主机的cni0网桥。实际上有很多集群是部署在同一二层网络环境下的，可以直接利用二层的主机当作流量转发的网关。这样的话，可以不用进行封包解包，直接通过路由表去转发流量。
 
-![img](4Kubernetes进阶实践.assets/flannel-host-gw.png)
+<img src="./4Kubernetes进阶实践.assets/flannel-host-gw.png" alt="img" style="zoom:50%;" />
 
 为什么三层可达的网络不直接利用网关转发流量？
 
@@ -2669,8 +3184,8 @@ $ route -n
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         172.21.64.190   0.0.0.0         UG    0      0        0 eth0
 10.244.0.0      0.0.0.0         255.255.255.0   U     0      0        0 cni0
-10.244.1.0      172.21.65.227   255.255.255.0   UG    0      0        0 eth0
-10.244.2.0      172.21.65.228   255.255.255.0   UG    0      0        0 eth0
+10.244.1.0      172.16.1.227   255.255.255.0   UG    0      0        0 eth0
+10.244.2.0      172.16.1.228   255.255.255.0   UG    0      0        0 eth0
 169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0
 172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
 ```
@@ -2848,7 +3363,7 @@ $ helm install debug-nginx ./nginx --dry-run --set replicaCount=2 --debug
 
   - `Values`：从 `values.yaml` 文件和用户提供的 values 文件传递到模板的 Values 值
 
-  - `Chart`：获取 `Chart.yaml` 文件的内容，该文件中的任何数据都可以访问，例如 `{{ .Chart.Name }}-{{ .Chart.Version}}` 可以渲染成 `mychart-0.1.0`
+  - `Chart`：获取 `Chart.yaml` 文件的内容，该文件中的任何数据都可以访问，例如 <span v-pre> {{ .Chart.Name }}-{{ .Chart.Version}} </span> 可以渲染成 `mychart-0.1.0`
 
 - 模板定义
 
@@ -2867,7 +3382,7 @@ $ helm install debug-nginx ./nginx --dry-run --set replicaCount=2 --debug
   {{- end }}
   ```
 
-  - {{- 去掉左边的空格及换行，-}} 去掉右侧的空格及换行
+  - <span v-pre> {{- 去掉左边的空格及换行，-}} </span> 去掉右侧的空格及换行
 
   - 示例
 
@@ -3049,7 +3564,7 @@ https://helm.sh/docs/topics/charts/
 
 架构 https://github.com/goharbor/harbor/wiki/Architecture-Overview-of-Harbor
 
-![img](4Kubernetes进阶实践.assets/harbor-architecture.png)
+<img src="./4Kubernetes进阶实践.assets/harbor-architecture.png" alt="img" style="zoom:50%;" />
 
 - Core，核心组件
   - API Server，接收处理用户请求
@@ -3236,7 +3751,7 @@ $ helm -n harbor install harbor ./harbor
 ```bash
 $ cat /etc/hosts
 ...
-172.21.65.226 k8s-master harbor.luffy.com
+172.16.1.226 k8s-master harbor.luffy.com
 ...
 
 $ cat /etc/docker/daemon.json
@@ -3326,27 +3841,27 @@ $ helm push harbor luffy --ca-file=harbor.ca.crt -u admin -p Harbor12345!
 
 2. 理解k8s调度的过程，预选及优先。影响调度策略的设置
 
-   ![img](4Kubernetes进阶实践.assets/kube-scheduler-process-1669078918768155.png)
+   <img src="./4Kubernetes进阶实践.assets/kube-scheduler-process-1669078918768155.png" alt="img" style="zoom:50%;" />
 
 3. Flannel网络的原理学习，了解网络的流向，帮助定位问题
 
-   ![img](4Kubernetes进阶实践.assets/pods-network-1669078918768157.webp)
+   ![img](./4Kubernetes进阶实践.assets/pods-network-1669078918768157.webp)
 
 4. 认证与授权，掌握kubectl、kubelet、rbac及二次开发如何调度API
 
-   ![img](4Kubernetes进阶实践.assets/AUTH-1669078918768159.jpg)
+   ![img](./4Kubernetes进阶实践.assets/AUTH-1669078918768159.jpg)
 
 5. 利用HPA进行业务动态扩缩容，通过metrics-server了解整个k8s的监控体系
 
-   ![img](4Kubernetes进阶实践.assets/hpa-prometheus-custom-1669078918768161.png)
+   ![img](./4Kubernetes进阶实践.assets/hpa-prometheus-custom-1669078918768161.png)
 
 6. PV + PVC
 
-   ![img](4Kubernetes进阶实践.assets/storage-class-1669078918768163.png)
+   <img src="./4Kubernetes进阶实践.assets/storage-class-1669078918768163.png" alt="img" style="zoom:50%;" />
 
 7. Helm
 
-   ![img](4Kubernetes进阶实践.assets/helm3.jpg)
+   <img src="./4Kubernetes进阶实践.assets/helm3.jpg" alt="img" style="zoom:50%;" />
 
 
 

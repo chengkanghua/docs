@@ -12,11 +12,11 @@ Prometheus 是一个开源监控系统，它本身已经成为了云原生中指
 
 heapster负责调用各node中的cadvisor接口，对数据进行汇总，然后导到InfluxDB ， 可以从cluster，node，pod的各个层面提供详细的资源使用情况。
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/monitor-earlier.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/monitor-earlier.png)
 
 第三版本：Metrics-Server + Prometheus
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/custom-hpa.webp)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/custom-hpa.webp)
 
 k8s对监控接口进行了标准化，主要分了三类：
 
@@ -36,7 +36,7 @@ k8s对监控接口进行了标准化，主要分了三类：
 
 ##### [Prometheus架构](http://49.7.203.222:2023/#/prometheus/arct?id=prometheus架构)
 
-![image-20221122092246137](6基于Prometheus的Kubernetes监控方案.assets/image-20221122092246137.png)
+![image-20221122092246137](./6基于Prometheus的Kubernetes监控方案.assets/image-20221122092246137.png)
 
 - Prometheus Server ，监控、告警平台核心，抓取目标端监控数据，生成聚合数据，存储时间序列数据
 - exporter，由被监控的对象提供，提供API暴漏监控对象的指标，供prometheus 抓取
@@ -61,7 +61,7 @@ k8s对监控接口进行了标准化，主要分了三类：
 若使用docker部署直接启动镜像即可：
 
 ```bash
-$ docker run --name prometheus -d -p 127.0.0.1:9090:9090 prom/prometheus:v2.28.0
+docker run --name prometheus -d -p 127.0.0.1:9090:9090 prom/prometheus:v2.28.0
 ```
 
 我们想制作Prometheus的yaml文件，可以先启动容器进去看一下默认的启动命令：
@@ -100,13 +100,18 @@ scrape_configs:
 
     static_configs:
     - targets: ['localhost:9090']
+
+$ exit
+$ docker rm -f tmp
 ```
 
 本例中，使用k8s来部署，所需的资源清单如下：
 
 ```bash
+mkdir -p monitor/prometheus/ ; cd monitor/prometheus/
+
 # 需要准备配置文件，因此使用configmap的形式保存
-$ cat prometheus.yml
+cat <<\EOF > prometheus.yml
 # my global config
 global:
   scrape_interval: 30s
@@ -131,12 +136,13 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
     - targets: ['localhost:9090']
-    
+EOF
+
+# kubectl -n monitor delete configmap prometheus-config
 # kubectl -n monitor create configmap prometheus-config --from-file=prometheus.yml
 
-
 # pvc
-$ cat pvc.yaml
+cat <<\EOF > pvc.yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -149,11 +155,11 @@ spec:
   resources:
     requests:
       storage: 200Gi
-
+EOF
 
 # prometheus的资源文件
 # 出现Prometheus数据存储权限问题，因为Prometheus内部使用nobody启动进程，挂载数据目录后权限为root，因此使用initContainer进行目录权限修复：
-$ cat prometheus-deployment.yaml
+cat <<\EOF > prometheus-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -214,9 +220,10 @@ spec:
       - configMap:
           name: prometheus-config
         name: config-volume
-        
+EOF
+
 # rbac,prometheus会调用k8s api做服务发现进行抓取指标
-$ cat prometheus-rbac.yaml
+cat <<\EOF > prometheus-rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -272,10 +279,10 @@ subjects:
 - kind: ServiceAccount
   name: prometheus
   namespace: monitor
-
+EOF
 
 # 提供Service，为Ingress使用
-$ cat prometheus-svc.yaml
+cat <<\EOF > prometheus-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -291,8 +298,9 @@ spec:
     - name: web
       port: 9090
       targetPort: http
+EOF
 
-$ cat prometheus-ingress.yaml
+cat <<\EOF > prometheus-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -311,22 +319,61 @@ spec:
             name: prometheus
             port:
               number: 9090
+EOF
+
 ```
 
 部署上述资源：
 
 ```bash
 # 命名空间
-$ kubectl create namespace monitor
+kubectl create namespace monitor
 
 # 配置文件
-$ kubectl -n monitor create configmap prometheus-config --from-file=prometheus.yml
+kubectl -n monitor create configmap prometheus-config --from-file=prometheus.yml
 
 #部署configmap
-$ kubectl apply -f .
+# kubectl apply -f .
+kubectl create -f pvc.yaml
+kubectl create -f prometheus-deployment.yaml
+kubectl create -f prometheus-rbac.yaml
+kubectl create -f prometheus-svc.yaml
+kubectl create -f prometheus-ingress.yaml
+
+kubectl delete -f pvc.yaml
+kubectl -n monitor delete configmap prometheus-config
+kubectl delete -f prometheus-deployment.yaml
+kubectl delete -f prometheus-rbac.yaml
+kubectl delete -f prometheus-svc.yaml
+kubectl delete -f prometheus-ingress.yaml
+
 
 # 访问测试
-$ kubectl -n monitor get ingress
+kubectl -n monitor get ingress
+
+# hosts修改
+10.0.0.226 prometheus.luffy.com   
+# 浏览器访问
+
+# kubectl -n monitor get ingress
+NAME         CLASS   HOSTS                  ADDRESS   PORTS   AGE
+prometheus   nginx   prometheus.luffy.com             80      13s
+# kubectl -n monitor get deploy
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+prometheus   1/1     1            1           2m29s
+# kubectl -n monitor get pod -owide
+NAME                         READY   STATUS    RESTARTS   AGE     IP            NODE         NOMINATED NODE   READINESS GATES
+prometheus-6c8768547-7vh7p   1/1     Running   0       2m37s   10.244.2.63   k8s-slave2   <none>  
+# kubectl -n monitor logs -f prometheus-6c8768547-7vh7p
+.... msg="Server is ready to receive web requests."
+
+[root@k8s-master prometheus]# kubectl -n monitor get po -owide
+NAME                         READY   STATUS    RESTARTS   AGE         IP            NODE         NOMINATED NODE   READINESS GATES
+prometheus-6c8768547-7vh7p   1/1     Running   0          <invalid>   10.244.2.63   k8s-slave2   <none>           <none>
+[root@k8s-master prometheus]# curl 10.244.2.63:9090/metrics
+
+
+
 ```
 
 
@@ -338,9 +385,9 @@ $ kubectl -n monitor get ingress
 ```bash
 # http://localhost:9090/metrics
 $ kubectl -n monitor get po -o wide
-prometheus-dcb499cbf-fxttx   1/1     Running   0          13h   10.244.1.132   k8s-slave1 
+prometheus-6c8768547-7vh7p   1/1     Running   0          13h   10.244.2.63    k8s-slave1 
 
-$ curl http://10.244.1.132:9090/metrics
+$ curl http://10.244.2.63:9090/metrics
 ...
 # HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
 # TYPE promhttp_metric_handler_requests_total counter
@@ -415,6 +462,12 @@ coredns-58cc8c89f4-nshx2             1/1     Running   6          22d   10.244.0
 coredns-58cc8c89f4-t9h2r             1/1     Running   7          22d   10.244.0.21
 
 $ curl 10.244.0.20:9153/metrics
+
+[root@k8s-master prometheus]# kubectl -n kube-system get svc
+NAME             TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                  AGE
+kube-dns         ClusterIP   10.96.0.10     <none>        53/UDP,53/TCP,9153/TCP   6d16h
+metrics-server   ClusterIP   10.99.99.169   <none>        443/TCP                  38h
+
 ```
 
 修改target配置：
@@ -429,13 +482,20 @@ $ kubectl -n monitor edit configmap prometheus-config
       - job_name: 'coredns'
         static_configs:
         - targets: ['10.96.0.10:9153']
-      
-$ kubectl apply -f prometheus-configmap.yaml
+
+#查看配置是否修改了
+# kubectl -n monitor exec prometheus-6c8768547-7vh7p -- cat /etc/prometheus/prometheus.yml
+# kubectl apply -f prometheus-configmap.yaml #上面在线修改了, 不用运行这条命令
 
 # 等待30s左右，重启Prometheus进程
 $ kubectl -n monitor get po -owide
-prometheus-5cd4d47557-758r5   1/1     Running   0          12m   10.244.2.104
-$ curl -XPOST 10.244.2.104:9090/-/reload
+prometheus-5cd4d47557-758r5   1/1     Running   0          12m   10.244.2.63
+$ curl -XPOST 10.244.2.63:9090/-/reload
+
+kubectl -n monitor logs -f prometheus-6c8768547-7vh7p
+
+
+# 浏览器上可查看到新添加的coredns  http://prometheus.luffy.com/targets  
 ```
 
 
@@ -462,10 +522,45 @@ NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   23d
 
 # 获取token
+# kubectl -n monitor get sa   # serviceaccounts
+NAME         SECRETS   AGE
+default      0         <invalid>
+prometheus   0         <invalid>
 $ kubectl -n monitor create token prometheus
 
 # 使用token请求apiserver
-$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InhXcmtaSG5ZODF1TVJ6dUcycnRLT2c4U3ZncVdoVjlLaVRxNG1wZ0pqVmcifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi10b2tlbi1xNXBueiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJhZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImViZDg2ODZjLWZkYzAtNDRlZC04NmZlLTY5ZmE0ZTE1YjBmMCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbiJ9.iEIVMWg2mHPD88GQ2i4uc_60K4o17e39tN0VI_Q_s3TrRS8hmpi0pkEaN88igEKZm95Qf1qcN9J5W5eqOmcK2SN83Dd9dyGAGxuNAdEwi0i73weFHHsjDqokl9_4RGbHT5lRY46BbIGADIphcTeVbCggI6T_V9zBbtl8dcmsd-lD_6c6uC2INtPyIfz1FplynkjEVLapp_45aXZ9IMy76ljNSA8Uc061Uys6PD3IXsUD5JJfdm7lAt0F7rn9SdX1q10F2lIHYCMcCcfEpLr4Vkymxb4IU4RCR8BsMOPIO_yfRVeYZkG4gU2C47KwxpLsJRrTUcUXJktSEPdeYYXf9w" https://10.96.0.1:6443/metrics
+# kubectl -n monitor exec -ti prometheus-6c8768547-7vh7p -- sh
+$ cat /var/run/secrets/kubernetes.io/serviceaccount/token
+$ curl -k  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InFQRmxuWUd5UU9fTVhnSktxQjhOTUJmanZpX25RSFpoWXNwWl9xdDNRcGsifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzYxMjk1NDcyLCJpYXQiOjE3Mjk3NTk0NzIsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJtb25pdG9yIiwicG9kIjp7Im5hbWUiOiJwcm9tZXRoZXVzLTZjODc2ODU0Ny1yaDQ5eiIsInVpZCI6IjYyNWZhYmMzLTdkZTAtNGRhNC04MmVmLTU2MWVlODI5N2VlNyJ9LCJzZXJ2aWNlYWNjb3VudCI6eyJuYW1lIjoicHJvbWV0aGV1cyIsInVpZCI6ImIwZjk5ZDdmLTU3ZjItNGJlZC05ZjU1LTIxYjc1M2JmOGE5MyJ9LCJ3YXJuYWZ0ZXIiOjE3Mjk3NjMwNzl9LCJuYmYiOjE3Mjk3NTk0NzIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptb25pdG9yOnByb21ldGhldXMifQ.cwShfc5WNUnWbdSm09oB05kmZVBiVz8BS_XzB-_zMHekSLlVe_Ooxcuav8MZQhnpLcji8gUnaZqBdBTcs22fEEf0jIRVCXpu7-GsfWHdMGSxMyL9Q6oXl1Q12Hah3Qp75qAe0wmdzuHDTmTbKWoVhg_0vuB9BxOjC-uUYdBIFkml9Dxwzf62bschAgASNOSe3_RvMYplScRH_S-2t0pgjlH_9xPBBASYcjab9IXA9M6YU_zbdP0okFW6mUNtJWb1rrMm97lezD-0upShlMQyWyDxEWhL3DGZvKgX2fbHnNaRf0uuEeDYICHLJFBpvX6nUIU-KTijit3S-rSewajrng" https://10.96.0.1/metrics
+
+# kubectl describe svc kubernetes
+Name:              kubernetes
+Namespace:         default
+Labels:            component=apiserver
+                   provider=kubernetes
+Annotations:       <none>
+Selector:          <none>
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.96.0.1
+IPs:               10.96.0.1
+Port:              https  443/TCP
+TargetPort:        6443/TCP
+Endpoints:         172.16.1.226:6443
+Session Affinity:  None
+Events:            <none>
+
+
+# kubectl -n monitor get po
+NAME                         READY   STATUS    RESTARTS   AGE
+prometheus-6c8768547-7vh7p   1/1     Running   0          <invalid>
+#等30秒 配置文件会更新到prometheus容器里
+# kubectl -n monitor exec -ti prometheus-6c8768547-7vh7p -- cat /etc/prometheus/prometheus.yml
+# kubectl -n monitor exec -ti prometheus-6c8768547-7vh7p -- sh
+/prometheus $ df -h
+/prometheus $ cat /var/run/secrets/kubernetes.io/serviceaccount/token
+
 ```
 
 可以通过手动配置如下job来试下对apiserver服务的监控，
@@ -481,6 +576,63 @@ $ kubectl -n monitor edit configmap prometheus-config
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           insecure_skip_verify: true
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        
+
+# 等待30s左右，重启Prometheus进程
+$ kubectl -n monitor get po -owide
+prometheus-5cd4d47557-758r5   1/1     Running   0          12m   10.244.2.63
+$ curl -XPOST 10.244.2.63:9090/-/reload  #加载配置
+
+
+------------------------------报错信息
+/prometheus $ cat /etc/prometheus/prometheus.yml
+# my global config
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+  - job_name: 'coredns'
+    static_configs:
+    - targets: ['10.96.0.10:9153']
+  - job_name: 'kubernetes-apiserver'
+    static_configs:
+    - targets: ['10.96.0.1']
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+上面是prometheus的配置文件
+[root@k8s-master prometheus]# kubectl -n monitor get po -owide
+NAME                         READY   STATUS    RESTARTS   AGE   IP            NODE         NOMINATED NODE   READINESS GATES
+prometheus-6c8768547-rh49z   1/1     Running   0          41m   10.244.1.72   k8s-slave1   <none>           <none>
+[root@k8s-master prometheus]# curl -XPOST 10.244.1.72:9090/-/reload
+failed to reload config: couldn't load configuration (--config.file="/etc/prometheus/prometheus.yml"): parsing YAML file /etc/prometheus/prometheus.yml: yaml: unmarshal errors:
+  line 31: field scheme not found in type struct { Targets []string "yaml:\"targets\""; Labels model.LabelSet "yaml:\"labels\"" }
+  line 32: field tls_config not found in type struct { Targets []string "yaml:\"targets\""; Labels model.LabelSet "yaml:\"labels\"" }
+  line 35: field bearer_token_file not found in type struct { Targets []string "yaml:\"targets\""; Labels model.LabelSet "yaml:\"labels\"" }
+
+配置文件加载错误?, 重新检查了很多遍 依然报错
 ```
 
 
@@ -498,7 +650,7 @@ node_exporter https://github.com/prometheus/node_exporter
 - 挂载宿主机中的系统文件信息
 
 ```bash
-$ cat node-exporter.ds.yaml
+cat <<\EOF > node-exporter.ds.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -571,18 +723,25 @@ spec:
       - name: root
         hostPath:
           path: /
+EOF
+
 ```
 
 创建node-exporter服务
 
 ```bash
-$ kubectl apply -f node-exporter.ds.yaml
+kubectl apply -f node-exporter.ds.yaml
 
 $ kubectl -n monitor get po -owide
-node-exporter-djcqx           1/1     Running   0          110s   172.21.51.68
+NAME               READY   STATUS    RESTARTS   AGE     IP        NODE         NOMINATED NODE   
+node-exporter-55kdr          1/1     Running   0          2m39s   172.16.1.228   k8s-slave2   <none> 
+node-exporter-8x4xh          1/1     Running   0          2m39s   172.16.1.226   k8s-master   <none> 
+node-exporter-nmf76          1/1     Running   0          2m39s   172.16.1.227   k8s-slave1   <none> 
 
+$ curl 172.16.1.226:9100/metrics
 
-$ curl 172.21.51.143:9100/metrics
+curl 172.16.1.226:9100/metrics  |grep nodel_load
+
 ```
 
 问题来了，如何添加到Prometheus的target中？
@@ -602,18 +761,24 @@ $ curl 172.21.51.143:9100/metrics
 配置job即可：
 
 ```bash
-      - job_name: 'kubernetes-sd-node-exporter'
+# kubectl -n monitor edit cm prometheus-config
+.... 下面增加内容
+     - job_name: 'kubernetes-sd-node-exporter'
         kubernetes_sd_configs:
           - role: node
+
+# 等30秒查看配置更新了
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml     
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置
 ```
 
 重新reload后查看效果：
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/prometheus-target-err1.jpg)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/prometheus-target-err1.jpg)
 
 默认访问的地址是http://node-ip/10250/metrics，10250是kubelet API的服务端口，说明Prometheus的node类型的服务发现模式，默认是和kubelet的10250绑定的，而我们是期望使用node-exporter作为采集的指标来源，因此需要把访问的endpoint替换成http://node-ip:9100/metrics。
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/when-relabel-work.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/when-relabel-work.png)
 
 在真正抓取数据前，Prometheus提供了relabeling的能力。怎么理解？
 
@@ -630,6 +795,8 @@ instance的值其实则取自于`__address__`
 因此，利用relabeling的能力，只需要将`__address__`替换成node_exporter的服务地址即可。
 
 ```bash
+# kubectl -n monitor edit cm prometheus-config
+.... 下面增加内容    
       - job_name: 'kubernetes-sd-node-exporter'
         kubernetes_sd_configs:
           - role: node
@@ -639,6 +806,10 @@ instance的值其实则取自于`__address__`
           replacement: '${1}:9100'
           target_label: __address__
           action: replace
+          
+# 等30秒查看配置更新了
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml     
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置          
 ```
 
 再次更新Prometheus服务后，查看targets列表及node-exporter提供的指标，node_load1
@@ -678,6 +849,8 @@ https://172.21.51.68:10250/metrics/cadvisor
 http://172.21.51.143:10250/metrics
 http://172.21.51.67:10250/metrics
 http://172.21.51.68:10250/metrics
+
+# 可以通过curl -k  -H "Authorization: Bearer xxxx" https://xxxx/xx查看
 ```
 
 和期望值不同的是`__schema__`和`__metrics_path__`，针对`__metrics_path__`可以使用relabel修改：
@@ -691,6 +864,8 @@ http://172.21.51.68:10250/metrics
 针对`__schema__`：
 
 ```yaml
+# kubectl -n monitor edit cm prometheus-config
+.... 下面增加内容
       - job_name: 'kubernetes-sd-cadvisor'
         kubernetes_sd_configs:
           - role: node
@@ -702,6 +877,11 @@ http://172.21.51.68:10250/metrics
         relabel_configs:
         - target_label: __metrics_path__
           replacement: /metrics/cadvisor
+          
+# 等30秒查看配置更新了
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml     
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置                   
+          
 ```
 
 重新应用配置，然后重建Prometheus的pod。查看targets列表，查看cadvisor指标，比如container_cpu_system_seconds_total，container_memory_usage_bytes
@@ -713,6 +893,8 @@ http://172.21.51.68:10250/metrics
 若想采集kubelet的指标：
 
 ```yaml
+# kubectl -n monitor edit cm prometheus-config
+.... 下面增加内容
       - job_name: 'kubernetes-sd-kubelet'
         kubernetes_sd_configs:
           - role: node
@@ -721,6 +903,10 @@ http://172.21.51.68:10250/metrics
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           insecure_skip_verify: true
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        
+# 等30秒查看配置更新了
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml     
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置    
 ```
 
 
@@ -735,11 +921,19 @@ http://172.21.51.68:10250/metrics
       - job_name: 'kubernetes-sd-endpoints'
         kubernetes_sd_configs:
           - role: endpoints
+
+# kubectl -n monitor edit cm prometheus-config  
+# 等30秒 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置   
+
+# kubectl get ep -A #并不是所有endpoint都实现了metrics接口
+
 ```
 
 reload prometheush，此使的Target列表中，`kubernetes-sd-endpoints`下出现了N多条数据，
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/prometheus-target-err2.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/prometheus-target-err2.png)
 
 可以发现，实际上endpoint这个类型，目标是去抓取整个集群中所有的命名空间的Endpoint列表，然后使用默认的/metrics进行数据抓取，我们可以通过查看集群中的所有ep列表来做对比：
 
@@ -749,18 +943,24 @@ $ kubectl get endpoints --all-namespaces
 
 但是实际上并不是每个服务都已经实现了/metrics监控的，也不是每个实现了/metrics接口的服务都需要注册到Prometheus中，因此，我们需要一种方式对需要采集的服务实现自主可控。这就需要利用relabeling中的keep功能。
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/when-relabel-work-1669080479809213.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/when-relabel-work-1669080479809213.png)
 
 我们知道，relabel的作用对象是target的Before Relabling标签，比如说，假如通过如下定义:
 
 ```bash
-- job_name: 'kubernetes-sd-endpoints'
-  kubernetes_sd_configs:
-  - role: endpoints
-  relabel_configs:
-  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-    action: keep
-    regex: true
+  - job_name: 'kubernetes-sd-endpoints'
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+
+    
+# kubectl -n monitor edit cm prometheus-config  
+# 等待30秒 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置     
 ```
 
 那么就可以实现target的Before Relabling中若存在`__meta_kubernetes_service_annotation_prometheus_io_scrape`，且值为`true`的话，则会加入到kubernetes-sd-endpoints这个target中，否则就会被删除。
@@ -801,13 +1001,19 @@ metadata:
 我们即可以使用如下配置，来定义服务是否要被抓取监控数据。
 
 ```bash
-- job_name: 'kubernetes-sd-endpoints'
-  kubernetes_sd_configs:
-  - role: endpoints
-  relabel_configs:
-  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-    action: keep
-    regex: true
+      - job_name: 'kubernetes-sd-endpoints'
+        kubernetes_sd_configs:
+        - role: endpoints
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+
+   
+# kubectl -n monitor edit cm prometheus-config  
+# 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置     
 ```
 
 这样的话，我们只需要为服务定义上如下的声明，即可实现Prometheus自动采集数据
@@ -822,9 +1028,12 @@ metadata:
 同样的思路，我们知道，Prometheus会默认使用Before Relabling中的`__metrics_path`作为采集路径，因此，我们再自定义一个annotation，`prometheus.io/path`
 
 ```bash
+# kubectl -n kube-system edit svc kube-dns
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/path: "/path/to/metrics"
+    prometheus.io/path: "/path/to/metrics" #增加内容
+    
+
 ```
 
 这样，Prometheus端会自动生成如下标签：
@@ -836,17 +1045,23 @@ __meta_kubernetes_service_annotation_prometheus_io_path="/path/to/metrics"
 我们只需要在relabel_configs中用该标签的值，去重写`__metrics_path__`的值即可。因此：
 
 ```bash
-- job_name: 'kubernetes-sd-endpoints'
-  kubernetes_sd_configs:
-  - role: endpoints
-  relabel_configs:
-  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-    action: keep
-    regex: true
-  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-    action: replace
-    target_label: __metrics_path__
-    regex: (.+)
+  - job_name: 'kubernetes-sd-endpoints'
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+      action: replace
+      target_label: __metrics_path__
+      regex: (.+)
+
+    
+# kubectl -n monitor edit cm prometheus-config  
+# 等待30秒 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置     
 ```
 
 有些时候，业务服务的metrics是独立的端口，比如coredns，业务端口是53，监控指标采集端口是9153，这种情况，如何处理？
@@ -854,10 +1069,14 @@ __meta_kubernetes_service_annotation_prometheus_io_path="/path/to/metrics"
 很自然的，我们会想到通过自定义annotation来处理，
 
 ```bash
+# kubectl -n kube-system edit svc kube-dns
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/path: "/path/to/metrics"
+    prometheus.io/path: "ss/metrics"  #修改成/metrics
     prometheus.io/port: "9153"
+    
+    
+# http://prometheus.luffy.com/targets #页面查看 路径变更了    
 ```
 
 如何去替换？
@@ -882,6 +1101,20 @@ __address__="10.244.0.21"
     target_label: __address__
     regex: ([^:]+)(?::\d+)?;(\d+)
     replacement: $1:$2
+    
+# kubectl -n monitor edit cm prometheus-config  
+# 等待30秒 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置     
+
+# kubectl -n monitor edit cm prometheus-config   # 删除掉coredns
+      - job_name: 'coredns'
+        static_configs:
+        - targets: ['10.244.0.55:9153']
+        
+# 等待30秒 查看修改的配置是否更新上去
+# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+# curl -XPOST 10.244.1.72:9090/-/reload  #软加载配置    
 ```
 
 需要注意的几点：
@@ -932,6 +1165,93 @@ __address__="10.244.0.21"
         - source_labels: [__meta_kubernetes_pod_name]
           action: replace
           target_label: kubernetes_pod_name 
+          
+-----------------完整版
+[root@k8s-master prometheus]# kubectl -n monitor exec prometheus-6c8768547-rh49z -- cat /etc/prometheus/prometheus.yml
+Defaulted container "prometheus" out of: prometheus, change-permission-of-directory (init)
+# my global config
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+  - job_name: 'coredns'
+    static_configs:
+    - targets: ['10.96.0.10:9153']
+  - job_name: 'kubernetes-sd-node-exporter'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+    - source_labels: [__address__]
+      regex: '(.*):10250'
+      replacement: '${1}:9100'
+      target_label: __address__
+      action: replace
+  - job_name: 'kubernetes-sd-cadvisor'
+    kubernetes_sd_configs:
+      - role: node
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+    - target_label: __metrics_path__
+      replacement: /metrics/cadvisor
+  - job_name: 'kubernetes-sd-kubelet'
+    kubernetes_sd_configs:
+      - role: node
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  - job_name: 'kubernetes-sd-endpoints'
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+    - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+      action: replace
+      target_label: __metrics_path__
+      regex: (.+)
+    - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+      action: replace
+      target_label: __address__
+      regex: ([^:]+)(?::\d+)?;(\d+)
+      replacement: $1:$2
+    - source_labels: [__meta_kubernetes_namespace]
+      action: replace
+      target_label: kubernetes_namespace
+    - source_labels: [__meta_kubernetes_service_name]
+      action: replace
+      target_label: kubernetes_service_name
+    - source_labels: [__meta_kubernetes_pod_name]
+      action: replace
+      target_label: kubernetes_pod_name
+
+---------------------
+
 ```
 
 验证一下：
@@ -985,9 +1305,12 @@ __address__="10.244.0.21"
 
 ```bash
 $ wget https://github.com/kubernetes/kube-state-metrics/archive/v2.1.0.tar.gz
+# wget https://gitee.com/chengkanghua/script/raw/master/kube-state-metrics-2.1.0.tar.gz #备用地址
 
-$ tar zxf kube-state-metrics-2.1.0.tar.gz
-$  cp -r kube-state-metrics-2.1.0/examples/standard/ .
+
+tar zxf kube-state-metrics-2.1.0.tar.gz
+cd kube-state-metrics-2.1.0/examples/standard/
+
 
 $ ll standard/
 total 20
@@ -998,12 +1321,12 @@ total 20
 -rw-r--r-- 1 root root  405 Jun 24 20:49 service.yaml
 
 # 替换namespace为monitor
-$ sed -i 's/namespace: kube-system/namespace: monitor/g' standard/*
+sed -i 's/namespace: kube-system/namespace: monitor/g' *
 
 # 替换镜像地址为image: bitnami/kube-state-metrics:2.1.0
-$ sed -i 's#k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.1.0#bitnami/kube-state-metrics:2.1.0#g' standard/deployment.yaml
+sed -i 's#k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.1.0#bitnami/kube-state-metrics:2.1.0#g' deployment.yaml
 
-$ kubectl apply -f standard/
+$ kubectl apply -f .
 clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created
 clusterrole.rbac.authorization.k8s.io/kube-state-metrics created
 deployment.apps/kube-state-metrics created
@@ -1014,11 +1337,11 @@ service/kube-state-metrics created
 如何添加到Prometheus监控target中？
 
 ```bash
-$ cat standard/service.yaml
+$ vi service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
+  annotations:#新增加
     prometheus.io/scrape: "true"
     prometheus.io/port: "8080"
   labels:
@@ -1038,7 +1361,12 @@ spec:
   selector:
     app.kubernetes.io/name: kube-state-metrics
     
-$ kubectl apply -f standard/service.yaml
+$ kubectl apply -f service.yaml
+
+[root@k8s-master standard]# kubectl -n monitor get po -owide
+NAME                                 READY   STATUS    RESTARTS   AGE     IP             NODE      
+kube-state-metrics-7dc6bc9d6-89cf2   1/1     Running   0          3m45s   10.244.2.68    k8s-slave2
+
 ```
 
 查看target列表，观察是否存在kube-state-metrics的target。
@@ -1068,7 +1396,7 @@ kube_deployment_status_replicas_unavailable
 - 配置ingress暴露访问入口
 
 ```bash
-$ cat grafana-all.yaml
+cat <<\EOF > grafana-all.yaml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -1175,11 +1503,34 @@ spec:
             name: grafana
             port:
               number: 3000
+EOF
+
+
+kubectl apply -f grafana-all.yaml
+kubectl -n monitor get ing
+kubectl -n monitor get po -owide
+
+# 宿主机配置hosts
+10.0.0.266 grafana.luffy.com
+#浏览器访问  账号密码 admin
+
 ```
 
 配置数据源：
 
 - URL：[http://prometheus:9090](http://prometheus:9090/)
+
+  ```bash
+  http://grafana.luffy.com/datasources/edit/1/
+  添加prometheus --> 设置 url http://prometheus:9090 --> save& test
+  
+  导入数据源
+  http://grafana.luffy.com/dashboard/import
+  id : 11074
+  VictoriaMetrics: 选择刚刚的数据源 Prometheus  ->点击import
+  ```
+
+  
 
 如何丰富Grafana监控面板：
 
@@ -1191,13 +1542,13 @@ spec:
 
 # 完善监控面板
 
-###### [导入Dashboard的配置](http://49.7.203.222:2023/#/prometheus/grafana/add-grafana-metrics?id=导入dashboard的配置)
+###### 导入Dashboard的配置
 
 dashboard： https://grafana.com/grafana/dashboards
 
 - Node Exporter https://grafana.com/grafana/dashboards/11074
 
-###### [DevOpsProdigy KubeGraf插件的使用](http://49.7.203.222:2023/#/prometheus/grafana/add-grafana-metrics?id=devopsprodigy-kubegraf插件的使用)
+###### DevOpsProdigy KubeGraf插件的使用
 
 除了直接导入Dashboard，我们还可以通过安装插件的方式获得，Configuration -> Plugins可以查看已安装的插件，通过 [官方插件列表](https://grafana.com/grafana/plugins?utm_source=grafana_plugin_list) 我们可以获取更多可用插件。
 
@@ -1210,7 +1561,7 @@ Kubernetes相关的插件：
 
 ```bash
 # 进入grafana容器内部执行安装
-$ kubectl -n monitor exec -ti grafana-594f447d6c-jmjsw bash
+$ kubectl -n monitor exec -it grafana-587484b84d-grhl5 -- bash
 bash-5.0# grafana-cli plugins install devopsprodigy-kubegraf-app 1.5.2
 installing devopsprodigy-kubegraf-app @ 1.5.2
 from: https://grafana.com/api/plugins/devopsprodigy-kubegraf-app/versions/1.5.2/download
@@ -1223,7 +1574,7 @@ Restart grafana after installing plugins . <service grafana-server restart>
 # 也可以下载离线包进行安装
 
 # 重建pod生效
-$ kubectl -n monitor delete po grafana-594f447d6c-jmjsw
+$ kubectl -n monitor delete po grafana-587484b84d-grhl5
 ```
 
 登录grafana界面，Configuration -> Plugins 中找到安装的插件，点击插件进入插件详情页面，点击 [Enable]按钮启用插件，点击 `Set up your first k8s-cluster` 创建一个新的 Kubernetes 集群:
@@ -1236,6 +1587,14 @@ $ kubectl -n monitor delete po grafana-594f447d6c-jmjsw
   - CA Cert：使用config文件中的`certificate-authority-data`对应的内容
   - Client Cert：使用config文件中的`client-certificate-data`对应的内容
   - Client Key：使用config文件中的`client-key-data`对应的内容
+  
+  ```bash
+  grep certificate-authority-data ~/.kube/config
+  grep client-certificate-data ~/.kube/config
+  grep client-key-data ~/.kube/config
+  ```
+  
+  
 
 > 面板没有数据怎么办？
 
@@ -1424,6 +1783,7 @@ node_cpu_seconds_total
 因此，我们只需要使用PromQL取出上述过程中的值即可：
 
 ```bash
+
 # 过滤出当前时间点idle的时长
 node_cpu_seconds_total{mode="idle"}
 
@@ -1445,12 +1805,13 @@ sum(increase(node_cpu_seconds_total{}[1m])) by (instance)
 # 最终的语句
 (1- sum(increase(node_cpu_seconds_total{mode="idle"}[1m])) by (instance) / sum(increase(node_cpu_seconds_total{}[1m])) by (instance)) * 100
 ```
-
+<span v-pre>
 除此之外，还会经常看到avg,irate和rate方法的使用：
-
-`irate()` 是基于最后两个数据点计算一个时序指标在一个范围内的每秒递增率 ，举个例子：
+`irate()`是基于最后两个数据点计算一个时序指标在一个范围内的每秒递增率 ，举个例子： 
+</span> 
 
 ```bash
+<span v-pre>
 # 1min内，k8s-master节点的idle状态的cpu分配时长增量值
 increase(node_cpu_seconds_total{instance="k8s-master",mode="idle"}[1m])
 
@@ -1478,13 +1839,15 @@ rate(node_cpu_seconds_total{instance="k8s-master",mode="idle"}[1m])
 {cpu="1",instance="k8s-master",job="kubernetes-sd-node-exporter",mode="idle"}    0.940
 {cpu="2",instance="k8s-master",job="kubernetes-sd-node-exporter",mode="idle"}    0.935
 {cpu="3",instance="k8s-master",job="kubernetes-sd-node-exporter",mode="idle"}    0.937
+
+</span> 
 ```
 
 因此rate的值，相对来讲更平滑，因为计算的是时间段内的平均，更适合于用作告警。
 
 取CPU平均使用率也可以用如下表达式表示：
 
-```
+```bash
 (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[1m])) by (instance)) * 100
 ```
 
@@ -1498,7 +1861,7 @@ Alertmanager是一个独立的告警模块。
 - 通过分组、删除重复等处理，并将它们通过路由发送给正确的接收器；
 - 告警方式可以按照不同的规则发送给不同的模块负责人。Alertmanager支持Email, Slack，等告警方式, 也可以通过webhook接入钉钉等国内IM工具。
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/alertmanager.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/alertmanager.png)
 
 如果集群主机的内存使用率超过80%，且该现象持续了2分钟？想实现这样的监控告警，如何做？
 
@@ -1659,7 +2022,7 @@ spec:
 
 ###### [配置Prometheus与Alertmanager对话](http://49.7.203.222:2023/#/prometheus/alertmanager/install?id=配置prometheus与alertmanager对话)
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/alertmanager.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/alertmanager.png)
 
 是否告警是由Prometheus进行判断的，若有告警产生，Prometheus会将告警push到Alertmanager，因此，需要在Prometheus端配置alertmanager的地址：
 
@@ -1797,8 +2160,8 @@ data:
 
 规则配置中，支持模板的方式，其中：
 
-- {{$labels}}可以获取当前指标的所有标签，支持{{$labels.instance}}或者{{$labels.job}}这种形式
-- {{ $value }}可以获取当前计算出的指标值
+- <span v-pre>  {{$labels}}可以获取当前指标的所有标签，支持{{$labels.instance}}或者{{$labels.job}}这种形式 </span>
+- <span v-pre> {{ $value }}可以获取当前计算出的指标值 </span>
 
 更新配置并软重启，并查看Prometheus报警规则。
 
@@ -2299,7 +2662,7 @@ metadata:
 
 一条告警产生后，还要经过 Alertmanager 的分组、抑制处理、静默处理、去重处理和降噪处理最后再发送给接收者。这个过程中可能会因为各种原因会导致告警产生了却最终没有进行通知，可以通过下图了解整个告警的生命周期：
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/alertmanager-process.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/alertmanager-process.png)
 
 
 
@@ -2313,7 +2676,7 @@ metadata:
 
 前面章节，我们讲过基于CPU和内存的HPA，即利用metrics-server及HPA，可以实现业务服务可以根据pod的cpu和内存进行弹性伸缩。
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/hpa-prometheus-custom.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/hpa-prometheus-custom.png)
 
 k8s对监控接口进行了标准化：
 
@@ -2325,7 +2688,7 @@ k8s对监控接口进行了标准化：
 
   对应的接口是 custom.metrics.k8s.io，主要的实现是 Prometheus， 它提供的是资源监控和自定义监控
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/k8s-metrics.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/k8s-metrics.png)
 
 安装完metrics-server后，利用kube-aggregator的功能，实现了metrics api的注册。可以通过如下命令
 
@@ -2447,7 +2810,7 @@ $ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta2 |jq
 
 ###### [通用指标示例程序部署](http://49.7.203.222:2023/#/prometheus/custom-metrics?id=通用指标示例程序部署)
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/hpa-prometheus-custom-1669080924564225.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/hpa-prometheus-custom-1669080924564225.png)
 
 为了演示效果，我们新建一个deployment来模拟业务应用。
 
@@ -2548,7 +2911,7 @@ spec:
 
 ###### [Adapter配置自定义指标](http://49.7.203.222:2023/#/prometheus/custom-metrics?id=adapter配置自定义指标)
 
-![img](6基于Prometheus的Kubernetes监控方案.assets/customer-metrics.png)
+![img](./6基于Prometheus的Kubernetes监控方案.assets/customer-metrics.png)
 
 思考：
 

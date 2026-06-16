@@ -2091,7 +2091,7 @@ public class BillController {
 
     @GetMapping("/bill/user")
     public String getUserInfo(){
-        return restTemplate.getForObject("http://localhost:7000/user", String.class);
+        return restTemplate.getForObject("localhost:7000/user", String.class);
     }
 }
 ```
@@ -2184,7 +2184,7 @@ public class BillController {
 
     @GetMapping("/normal")
     public String normal() {
-        return normalRestTemplate.getForObject("http://localhost:7000/user", String.class);
+        return normalRestTemplate.getForObject("localhost:7000/user", String.class);
     }
 }
 ```
@@ -2754,7 +2754,7 @@ spring:
           include: "*"
   ```
 
-访问`http://localhost:9000/actuator/hystrix.stream` 即可访问到断路器的执行状态，但是显示不太友好，因此需要dashboard。
+访问`localhost:9000/actuator/hystrix.stream` 即可访问到断路器的执行状态，但是显示不太友好，因此需要dashboard。
 
 新建项目，hystrix-dashboard
 
@@ -3021,9 +3021,10 @@ eureka:
 
 启动后，访问：
 
-http://localhost:10000/bill-service/bill/user/1
-
-http://localhost:10000/user-service/user
+<span v-pre>
+localhost:10000/bill-service/bill/user/1
+localhost:10000/user-service/user
+</span> 
 
 filter 过滤器
 
@@ -3038,15 +3039,19 @@ zuul:
     bill-service:
       path: /bill/**
       service-id: bill-service
-http://localhost:10000/users/user/1
-                                                 --->  http://localhost:7000/user/1
-http://localhost:10000/user-service/user/1
+
+<span v-pre>      
+localhost:10000/users/user/1
+                                                 --->  localhost:7000/user/1
+localhost:10000/user-service/user/1
 
 
 
-http://localhost:10000/bill/service/user/2 
-                                                 --->http://localhost:7001/service/user/2
-http://localhost:10000/bill-service/service/user/2
+localhost:10000/bill/service/user/2 
+                                                 --->localhost:7001/service/user/2
+localhost:10000/bill-service/service/user/2
+
+</span> 
 ```
 
 zuul如何指定对外暴漏api的path，如：
@@ -3063,7 +3068,7 @@ management:
         include: "*"
 ```
 
-可以访问到zuul的route列表， http://localhost:10000/actuator/routes/ ，添加details可以访问到详细信息
+可以访问到zuul的route列表，<span v-pre>  localhost:10000/actuator/routes/ </span> ，添加details可以访问到详细信息
 
 ```json
 {
@@ -3195,7 +3200,7 @@ logging:
     org.springframework.cloud: debug
 ```
 
-访问zuul网关的接口`http://localhost:10000/apis/bill-service/bill/user/2`
+访问zuul网关的接口 <span v-pre> `localhost:10000/apis/bill-service/bill/user/2` </span>
 
 
 
