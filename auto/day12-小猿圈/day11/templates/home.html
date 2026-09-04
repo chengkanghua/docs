@@ -1,0 +1,122 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h3>row+栅格</h3>
+<div class="clearfix">
+    <div class="col-md-8" style="background-color: red;">.col-md-8</div>
+    <div class="col-md-4" style="background-color: green">.col-md-4</div>
+</div>
+<div class="clearfix row">
+    <div class="col-md-8" style="background-color: red;">.col-md-8</div>
+    <div class="col-md-4" style="background-color: green">.col-md-4</div>
+</div>
+
+
+<h3>布局</h3>
+<div style="background-color: #f0ad4e">
+    <div class="container" style="background-color: #2e6da4">asdf</div>
+
+</div>
+
+<h3>栅格系统</h3>
+<div class="clearfix">
+    <div class="col-xs-3">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <i style="color: red;" class="fa fa-balance-scale" aria-hidden="true"></i> Panel heading without
+                title
+            </div>
+            <div class="panel-body">
+                Panel content
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">Panel heading without title
+                <i class="fa fa-star" aria-hidden="true" style="color: #f0ad4e"></i>
+                <i class="fa fa-star" aria-hidden="true"></i>
+                <i class="fa fa-star" aria-hidden="true"></i>
+                <i class="fa fa-star" aria-hidden="true"></i>
+                <i class="fa fa-star" aria-hidden="true"></i>
+            </div>
+            <div class="panel-body">
+                Panel content
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-5">
+        <div class="panel panel-default">
+            <div class="panel-heading">Panel heading without title</div>
+            <div class="panel-body">
+                Panel content
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span> 数据处理区域
+    </div>
+    <div class="panel-body">
+        <form class="form-inline">
+            <div class="form-group">
+                <label class="sr-only" for="exampleInputEmail3">Email address</label>
+                <input type="email" class="form-control" id="exampleInputEmail3" placeholder="Email">
+            </div>
+            <div class="form-group">
+                <label class="sr-only" for="exampleInputPassword3">Password</label>
+                <input type="password" class="form-control" id="exampleInputPassword3" placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-success">新 建</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span> 数据列表区域
+    </div>
+
+
+    <table class="table table-bordered table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Username</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <th scope="row">1</th>
+            <td>Mark</td>
+            <td>Otto</td>
+            <td>
+                <a class="btn btn-primary btn-xs">编辑</a>
+                <a class="btn btn-danger btn-xs">删除</a>
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
+
+
+</div>
+
+<ul class="pagination">
+    <li class="disabled"><a href="#" aria-label="Previous"><span aria-hidden="true">«</span></a></li>
+    <li class="active"><a href="#">1 <span class="sr-only">(current)</span></a></li>
+    <li><a href="#">2</a></li>
+    <li><a href="#">3</a></li>
+    <li><a href="#">4</a></li>
+    <li><a href="#">5</a></li>
+    <li><a href="#" aria-label="Next"><span aria-hidden="true">»</span></a></li>
+</ul>
+
+{% endblock %}

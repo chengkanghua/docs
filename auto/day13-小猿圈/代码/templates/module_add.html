@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>新建模块</h1>
+<div>
+    <form method="post">
+        <div class="form-group">
+            <label>名称</label>
+            <input name="name" type="text" class="form-control" placeholder="模块名称">
+        </div>
+        <div class="form-group">
+            <label>介绍</label>
+            <textarea name="detail" class="form-control" placeholder="模块介绍"></textarea>
+        </div>
+        <div class="form-group">
+            <label>学科</label>
+            <select class="form-control" name="course_id">
+                {% for item in course_list%}
+                <option value="{{item.id}}">{{item.title}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>讲师</label>
+            <div>
+                {% for item in teacher_list%}
+                <input type="radio" name="teacher_id" value="{{item.id}}" />{{item.name}}
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">提 交</button>
+    </form>
+</div>
+{% endblock %}

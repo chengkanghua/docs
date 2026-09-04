@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>{{x1}}</h1>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>标题</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in x2 %}
+        <tr>
+            <td>{{item.id}}</td>
+            <td>{{item.title}}</td>
+            <td>删除</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

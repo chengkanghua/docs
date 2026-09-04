@@ -1,0 +1,103 @@
+version: "3.7"
+services:
+  mysql:
+    image: mysql:8.0.26
+    restart: always
+    container_name: mysql
+    networks:
+      - web
+    environment:
+      - "MYSQL_ROOT_PASSWORD=123456"
+      - "TZ=Asia/Shanghai"
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./docker/mysql/conf:/etc/mysql/conf.d/
+      - ./docker/mysql/data:/var/lib/mysql/
+      - ./docker/mysql/logs:/var/log/mysql/
+      - ./docker/mysql/initdb:/docker-entrypoint-initdb.d/
+  redis:
+    image: redis:5.0.14-alpine
+    restart: always
+    container_name: redis
+    networks:
+      - web
+    command: redis-server /etc/redis/redis.conf
+    sysctls:
+      - net.core.somaxconn=2048
+    ports:
+      - "6370:6379"
+    volumes:
+      - ./docker/redis/conf:/etc/redis
+      - ./docker/redis/data:/data
+      - ./docker/redis/logs:/logs
+  ubuntu1: &ubuntu
+    build: .
+    image: sshd-ubuntu:20.04
+    restart: always
+    container_name: ubuntu_1
+    tty: true
+    privileged: true
+    expose:
+      - 22
+    ports:
+      - "10021:22"
+    command: /usr/sbin/sshd -D
+    networks:
+      - sys
+  ubuntu2:
+    <<: *ubuntu
+    container_name: ubuntu_2
+    ports:
+      - "10022:22"
+  ubuntu3:
+    <<: *ubuntu
+    container_name: ubuntu_3
+    ports:
+      - "10023:22"
+  ubuntu4:
+    <<: *ubuntu
+    container_name: ubuntu_4
+    ports:
+      - "10024:22"
+
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest' # gitlab的镜像，如果已经有了，指定自己的镜像版本即可
+    container_name: gitlab # 生成的docker容器的名字
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://192.168.101.8:8993' # 此处填写所在服务器ip若有域名可以写域名
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+    ports:
+      - '8993:8993' # 此处端口号须与 external_url 中保持一致，左边和右边都要一样
+      - '2224:22' # 这里的2224和上面的2224一致，但是右边必须是22，不能是其他
+    volumes:
+      #将相关配置映射到当前目录下的config目录
+      - './docker/gitlab/conf:/etc/gitlab'
+      #将日志映射到当前目录下的logs目录
+      - './docker/gitlab/logs:/var/log/gitlab'
+      #将数据映射到当前目录下的data目录
+      - './docker/gitlab/data:/var/opt/gitlab'
+
+  jenkins:
+    image: 'jenkins/jenkins:lts-jdk11'
+    container_name: jenkins
+    restart: always
+    user: root
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - '8888:8080'
+      - '5000:50000'
+    volumes:
+      - './docker/jenkins/data:/var/jenkins_home'
+
+networks:
+  web:
+  sys:

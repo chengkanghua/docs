@@ -1,0 +1,50 @@
+{
+    "config": {
+        "name": "接口测试-测试用例",
+        "base_url": "https://api.luffycity.com/api/v1",
+        "variables": {
+            "a": "${sum(10, 2.3)}",
+            "b": 3.45,
+            "n": "${sum_ints(1, 2, 2)}",
+            "varFoo1": "${gen_random_string($n)}",
+            "varFoo2": "${max($a, $b)}"
+        }
+    },
+    "teststeps": [
+        {
+            "name": "请求课程分页数据",
+            "request": {
+                "method": "GET",
+                "url": "/course/actual/",
+                "params": {
+                    "limit": 12,
+                    "offset": 0,
+                    "category_id": 1
+                },
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+                }
+            },
+
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check response status code"
+                },
+                {
+                    "check": "headers.\"Content-Type\"",
+                    "assert": "startswith",
+                    "expect": "application/json"
+                },
+                {
+                    "check": "body.code",
+                    "assert": "equals",
+                    "expect": 0,
+                    "msg": "check code"
+                }
+            ]
+        }
+    ]
+}

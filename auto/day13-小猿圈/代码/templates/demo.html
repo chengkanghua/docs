@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>
+
+
+
+    <input type="text" id="txt"/>
+    <input type="button" value="点击" id="btn"/>
+    <img src="xxx"/>
+</div>
+
+<script src="/static/jquery-3.6.0.min.js"></script>
+<script>
+    // 当页面框架加载完成后自动执行
+    $(function () {
+        $("#btn").click(function () {
+            // alert("点我了");
+
+            // var data = $("#txt").val();
+            // alert(data);
+
+            // console.log(this); // DOM对象 -> jQuery ==> $(this)
+            var data = $(this).prev().val();
+            console.log(data);
+        });
+    })
+
+</script>
+</body>
+</html>

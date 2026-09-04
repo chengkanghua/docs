@@ -1,0 +1,17 @@
+/* 顶部导航标签（navigation.tabs）在窄屏也保持显示
+   material 默认需视口宽度 >= 约 1220px(76.25em) 才显示顶部标签，
+   否则收进左侧抽屉菜单。这里把显示断点降到 76.24em 以下，
+   并允许标签栏横向滚动，避免窄屏/分屏时标签溢出。 */
+@media screen and (max-width: 76.24em) {
+  .md-tabs {
+    display: block !important;
+  }
+  .md-tabs__list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .md-tabs__item {
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,31 @@
+[ {
+  "uid" : "bf869f7dcc8dff71",
+  "name" : "测试用例test_01的标题描述",
+  "time" : {
+    "start" : 1653211731941,
+    "stop" : 1653211731941,
+    "duration" : 0
+  },
+  "status" : "passed",
+  "severity" : "minor"
+}, {
+  "uid" : "732906e7a984385",
+  "name" : "测试用例test_03的标题描述",
+  "time" : {
+    "start" : 1653211731946,
+    "stop" : 1653211731949,
+    "duration" : 3
+  },
+  "status" : "failed",
+  "severity" : "critical"
+}, {
+  "uid" : "547f62f2e8884095",
+  "name" : "测试用例test_02的标题描述",
+  "time" : {
+    "start" : 1653211731944,
+    "stop" : 1653211731944,
+    "duration" : 0
+  },
+  "status" : "passed",
+  "severity" : "blocker"
+} ]

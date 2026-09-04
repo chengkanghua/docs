@@ -1,0 +1,11 @@
+django == 3.2
+pymysql
+djangorestframework
+djangorestframework-jwt
+django-cors-headers
+paramiko
+openpyxl
+pillow
+
+
+

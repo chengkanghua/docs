@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: user-service
+  namespace: {{NAMESPACE}}
+spec:
+  rules:
+    - host: {{INGRESS_USER_SERVICE}}
+      http:
+        paths:
+          - backend:
+              serviceName: user-service
+              servicePort: 7000
+            path: /
+status:
+  loadBalancer: {}

@@ -1,0 +1,1 @@
+from rest_framework.throttling import BaseThrottle

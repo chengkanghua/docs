@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .go {
+            width: 100%;
+            min-height: 350px;
+            background-color: #DAE4E4;
+        }
+    </style>
+</head>
+<body>
+<div id="diagramDiv" class="go"></div>
+
+<div class="content">
+    <div>{{ task_object.title }}</div>
+    <div>{{ task_object.detail }}</div>
+    <div>
+        <input type="button" value="同意" onclick="agree();">
+        <input type="button" value="不同意" onclick="disAgree();">
+    </div>
+
+</div>
+
+<script src="/static/gojs/go-no-logo.js"></script>
+<script>
+    var diagram;
+    var socket;
+    var $;
+
+    function initGoJs() {
+        $ = go.GraphObject.make;
+
+        diagram = $(go.Diagram, "diagramDiv", {
+            layout: $(go.TreeLayout, {
+                angle: 0,
+                nodeSpacing: 20,
+                layerSpacing: 70
+            })
+        });
+
+        // 节点的模板
+        diagram.nodeTemplate = $(go.Node, "Auto",
+            $(go.Shape, {
+                figure: "RoundedRectangle",
+                fill: 'lightgray',
+                stroke: 'lightgray'
+            }, new go.Binding("figure", "figure"), new go.Binding("fill", "color"), new go.Binding("stroke", "color")),
+            $(go.TextBlock, {margin: 8}, new go.Binding("text", "text"))
+        );
+
+        // 连接的模板
+        diagram.linkTemplate = $(go.Link,
+            {routing: go.Link.Orthogonal},
+            $(go.Shape, {stroke: 'lightgray'}, new go.Binding('stroke', 'link_color')),
+            $(go.Shape, {toArrow: "OpenTriangle", stroke: 'lightgray'}, new go.Binding('stroke', 'link_color')),
+            $(go.TextBlock, {
+                font: '8pt serif',
+                segmentOffset: new go.Point(0, -10)
+            }, new go.Binding("text", "link_text"))
+        );
+
+    }
+
+    function initWebSocket() {
+        socket = new WebSocket("ws://127.0.0.1:8000/audit/{{ task_id }}/");
+
+        socket.onmessage = function (event) {
+            // 判断，全部 or 修改局部
+            let dataDict = JSON.parse(event.data);
+            if (dataDict.msg_type === 1) {
+                diagram.model = new go.TreeModel(dataDict.node_data_array);
+            } else {
+                // 局部更新
+                let node = diagram.model.findNodeDataForKey(dataDict.key);
+                diagram.model.setDataProperty(node, "color", dataDict.color);
+            }
+
+        }
+    }
+
+    function agree() {
+        let info = {user: "{{ user }}", type: "同意"};
+        socket.send(JSON.stringify(info));
+    }
+
+    function disAgree() {
+        let info = {user: "{{ user }}", type: "不同意"};
+        socket.send(JSON.stringify(info));
+    }
+
+    initGoJs();
+    initWebSocket();
+
+
+</script>
+</body>
+</html>

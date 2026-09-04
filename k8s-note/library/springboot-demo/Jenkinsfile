@@ -1,0 +1,87 @@
+@Library('luffy-devops') _
+
+pipeline {
+    agent { label 'jnlp-slave'}
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        gitLabConnection('gitlab')
+    }
+    environment {
+        IMAGE_REPO = "10.211.55.27:5000/spring-cloud/springboot-demo"
+        IMAGE_CREDENTIAL = "credential-registry"
+        DINGTALK_CREDS = credentials('dingTalk')
+        PROJECT = "springboot-demo"
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                container('tools') {
+                    checkout scm
+                }
+            }
+        }
+        stage('mvn-package') {
+            steps {
+                container('tools') {
+                    script{
+                        sh 'mvn clean package'
+                    }
+                }
+            }
+        }
+        stage('CI'){
+            failFast true
+            parallel {
+                stage('Unit Test') {
+                    steps {
+                        echo "Unit Test Stage Skip..."
+                    }
+                }
+                stage('Code Scan') {
+                    steps {
+                        container('tools') {
+                            script {
+                               devops.scan().start()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('docker-image') {
+            steps {
+                container('tools') {
+                    script{
+                        devops.docker(
+                            "${IMAGE_REPO}",
+                            "${GIT_COMMIT}",
+                            IMAGE_CREDENTIAL
+                        ).build().push()
+                    }
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                container('tools') {
+                    script{
+                        devops.deploy("manifests",true,"manifests/deployment.yaml").start()
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script{
+                devops.notificationSuccess(PROJECT,"dingTalk")
+            }
+        }
+        failure {
+            script{
+                devops.notificationFailure(PROJECT,"dingTalk")
+            }
+        }
+    }
+}

@@ -1,0 +1,34 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>修改学科</h1>
+<div>
+    <form method="post" action="/course/edit?cid={{data.id}}">
+        <div class="form-group">
+            <label>学科</label>
+            <input name="title" value="{{data.title}}" type="text" class="form-control" placeholder="学科">
+        </div>
+        <div class="row clearfix">
+            <div class="col-xs-6">
+
+                <div class="form-group">
+                    <label>QQ群</label>
+                    <input name="qq"  value="{{data.qq}}" type="text" class="form-control" placeholder="QQ群">
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label>QQ群链接</label>
+                    <input name="qq_link"  value="{{data.qq_link}}" type="text" class="form-control" placeholder="QQ群链接">
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>简介</label>
+            <textarea name="summary" class="form-control" placeholder="简介" rows="3">{{data.summary}}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">提 交</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1>学科详细</h1>
+<ul>
+    <li>{{x2.id}}</li>
+    <li>{{x2['id']}}</li>
+    <li>{{x2.get("id")}}</li>
+
+    <li>{{x2.title}}</li>
+    <li>{{x2.summary}}</li>
+</ul>
+<ul>
+    <li>{{x3.0}}</li>
+    <li>{{x3[0]}}</li>
+</ul>
+{% endblock %}
