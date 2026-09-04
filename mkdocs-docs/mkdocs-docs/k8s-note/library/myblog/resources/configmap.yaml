@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myblog
+  namespace: demo
+data:
+  MYSQL_HOST: "mysql"
+  MYSQL_PORT: "3306"

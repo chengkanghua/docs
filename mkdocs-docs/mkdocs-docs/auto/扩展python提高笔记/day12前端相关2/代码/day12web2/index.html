@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+<div id="app">
+    {{ n1 }}
+    <ul>
+        <li>{{n2}}</li>
+        <li>{{n3}}</li>
+    </ul>
+    <input type="text" v-model="n4">
+    您输入的是：<span>{{n4}}</span>
+
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+        </tr>
+        <tr v-for="item in dataList">
+            <th>{{item.id}}</th>
+            <th>{{item.name}}</th>
+            <th>{{item.age}}</th>
+        </tr>
+
+    </table>
+</div>
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        data: {
+            n1: 'Hello Vue!',
+            n2: 'alex',
+            n3: 'eric',
+            n4: "武沛齐",
+            dataList: [
+                {id: 1, name: "武沛齐", age: 19},
+                {id: 2, name: "温家华", age: 29},
+            ]
+        }
+    })
+</script>
+</body>
+</html>

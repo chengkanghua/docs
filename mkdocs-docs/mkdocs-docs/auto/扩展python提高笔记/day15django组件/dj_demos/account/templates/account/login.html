@@ -1,0 +1,77 @@
+{% extends 'account/layout.html' %}
+
+{% block css %}
+    <style>
+        .login {
+            width: 400px;
+            margin-top: 30px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #f0f0f0;
+            padding: 10px 30px 30px 30px;
+            -webkit-box-shadow: 5px 10px 10px rgba(0, 0, 0, .05);
+            box-shadow: 5px 10px 10px rgba(0, 0, 0, .05);
+        }
+
+        .right {
+            float: right;
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="login">
+        <div style="font-size: 25px; font-weight: bold;text-align: center;">
+            用户登录
+        </div>
+        <form id="fm" method="POST" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+                {% if field.name == 'code' %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="row">
+                            <div class="col-xs-7">
+                                {{ field }}
+                                <span style="color: red;">{{ field.errors.0 }}</span>
+                            </div>
+                            <div class="col-xs-5">
+                                <img id="image_code" src="/check/code/">
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <span style="color: red;">{{ field.errors.0 }}</span>
+                    </div>
+
+                {% endif %}
+            {% endfor %}
+            <div class="row">
+                <div class="col-xs-3">
+                    <input type="submit" class="btn btn-primary" value="登 陆"/>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+{% endblock %}
+
+
+{% block js %}
+    <script>
+        $(function () {
+            $("#image_code").click(function () {
+                $(this)[0].src += "?";
+                // $(this)[0].src = $(this)[0].src;
+            });
+        })
+
+    </script>
+{% endblock %}

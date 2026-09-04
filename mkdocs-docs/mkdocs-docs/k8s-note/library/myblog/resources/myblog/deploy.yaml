@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myblog
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myblog
+  template:
+    metadata:
+      labels:
+        app: myblog
+    spec:
+      containers:
+      - name: myblog
+        image: 172.21.32.13:5000/myblog
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: myblog
+              key: MYSQL_HOST
+        - name: MYSQL_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: myblog
+              key: MYSQL_PORT
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: myblog
+              key: MYSQL_USER
+        - name: MYSQL_PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: myblog
+              key: MYSQL_PASSWD
+        ports:
+        - containerPort: 8002
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 50m
+          limits:
+            memory: 500Mi
+            cpu: 100m
+        livenessProbe:
+          httpGet:
+            path: /blog/index/
+            port: 8002
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 15
+          timeoutSeconds: 2
+        readinessProbe: 
+          httpGet: 
+            path: /blog/index/
+            port: 8002
+            scheme: HTTP
+          initialDelaySeconds: 10 
+          timeoutSeconds: 2
+          periodSeconds: 15

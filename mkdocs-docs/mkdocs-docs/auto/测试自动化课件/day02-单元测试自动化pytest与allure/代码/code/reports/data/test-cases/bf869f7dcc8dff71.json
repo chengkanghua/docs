@@ -1,0 +1,121 @@
+{
+  "uid" : "bf869f7dcc8dff71",
+  "name" : "测试用例test_01的标题描述",
+  "fullName" : "main.TestAdd#test_01",
+  "historyId" : "8dae75baf643dc14db6aaf2f400205b3",
+  "time" : {
+    "start" : 1653211731941,
+    "stop" : 1653211731941,
+    "duration" : 0
+  },
+  "description" : "测试用例test_01的详细描述",
+  "descriptionHtml" : "<p>测试用例test_01的详细描述</p>\n",
+  "status" : "passed",
+  "flaky" : false,
+  "newFailed" : false,
+  "newBroken" : false,
+  "newPassed" : false,
+  "retriesCount" : 0,
+  "retriesStatusChange" : false,
+  "beforeStages" : [ {
+    "name" : "_session_faker",
+    "time" : {
+      "start" : 1653211731781,
+      "stop" : 1653211731939,
+      "duration" : 158
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "hasContent" : false,
+    "shouldDisplayMessage" : false,
+    "attachmentsCount" : 0
+  }, {
+    "name" : "fixture_open_browser",
+    "time" : {
+      "start" : 1653211731939,
+      "stop" : 1653211731940,
+      "duration" : 1
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "hasContent" : false,
+    "shouldDisplayMessage" : false,
+    "attachmentsCount" : 0
+  } ],
+  "afterStages" : [ {
+    "name" : "fixture_open_browser::0",
+    "time" : {
+      "start" : 1653211732106,
+      "stop" : 1653211732106,
+      "duration" : 0
+    },
+    "status" : "passed",
+    "steps" : [ ],
+    "attachments" : [ ],
+    "parameters" : [ ],
+    "stepsCount" : 0,
+    "hasContent" : false,
+    "shouldDisplayMessage" : false,
+    "attachmentsCount" : 0
+  } ],
+  "labels" : [ {
+    "name" : "story",
+    "value" : "测试用例的分类描述"
+  }, {
+    "name" : "feature",
+    "value" : "测试用例模块的描述: 购物车模块，用户模块"
+  }, {
+    "name" : "severity",
+    "value" : "minor"
+  }, {
+    "name" : "suite",
+    "value" : "main"
+  }, {
+    "name" : "subSuite",
+    "value" : "TestAdd"
+  }, {
+    "name" : "host",
+    "value" : "WIN-Q0O96JBBIJ2"
+  }, {
+    "name" : "thread",
+    "value" : "49436-MainThread"
+  }, {
+    "name" : "framework",
+    "value" : "pytest"
+  }, {
+    "name" : "language",
+    "value" : "cpython3"
+  }, {
+    "name" : "package",
+    "value" : "main"
+  }, {
+    "name" : "resultFormat",
+    "value" : "allure2"
+  } ],
+  "parameters" : [ ],
+  "links" : [ {
+    "name" : "软件缺陷的管理站点的首页地址",
+    "url" : "http://www.luffycity.com",
+    "type" : "issue"
+  }, {
+    "name" : "测试地址站点的首页地址",
+    "url" : "http://www.luffycity.com",
+    "type" : "test_case"
+  } ],
+  "hidden" : false,
+  "retry" : false,
+  "extra" : {
+    "severity" : "minor",
+    "retries" : [ ],
+    "categories" : [ ],
+    "tags" : [ ]
+  },
+  "source" : "bf869f7dcc8dff71.json",
+  "parameterValues" : [ ]
+}

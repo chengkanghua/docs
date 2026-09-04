@@ -1,0 +1,383 @@
+# mkdocs 工程(官方布局): 配置文件与内容目录同级
+#   内容目录: mkdocs-docs/  (python / auto / linux / k8s-note / k8s-2023 / dba-note)
+#   成品输出: site/        (在内容目录之外, mkdocs 禁止构建目录位于 docs_dir 内)
+# 导航说明: nav 已固化在下方, 手工维护即可。新增页面时在对应栏目下加一行 "标题: 相对路径";
+#           之前用于自动生成导航的 generate_nav.py 已按需要删除(它是根据 docsify 的 _sidebar.md 生成 nav 的一次性脚本)。
+site_name: 程康华的实战笔记
+site_url: https://docs.chengkanghua.top/
+site_description: '程康华的 IT 实战笔记: Linux 运维 / K8s-DevOps 架构师 / Python 全栈 / 数据库'
+docs_dir: mkdocs-docs
+site_dir: site
+use_directory_urls: false
+# 排除第三方代码库/框架自带的文档噪音(非笔记内容, 与之前 generate_nav.py 的 EXCLUDE_DIR_NAMES 一致)
+exclude_docs: |
+  **/_*.md
+  **/*.pyc
+  **/__pycache__/
+  **/uric_web/
+  **/myblog/
+  **/bootstrap/
+  **/VueDemo/
+  **/Muban/
+  **/statics/
+theme:
+  name: material
+  language: zh
+  favicon: _media/wx.jpg
+  font: false
+  features:
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - search.suggest
+  - search.highlight
+  - content.code.copy
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: indigo
+    accent: indigo
+    toggle:
+      icon: material/brightness-7
+      name: 切换到暗色模式
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: indigo
+    accent: indigo
+    toggle:
+      icon: material/brightness-4
+      name: 切换到亮色模式
+markdown_extensions:
+- admonition
+- attr_list
+- def_list
+- footnotes
+- md_in_html
+- tables
+- sane_lists
+- toc:
+    permalink: true
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.inlinehilite
+- pymdownx.superfences
+- pymdownx.caret
+- pymdownx.mark
+- pymdownx.tilde
+- pymdownx.tasklist
+- pymdownx.details
+- pymdownx.tabbed
+plugins:
+- search:
+    separator: '[\s\u200b\-、。，．？！；：（）、（）【】［］「」『』～〜ーぁ-んァ-ヴ一-龠]+'
+    lang:
+    - zh
+extra:
+  generator: false
+copyright: Copyright &copy; 2022-2026 程康华 · <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">赣ICP备2022002833号-1</a>
+nav:
+- En: README.md
+- python:
+  - README: python/README.md
+  - 1Python基础V2.0:
+    - README: python/1Python基础V2.0/README.md
+    - 学前必备: python/1Python基础V2.0/学前必备.md
+    - Day01计算机基础和环境搭建: python/1Python基础V2.0/day01计算机基础和环境搭建.md
+    - Day01作业讲解: python/1Python基础V2.0/day01作业讲解.md
+    - Day02作业答案: python/1Python基础V2.0/day02作业答案.md
+    - Day02快速上手: python/1Python基础V2.0/day02快速上手.md
+    - Day03Python基础: python/1Python基础V2.0/day03Python基础.md
+    - Day03作业答案讲解: python/1Python基础V2.0/day03作业答案讲解.md
+    - Day04进制和编码: python/1Python基础V2.0/day04进制和编码.md
+    - Day05数据类型: python/1Python基础V2.0/day05数据类型.md
+    - Day06数据类型: python/1Python基础V2.0/day06数据类型.md
+    - Day07数据类型: python/1Python基础V2.0/day07数据类型.md
+    - Day08总结和考试: python/1Python基础V2.0/day08总结和考试.md
+    - 第一阶段考试题: python/1Python基础V2.0/第一阶段考试题.md
+    - 第一阶段考试题 答案: python/1Python基础V2.0/第一阶段考试题-答案.md
+  - 2函数和模块V2.0:
+    - REDME: python/2函数和模块v2.0/README.md
+    - Day09文件操作相关: python/2函数和模块v2.0/day09文件操作相关.md
+    - Day10函数基础: python/2函数和模块v2.0/day10函数基础.md
+    - Day11函数进阶: python/2函数和模块v2.0/day11函数进阶.md
+    - Day12函数高级: python/2函数和模块v2.0/day12函数高级.md
+    - Day13内置函数和生成器及推导式: python/2函数和模块v2.0/day13内置函数和生成器及推导式.md
+    - Day14模块和内置模块: python/2函数和模块v2.0/day14模块和内置模块.md
+    - Day15内置和开发规范: python/2函数和模块v2.0/day15内置和开发规范.md
+    - Day16阶段总结和考试: python/2函数和模块v2.0/day16阶段总结和考试.md
+    - 第二阶段考试题: python/2函数和模块v2.0/第二阶段考试题.md
+    - 第二阶段考试题 含答案: python/2函数和模块v2.0/第二阶段考试题-含答案.md
+    - 第二模块考核答案: python/2函数和模块v2.0/第二模块考核答案.md
+  - 3面向对象编程V2.0:
+    - REDME: python/3面向对象编程v2.0/README.md
+    - Day17初识面向对象: python/3面向对象编程v2.0/day17初识面向对象.md
+    - Day18面向对象进阶: python/3面向对象编程v2.0/day18面向对象进阶.md
+    - Day19面向对象高级和应用: python/3面向对象编程v2.0/day19面向对象高级和应用.md
+    - Day20网络编程上: python/3面向对象编程v2.0/day20网络编程上.md
+    - Day21网路编程下: python/3面向对象编程v2.0/day21网路编程下.md
+    - Day22并发编程上: python/3面向对象编程v2.0/day22并发编程上.md
+    - Day23并发编程下: python/3面向对象编程v2.0/day23并发编程下.md
+    - Day24阶段总结和考试: python/3面向对象编程v2.0/day24阶段总结和考试.md
+    - 异步编程: python/3面向对象编程v2.0/Python-asyncio高性能异步编程/课堂笔记.md
+    - 协程和异步编程文档: python/3面向对象编程v2.0/Python-asyncio高性能异步编程/协程和异步编程文档.md
+    - 第3阶段考试题: python/3面向对象编程v2.0/第3阶段考试题.md
+    - 第3阶段考试题 含答案: python/3面向对象编程v2.0/第3阶段考试题-含答案.md
+  - 4MySQLv2.0版:
+    - Readme: python/4MySQLv2.0版/blog/readme.md
+    - Day25MySQL入门: python/4MySQLv2.0版/day25MySQL入门.md
+    - Day25作业答案: python/4MySQLv2.0版/day25作业答案.md
+    - Day26必备SQL和表关系及授权: python/4MySQLv2.0版/day26必备SQL和表关系及授权.md
+    - Day27SQL强化和实践: python/4MySQLv2.0版/day27SQL强化和实践.md
+    - Day27含答案: python/4MySQLv2.0版/day27含答案.md
+    - Day28索引和函数及存储过程: python/4MySQLv2.0版/day28索引和函数及存储过程.md
+    - Day29Python操作MySQL和实战: python/4MySQLv2.0版/day29Python操作MySQL和实战.md
+  - 5前端基础:
+    - 前端文档: python/5前端基础/前端文档.md
+    - web开发基础v1.0: python/5前端基础/web开发基础v1.0.md
+  - 6Django:
+    - Django2.0: python/6Django/Django2.0.md
+    - Mysql基础: python/6Django/Mysql基础.md
+    - Django3.2: python/6Django/django3.2.md
+  - 7drf Vue:
+    - drf:
+      - 0 0前后端分离项目: python/7drf-vue/1-drf/0-0前后端分离项目.md
+      - 1 1restful规范: python/7drf-vue/1-drf/1-1restful规范.md
+      - 1 2FBV和CBV: python/7drf-vue/1-drf/1-2FBV和CBV.md
+      - 1 3drf上: python/7drf-vue/1-drf/1-3drf上.md
+      - 1 4drf中: python/7drf-vue/1-drf/1-4drf中.md
+      - 1 5drf下: python/7drf-vue/1-drf/1-5drf下.md
+      - 1 6实战案例: python/7drf-vue/1-drf/1-6实战案例.md
+    - es6:
+      - es6: python/7drf-vue/2-ES6_Demo/es6.md
+    - vue:
+      - 2 1vue基础: python/7drf-vue/3-vue/2-1vue基础.md
+      - 2 2脚手架和组件: python/7drf-vue/3-vue/2-2脚手架和组件.md
+      - 2 3项目案例: python/7drf-vue/3-vue/2-3项目案例.md
+  - 8路飞2.0:
+    - Chapter1 项目搭建:
+      - Chapter1 项目搭建: python/8路飞2.0/chapter1-项目搭建/chapter1-项目搭建.md
+      - Git: python/8路飞2.0/chapter1-项目搭建/素材/git.md
+      - Redis: python/8路飞2.0/chapter1-项目搭建/素材/redis.md
+    - Chapter2 站点首页功能实现:
+      - Chapter2 站点首页功能实现: python/8路飞2.0/chapter2-站点首页功能实现/chapter2-站点首页功能实现.md
+    - Chapter3 基于Jwt的分布式认证流程:
+      - Chapter3 基于Jwt的分布式认证流程: python/8路飞2.0/chapter3-基于jwt的分布式认证流程/chapter3-基于jwt的分布式认证流程.md
+    - Chapter4 Redis缓存&Celery异步任务:
+      - Celery: python/8路飞2.0/chapter4-Redis缓存&Celery异步任务/celery.md
+      - Redis: python/8路飞2.0/chapter4-Redis缓存&Celery异步任务/redis.md
+    - Chapter5 课程管理模块实现:
+      - Docker: python/8路飞2.0/chapter5-课程管理模块实现/Docker.md
+      - 课程列表: python/8路飞2.0/chapter5-课程管理模块实现/课程列表.md
+      - 课程搜索: python/8路飞2.0/chapter5-课程管理模块实现/课程搜索.md
+      - 课程详情: python/8路飞2.0/chapter5-课程管理模块实现/课程详情.md
+    - Chapter6 动态价格策略&购物车模块开发:
+      - 动态价格策略: python/8路飞2.0/chapter6-动态价格策略&购物车模块开发/动态价格策略.md
+      - 课程购买: python/8路飞2.0/chapter6-动态价格策略&购物车模块开发/课程购买.md
+    - Chapter7 下单支付&订单处理:
+      - Chapter7.1 结算下单: python/8路飞2.0/chapter7-下单支付&订单处理/chapter7.1-结算下单.md
+      - Chapter7.2 优惠券与积分: python/8路飞2.0/chapter7-下单支付&订单处理/chapter7.2-优惠券与积分.md
+      - Chapter7.3 支付: python/8路飞2.0/chapter7-下单支付&订单处理/chapter7.3-支付.md
+      - Chapter7.4 订单处理: python/8路飞2.0/chapter7-下单支付&订单处理/chapter7.4-订单处理.md
+    - Chapter8 用户中心与学习进度管理:
+      - Chapter8 课程学习进度: python/8路飞2.0/chapter8-用户中心与学习进度管理/chapter8-课程学习进度.md
+    - Chapter9 基于Docker Compose部署项目:
+      - Chapter9.0 Linux项目部署 核心内容: python/8路飞2.0/chapter9-基于Docker-compose部署项目/chapter9.0-Linux项目部署-核心内容.md
+      - Chapter9.1 Ssh 补充内容: python/8路飞2.0/chapter9-基于Docker-compose部署项目/chapter9.1-ssh-补充内容.md
+      - Chapter9.2 Docker 补充内容: python/8路飞2.0/chapter9-基于Docker-compose部署项目/chapter9.2-docker-补充内容.md
+      - Chapter9.3 Nginx 补充内容: python/8路飞2.0/chapter9-基于Docker-compose部署项目/chapter9.3-nginx-补充内容.md
+    - 预装环境:
+      - Ubuntu20.04镜像封装记录: python/8路飞2.0/预装环境/ubuntu20.04镜像封装记录.md
+  - 9嘤鸣APP:
+    - 1 Flask:
+      - day1-Flask 1: python/9嘤鸣APP/1-Flask/day1-flask/flask-1.md
+      - Flask 2: python/9嘤鸣APP/1-Flask/day1-flask/flask-2.md
+      - Flask 3: python/9嘤鸣APP/1-Flask/day1-flask/flask-3.md
+      - day2-Flask 1: python/9嘤鸣APP/1-Flask/day2-flask/flask-1.md
+      - Flask 2: python/9嘤鸣APP/1-Flask/day2-flask/flask-2.md
+      - Flask 3: python/9嘤鸣APP/1-Flask/day2-flask/flask-3.md
+      - day3-Flask 2: python/9嘤鸣APP/1-Flask/day3-flask/flask-2.md
+      - Flask 3: python/9嘤鸣APP/1-Flask/day3-flask/flask-3.md
+      - day4-Flask 2: python/9嘤鸣APP/1-Flask/day4-flask/flask-2.md
+      - Flask 3: python/9嘤鸣APP/1-Flask/day4-flask/flask-3.md
+      - day5-Flask 3: python/9嘤鸣APP/1-Flask/flask-5-1/flask-3.md
+      - Flask 3: python/9嘤鸣APP/1-Flask/flask-5-2/flask-3.md
+      - day6-Flask 3: python/9嘤鸣APP/1-Flask/day6-flask/flask-3.md
+      - 面试题: python/9嘤鸣APP/1-Flask/day6-flask/面试题.md
+      - Day21 MySQL基础: python/9嘤鸣APP/1-Flask/SQLAlchemy/day21-MySQL基础.md
+    - 2 Mongodb:
+      - Mongodb1: python/9嘤鸣APP/2-Mongodb/day01/mongodb.md
+      - Mongodb2: python/9嘤鸣APP/2-Mongodb/day02/mongodb.md
+      - Mongodb3: python/9嘤鸣APP/2-Mongodb/day03/mongodb.md
+    - 3 APP课件:
+      - Day136: python/9嘤鸣APP/3-APP课件/day01/day136.md
+      - Day137: python/9嘤鸣APP/3-APP课件/day02/day137.md
+      - Flask protobuf: python/9嘤鸣APP/3-APP课件/day02/flask_protobuf.md
+      - Day138: python/9嘤鸣APP/3-APP课件/day03/day138.md
+      - Flask protobuf: python/9嘤鸣APP/3-APP课件/day03/flask_protobuf.md
+      - Day138: python/9嘤鸣APP/3-APP课件/day04/day138.md
+      - Day139: python/9嘤鸣APP/3-APP课件/day04/day139.md
+      - Marshmallow: python/9嘤鸣APP/3-APP课件/day04/Marshmallow.md
+- auto:
+  - README: auto/README.md
+  - Day01 基础入门:
+    - Day01: auto/day01-基础入门/day01.md
+    - Day01python入门: auto/day01-基础入门/day01python入门.md
+    - Day01作业: auto/day01-基础入门/day01作业.md
+  - Day02 数据类型上:
+    - Day02数据类型: auto/day02-数据类型上/day02.md
+    - Day02作业: auto/day02-数据类型上/day02作业.md
+  - Day03 数据类型下:
+    - Day03 数据类型和函数: auto/day03-数据类型下/day03 数据类型和函数.md
+  - Day04 函数:
+    - Day04函数: auto/day04-函数/day04函数.md
+    - Day04作业: auto/day04-函数/day04作业.md
+  - Day05 函数:
+    - Day05函数: auto/day05-函数/day05.md
+    - Day05作业: auto/day05-函数/day05作业.md
+  - Day06 模块:
+    - Day06模块: auto/day06-模块/day06.md
+    - Day06作业: auto/day06-模块/day06作业.md
+  - Day07 复习和答疑线上:
+    - Day07复习: auto/day07-复习和答疑线上/day07.md
+  - Day08 模块和面向对象:
+    - Day08模块与面向对象: auto/day08-模块和面向对象/day08.md
+    - Day08作业: auto/day08-模块和面向对象/day08作业.md
+  - Day09 并发和前端:
+    - Day09并发和前端: auto/day09-并发和前端/day09并发和前端.md
+    - Day09作业: auto/day09-并发和前端/day09作业.md
+  - Day10 前端:
+    - Day10前端: auto/day10-前端/day10.md
+  - Day11 前端和数据库:
+    - Day11前端与数据库: auto/day11-前端和数据库/day11.md
+  - Day12 小猿圈:
+    - Day12小猿圈: auto/day12-小猿圈/day12.md
+  - Day13 小猿圈:
+    - Day13小猿圈: auto/day13-小猿圈/day13小猿圈.md
+  - Day14 Django 1:
+    - Django3.2: auto/day14-Django-1/Django3.2.md
+  - Day17 VUE:
+    - VUE3: auto/day17-VUE/VUE3.md
+  - Day19 DRF课程1:
+    - DRF组件: auto/day19-DRF课程1/DRF组件.md
+  - Day20 DRF课程2:
+    - DRF组件: auto/day20-DRF课程2/DRF组件.md
+  - 测试自动化课件:
+    - unittest-pytest测试自动化1: auto/测试自动化课件/day01-基本概念单元测试自动化unittest与pytest/测试自动化.md
+    - pytest-allure测试自动化2: auto/测试自动化课件/day02-单元测试自动化pytest与allure/测试自动化.md
+    - 框架构建测试自动化3: auto/测试自动化课件/day03-接口自动化测试框架构建/测试自动化.md
+    - selenium-appium测试自动化4: auto/测试自动化课件/day04-UI测试自动化-selenium与appium安装/测试自动化.md
+    - appium测试自动化5: auto/测试自动化课件/day05-UI测试自动化-appium/测试自动化.md
+    - 客户端测试测试自动化6: auto/测试自动化课件/day06-客户端测试/测试自动化.md
+    - 专项测试与htpprunner测试自动化7: auto/测试自动化课件/day07-专项测试与httprunner入门/测试自动化.md
+  - 运维自动化课件:
+    - Uric2022文档1: auto/运维自动化课件/day01/Uric2022文档/Uric2022文档.md
+    - Uric2022文档2: auto/运维自动化课件/day02/Uric2022文档/Uric2022文档.md
+    - Uric2022文档3: auto/运维自动化课件/day03/Uric2022文档/Uric2022文档.md
+    - Uric2022文档4: auto/运维自动化课件/day04/文档/文档/Uric2022文档.md
+    - Uric2022文档5: auto/运维自动化课件/day05/yuan-实战项目文档/Uric2022文档.md
+    - Uric2022文档6: auto/运维自动化课件/day06/yuan-实战项目文档/Uric2022文档.md
+    - devops-Urls文档1: auto/运维自动化课件/devops自动化/day01/Urls文档.md
+    - Urls文档2: auto/运维自动化课件/devops自动化/day02/Urls文档.md
+    - Urls文档3: auto/运维自动化课件/devops自动化/day03/Urls文档.md
+    - Urls文档4: auto/运维自动化课件/devops自动化/day04/Urls文档.md
+    - devops自动化/day05/Urls文档: auto/运维自动化课件/devops自动化/day05/Urls文档.md
+    - devops自动化/day06/Uric2022最终版本: auto/运维自动化课件/devops自动化/day06/Uric2022最终版本.md
+    - devops自动化/day06/Urls文档: auto/运维自动化课件/devops自动化/day06/Urls文档.md
+  - day03-数据类型下:
+    - 第一阶段考试题 (copy): auto/day03-数据类型下/第一阶段考试题 (copy).md
+  - 扩展python提高笔记:
+    - day01python基础与面试题/笔记和面试题/Python阶段面试题-基础篇: auto/扩展python提高笔记/day01python基础与面试题/笔记和面试题/Python阶段面试题-基础篇.md
+    - day01python基础与面试题/笔记和面试题/day01基础: auto/扩展python提高笔记/day01python基础与面试题/笔记和面试题/day01基础.md
+    - day02数据类型/day02 数据类型: auto/扩展python提高笔记/day02数据类型/day02 数据类型.md
+    - day03函数/笔记/day03函数: auto/扩展python提高笔记/day03函数/笔记/day03函数.md
+    - day04模块相关/笔记/day04模块相关: auto/扩展python提高笔记/day04模块相关/笔记/day04模块相关.md
+    - day04模块相关/代码/xiejun: auto/扩展python提高笔记/day04模块相关/代码/xiejun/README.md
+    - day05面向对象/笔记/day05面向对象: auto/扩展python提高笔记/day05面向对象/笔记/day05面向对象.md
+    - day06网络与并发/笔记/day06 网络和并发: auto/扩展python提高笔记/day06网络与并发/笔记/day06 网络和并发.md
+    - day07 - 答疑/答疑: auto/扩展python提高笔记/day07 - 答疑/答疑.md
+    - day08并发编程/day08并发编程: auto/扩展python提高笔记/day08并发编程/day08并发编程.md
+    - day09数据库/day09数据库: auto/扩展python提高笔记/day09数据库/day09数据库.md
+    - day10mysql主从/readme: auto/扩展python提高笔记/day10mysql主从/readme.md
+    - day11前端基础/day11 前端基础 - 上午笔记: auto/扩展python提高笔记/day11前端基础/day11 前端基础 - 上午笔记.md
+    - day11前端基础/day11 前端基础: auto/扩展python提高笔记/day11前端基础/day11 前端基础.md
+    - day12前端相关2/day12前端相关2: auto/扩展python提高笔记/day12前端相关2/day12前端相关2.md
+    - day13django1/课件/day13 django（一）: auto/扩展python提高笔记/day13django1/课件/day13 django（一）.md
+    - day14django2/day14 笔记/day14 django（二）: auto/扩展python提高笔记/day14django2/day14 笔记/day14 django（二）.md
+    - day15django组件/笔记/day15组件相关: auto/扩展python提高笔记/day15django组件/笔记/day15组件相关.md
+    - day16-爬虫/day16/day16: auto/扩展python提高笔记/day16-爬虫/day16/day16.md
+- k8s-2022:
+  - README: k8s-note/README.md
+  - 1走进Docker的世界: k8s-note/1走进docker的世界.md
+  - 2Kubernetes安装文档: k8s-note/2Kubernetes安装文档.md
+  - 3Kubernetes落地实践之旅: k8s-note/3Kubernetes落地实践之旅.md
+  - 4Kubernetes进阶实践: k8s-note/4Kubernetes进阶实践.md
+  - 5基于EFK的Kubernetes日志采集方案: k8s-note/5基于EFK的Kubernetes日志采集方案.md
+  - 6基于Prometheus的Kubernetes监控方案: k8s-note/6基于Prometheus的Kubernetes监控方案.md
+  - 7基于Kubernetes的DevOps平台实践: k8s-note/7基于Kubernetes的DevOps平台实践.md
+  - 8基于SharedLibrary进行CICD流程的优化: k8s-note/8基于sharedLibrary进行CICD流程的优化.md
+  - 10基于Istio实现微服务治理: k8s-note/10基于Istio实现微服务治理.md
+  - 9SpringCloud微服务项目交付: k8s-note/9SpringCloud微服务项目交付.md
+  - 操作记录问题: k8s-note/操作记录问题.md
+  - 问题详细描述: k8s-note/问题详细描述.md
+  - chart包:
+    - harbor/README: k8s-note/chart包/harbor/README.md
+- k8s-2023:
+  - README: k8s-2023/README.md
+  - 1走进Docker的世界: k8s-2023/1走进Docker的世界.md
+  - 2Kubernetes安装文档: k8s-2023/2Kubernetes安装文档.md
+  - 3Kubernetes落地实践之旅: k8s-2023/3Kubernetes落地实践之旅.md
+  - 4Kubernetes进阶实践: k8s-2023/4Kubernetes进阶实践.md
+  - 5基于EFK的Kubernetes日志采集方案: k8s-2023/5基于EFK的Kubernetes日志采集方案.md
+  - 6基于Prometheus的Kubernetes监控方案: k8s-2023/6基于Prometheus的Kubernetes监控方案.md
+  - 7基于Kubernetes的DevOps平台实践: k8s-2023/7基于Kubernetes的DevOps平台实践.md
+  - 8基于SharedLibrary进行CICD流程的优化: k8s-2023/8基于sharedLibrary进行CICD流程的优化.md
+  - 9SpringCloud微服务项目交付: k8s-2023/9SpringCloud微服务项目交付.md
+  - 10基于Istio实现微服务治理: k8s-2023/10基于Istio实现微服务治理.md
+  - 问题记录: k8s-2023/问题记录.md
+- dba:
+  - README: dba-note/README.md
+  - MySQL Lesson01 简介及安装: dba-note/MySQL-lesson01-简介及安装.md
+  - MySQL Lesson02 体系结构与管理: dba-note/MySQL-lesson02-体系结构与管理.md
+  - MySQL Lesson03 SQL基础应用: dba-note/MySQL-lesson03-SQL基础应用.md
+  - MySQL Lesson04 索引及执行计划: dba-note/MySQL-lesson04-索引及执行计划.md
+  - MySQL Lesson05 存储引擎: dba-note/MySQL-lesson05-存储引擎.md
+  - MySQL Lesson06 日志管理: dba-note/MySQL-lesson06-日志管理.md
+  - MySQL Lesson07 备份恢复: dba-note/MySQL-lesson07-备份恢复.md
+  - MySQL Lesson08 主从复制基础: dba-note/MySQL-lesson08-主从复制基础.md
+  - MySQL Lesson9  主从复制高级进阶: dba-note/MySQL-lesson9--主从复制高级进阶.md
+  - MySQL Lesson10 MHA高可用技术: dba-note/MySQL-lesson10-MHA高可用技术.md
+  - MySQL Lesson11  读写分离架构 Atlas: dba-note/MySQL-lesson11--读写分离架构-Atlas.md
+  - MySQL 分布式架构 MyCAT: dba-note/MySQL-分布式架构-MyCAT.md
+  - MySQL Lesson12 优化: dba-note/MySQL-lesson12-优化.md
+  - NoSQL Lesson13 Redis缓存技术 运维篇: dba-note/NoSQL-lesson13-Redis缓存技术-运维篇.md
+  - NoSQL Lesson14 MongoDB核心技术 运维篇: dba-note/NoSQL-lesson14-MongoDB核心技术-运维篇.md
+  - MySQL 第一阶段测试题（有答案）: dba-note/MySQL-第一阶段测试题（有答案）.md
+  - MySQL5.6 5.7 8.0在安装部署的异同: dba-note/MySQL5.6-5.7-8.0在安装部署的异同.md
+  - MySQL8017+版本的Clone Plugin应用: dba-note/MySQL8017+版本的clone-plugin应用.md
+  - MySQL十万个为什么 未完待续: dba-note/MySQL十万个为什么-未完待续.md
+  - Percona Toolkit工具详解: dba-note/Percona-toolkit工具详解.md
+  - Zabbix3.0forpercona ServerTokuDB: dba-note/Zabbix3.0forpercona-serverTokuDB.md
+  - 5.7.20多实例 MGR部署实战: dba-note/5.7.20多实例-MGR部署实战.md
+  - MySQL Multi Source Replication: dba-note/MySQL-Multi-Source-Replication.md
+- linux:
+  - README: linux/README.md
+  - Linux基础命令: linux/linux基础命令.md
+  - Linux文件目录管理命令: linux/linux文件目录管理命令.md
+  - LinuxShell基础: linux/LinuxShell基础.md
+  - Linux通配符: linux/Linux通配符.md
+  - Linux定时任务: linux/Linux定时任务.md
+  - Linux磁盘管理与文件系统: linux/Linux磁盘管理与文件系统.md
+  - Linux网络基础: linux/Linux网络基础.md
+  - Linux进程管理: linux/linux进程管理.md
+  - Linux软件包管理: linux/Linux软件包管理.md
+  - 互联网服务基础: linux/互联网服务基础.md
+  - 企业级负载均衡实战: linux/企业级负载均衡实战.md
+  - 高性能Web集群实战: linux/高性能Web集群实战.md
+  - 企业集群高可用方案: linux/企业集群高可用方案.md
+  - 期末架构: linux/期末架构.md
+  - 时间服务器与Vpn: linux/时间服务器与vpn.md
+  - Jenkins: linux/jenkins.md
+  - Shell开发: linux/shell开发.md
+  - 云计算: linux/云计算.md
+extra_css:
+- extra.css

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .message {
+            height: 300px;
+            border: 1px solid #dddddd;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="message" id="message"></div>
+<div>
+    <input type="text" placeholder="请输入" id="txt">
+    <input type="button" value="发送" onclick="sendMessage();">
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+
+    USER_UID = "{{ uid }}"; // "123"
+
+    function sendMessage() {
+        var text = $("#txt").val();
+
+        // 基于Ajax将用户输入的文本信息发送到后台（偷偷发请求）。
+        $.ajax({
+            url: '/send/msg/',
+            type: 'GET',
+            data: {
+                text: text
+            },
+            success: function (res) {
+                console.log("请求发送成功", res);
+            }
+        })
+    }
+
+    function getMessage() {
+        $.ajax({
+            url: '/get/msg/',
+            data: {
+                uid: USER_UID,
+            },
+            type: "GET",
+            dataType: "JSON",
+            success: function (res) {
+                // 超时,没有新数据
+                // 有新数据，展示信息数据
+                // console.log("请求发送成功，返回的结果：", res);
+                if (res.status) {
+                    var tag = $("<div>");
+                    tag.text(res.data)  // <div>你好</div>
+                    $("#message").append(tag);
+                }
+                getMessage(); // JS中的这种模块。
+            }
+        })
+    }
+
+    $(function () {
+        getMessage();
+    })
+</script>
+
+</body>
+</html>

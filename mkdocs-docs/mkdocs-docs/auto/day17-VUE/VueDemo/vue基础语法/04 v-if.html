@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<div id="app">
+    <h3>展示电影</h3>
+    <div v-if="age>18">成人电影</div>
+    <div v-else>青少年电影</div>
+
+    <h3>展示成绩</h3>
+    <div v-if="score>90">优秀</div>
+    <div v-else-if="score>80">良好</div>
+    <div v-else-if="score>60">及格</div>
+    <div v-else>不及格</div>
+
+</div>
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                age: 12,
+                score:78,
+            }
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>工单列表</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>工单</th>
+        <th>状态</th>
+        <th>姓名</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in data_list %}
+        <tr>
+            <td>{{ item.task.title }}</td>
+            <td>{{ item.get_status_display }}</td>
+            <td>{{ item.user }}</td>
+            <td>
+                <a href="/audit/?user={{ user }}&tid={{ item.task_id }}">去审批</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

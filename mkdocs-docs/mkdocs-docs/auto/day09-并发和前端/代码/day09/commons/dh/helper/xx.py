@@ -1,0 +1,2 @@
+def ms():
+    print("MS")

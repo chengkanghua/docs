@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>博客详情页</title>
+</head>
+<body>
+    <h3>标题： {{ article.title }}</h3>
+    </br>
+    <h3>内容: {{ article.content }}</h3>
+    </br>
+    </br>
+    <a href=" {% url 'blog:article_edit_page' article.id %} ">编辑</a>
+
+</body>
+</html>

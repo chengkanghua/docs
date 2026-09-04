@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="vue3.js"></script>
+
+</head>
+<body>
+
+
+<div id="app">
+
+    <p @click="foo">消息： {{msg}} </p>
+
+</div>
+
+
+<script>
+
+    // 数据驱动页面
+    var vm = Vue.createApp({
+        data() {
+            return {
+                msg: "hello world",
+                x: 100,
+            }
+        },
+        methods: {
+            foo() {
+                console.log(this);  // this:在方法中指的是vue对象
+                this.msg = "hello yuan"
+            }
+        },
+    }).mount("#app")
+
+
+</script>
+
+
+</body>
+</html>

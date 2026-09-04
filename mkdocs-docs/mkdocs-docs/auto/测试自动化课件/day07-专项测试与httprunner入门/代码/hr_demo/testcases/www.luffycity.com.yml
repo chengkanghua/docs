@@ -1,0 +1,14 @@
+config:
+    name: "接口测试-测试用例"
+    verify: False
+    base_url: https://api.luffycity.com/api/v1
+teststeps:
+-
+    name: 请求免费课
+    request:
+        method: GET
+        url: $base_url/course/free/
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.code", 0]
+        - length_greater_or_equals: ["body.data", 1]

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-ingress
+  namespace: {{NAMESPACE}}
+  labels:
+    app: eureka-cluster
+spec:
+  ports:
+    - port: 8761
+      name: eureka-cluster
+  selector:
+    app: eureka-cluster

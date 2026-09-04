@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.5/vue.global.js"></script>
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <style>
+        tr td {
+            padding: 10px;
+            width: 100px;
+        }
+    </style>
+
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+
+</head>
+<body>
+
+<div id="app">
+    <!--    <p><button @click="sendAjax">ajax</button></p>-->
+    <p><input type="text" placeholder="请输入查询城市" v-model="city">
+        <button @click="sendAjax">查询</button>
+    </p>
+
+    <table border="1" v-if="forecasts.length>1">
+        <tr>
+            <td>日期</td>
+            <td>类型</td>
+            <td>最高气温</td>
+            <td>最低气温</td>
+            <td>风向</td>
+        </tr>
+
+        <tr v-for="day_forecast in forecasts">
+            <td>{{day_forecast.date}}</td>
+            <td>{{day_forecast.type}}</td>
+            <td>{{day_forecast.high}}</td>
+            <td>{{day_forecast.low}}</td>
+            <td>{{day_forecast.fengxiang}}</td>
+        </tr>
+    </table>
+
+</div>
+
+
+<script lang="ts" setup>
+    import {
+        Check,
+        Delete,
+        Edit,
+        Message,
+        Search,
+        Star,
+    } from '@element-plus/icons-vue'
+</script>
+
+
+<script>
+
+    vm = Vue.createApp({
+        data() {
+            return {
+                forecasts: [],
+                city: "北京",
+            }
+        },
+        methods: {
+            sendAjax() {
+                var that = this;
+
+                axios.get("http://wthrcdn.etouch.cn/weather_mini", {
+                    params: {
+                        city: that.city,
+                    }
+                }).then(function (response) {
+                    console.log("response", response);
+
+                    that.forecasts = response.data.data.forecast
+
+                })
+            },
+        },
+
+        created() {
+            this.sendAjax()
+        },
+
+    }).mount('#app')
+</script>
+
+</body>
+</html>

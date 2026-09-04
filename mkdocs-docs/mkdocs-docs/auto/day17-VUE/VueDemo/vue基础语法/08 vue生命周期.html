@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.5/vue.global.js"></script>
+
+</head>
+<body>
+
+<div id="app">
+    <p ref="p1">{{num}}</p>
+    <input type="text" v-model="num">
+</div>
+
+<script>
+
+    vm = Vue.createApp({
+        data() {
+            return {
+                num: 0,
+            }
+        },
+        beforeCreate() {
+            alert("--------data数据被赋值到vm对象之前---------");
+            console.log("--------data数据被赋值到vm对象之前---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el);
+
+        },
+        created() { // 重点掌握，最常用，开发中一般会在这里编写ajax代码，发送http请求获取来自服务端的数据
+            alert("--------data数据被赋值到vm对象之后---------");
+            console.log("--------data数据被赋值到vm对象之后---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el);
+            this.num = 10
+        },
+        beforeMount() {
+            alert("--------把data数据渲染到HTML模板之前---------");
+            console.log("--------把data数据渲染到HTML模板之前---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el);
+        },
+        mounted() { // 重点掌握，最常用，开发中一般会在这里编写页面初始化的操作，一般就是根据条件/状态，进行页面跳转，改变页面的特效。
+            alert("--------把data数据渲染到HTML模板之后---------");
+            console.log("--------把data数据渲染到HTML模板之后---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el.parentElement);
+        },
+        beforeUpdate() {
+            alert("--------data数据发生改变以后，同步到HTML模板之前，此时data和模板的数据是不一致的---------");
+            console.log("--------data数据发生改变以后，同步到HTML模板之前，此时data和模板的数据是不一致的---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el.parentElement.innerHTML);
+        },
+        updated() {
+            alert("--------data数据发生改变以后，同步到HTML模板之后，此时data和模板中的数据保持一致---------");
+            console.log("--------data数据发生改变以后，同步到HTML模板之后，此时data和模板中的数据保持一致---------");
+            console.log("this", this);
+            console.log("num:", this.num);
+            console.log("$el", this.$el.parentElement.innerHTML);
+        }
+
+    }).mount('#app')
+</script>
+
+</body>
+</html>
