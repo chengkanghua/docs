@@ -1,0 +1,38 @@
+# mkdocs 构建忽略文件(与仓库根 .gitignore 对齐)
+# 防止以下文件被当作静态资源复制进 site/ 输出目录
+# 语法同 .gitignore, 模式相对于 mkdocs.yml 所在目录
+
+# macOS 系统文件
+.DS_Store
+
+# Python 字节码 / 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python 虚拟环境
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+
+# IDE / 编辑器
+.idea/
+.vscode/
+
+# 第三方 / 示例代码噪音(与 mkdocs.yml 的 exclude_docs 双保险)
+uric_web/
+myblog/
+bootstrap/
+VueDemo/
+Muban/
+statics/

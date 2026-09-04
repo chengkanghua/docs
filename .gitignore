@@ -1,3 +1,52 @@
+# MkDocs 构建产物（由 mkdocs build / mkdocs gh-deploy 生成，无需提交）
+site/
+.cache/
+
+# Python 虚拟环境
+venv/
+env/
+.venv/
+ENV/
+.venv*/
+
+# Python 缓存 / 编译产物
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# 打包 / 构建产物
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# 测试 / 类型检查 / Lint 缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# 日志
+*.log
+
+# 编辑器 / 系统文件
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
