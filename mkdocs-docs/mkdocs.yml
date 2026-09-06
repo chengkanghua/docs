@@ -76,6 +76,8 @@ plugins:
     - zh
 extra:
   generator: false
+extra_css:
+  - extra.css
 copyright: Copyright &copy; 2022-2026 程康华 · <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">赣ICP备2022002833号-1</a>
 nav:
 - En: README.md

@@ -1,0 +1,15 @@
+/* 顶部导航栏渐变背景 —— 仅改背景色, 字体/字号/间距保持 material 默认 */
+.md-header {
+  background: linear-gradient(135deg, #1976d2, #0097a7) !important;
+}
+
+.md-tabs {
+  background: linear-gradient(135deg, #1976d2, #0097a7) !important;
+}
+
+/* 保证渐变背景上文字清晰可读(白字) */
+.md-header__title,
+.md-header__topic,
+.md-tabs__link {
+  color: #fff !important;
+}
