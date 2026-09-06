@@ -5,6 +5,8 @@
 #           之前用于自动生成导航的 generate_nav.py 已按需要删除(它是根据 docsify 的 _sidebar.md 生成 nav 的一次性脚本)。
 site_name: 程康华的实战笔记
 site_url: https://docs.chengkanghua.top/
+repo_url: https://github.com/chengkanghua/docs
+repo_name: chengkanghua/docs
 site_description: '程康华的 IT 实战笔记: Linux 运维 / K8s-DevOps 架构师 / Python 全栈 / 数据库'
 docs_dir: mkdocs-docs
 site_dir: site
@@ -133,7 +135,6 @@ nav:
     - Day29Python操作MySQL和实战: python/4MySQLv2.0版/day29Python操作MySQL和实战.md
   - 5前端基础:
     - 前端文档: python/5前端基础/前端文档.md
-    - web开发基础v1.0: python/5前端基础/web开发基础v1.0.md
   - 6Django:
     - Django2.0: python/6Django/Django2.0.md
     - Mysql基础: python/6Django/Mysql基础.md
@@ -379,5 +380,3 @@ nav:
   - Jenkins: linux/jenkins.md
   - Shell开发: linux/shell开发.md
   - 云计算: linux/云计算.md
-extra_css:
-- extra.css

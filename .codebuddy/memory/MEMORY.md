@@ -9,7 +9,7 @@
   - 依赖: 全局 Python3.12 已装 mkdocs 1.6.1 + mkdocs-material 9.7.7 + pymdown-extensions 11.0.2(也可用仓库根 `requirement.txt` 重建); 仓库根 `.venv` 已被用户清理。
   - 导航: nav 固化在 mkdocs.yml(223 页), 手工维护; 一次性 `generate_nav.py` 已按用户要求删除(曾按 docsify 各 `_sidebar.md` 自动生成 nav)。
   - 内容目录根的 `README.md`(首页)与 `CNAME` 由仓库根同名文件复制而来(成品需含)。
-  - 仓库根 `.gitignore`(本次创建)忽略 `site/`(mkdocs 构建产物, 约1万文件/1.8G 不进 git)、Python 虚拟环境(venv/env/.venv/ENV 等)、编译缓存(`__pycache__`/*.py[cod])、`.DS_Store`、IDE(`.idea`/`.vscode`)等。
+  - 仓库根 `.gitignore`(已精简为 Python+mkdocs 专用, 去除 Django/Flask/Scrapy 等框架特定无用条目)忽略 `site/`(mkdocs 构建产物, 约1万文件/1.8G 不进 git)、Python 虚拟环境(venv/env/.venv/ENV 等)、缓存/编译产物(`__pycache__`/*.py[cod])、测试/lint 缓存、`.DS_Store`、`.env`、IDE(`.idea`/`.vscode`)等。
 - 注意: 各栏目 `README.md` 被 mkdocs 渲染成 `index.html`(非 README.html); 新增页面在 mkdocs.yml 的 `nav` 下加一行 "标题: 相对路径" 即可。
 - 旧成品 `c:\Users\kanghua\mkdocs-site`(1.8G, 旧布局产物)已无用, 可删。
 
@@ -25,3 +25,5 @@
 - 交互语言: 简体中文。
 - 环境: `execute_command` 的 shell 是 **Git Bash**(Windows), 需用 Unix 命令(find/rm); 不要嵌套 `powershell -Command` 且内部含 `$变量`(bash 会把 `$` 展开为空, 导致 PowerShell 命令失效)。
 - 部署方式(用户确认): 构建产物 `site/` **不进 git**(已被根 `.gitignore` 忽略), 用 `mkdocs gh-deploy` 把 `site/` 推送到 GitHub 的 `gh-pages` 分支; 主分支只保留源码。运行位置: 因 `mkdocs.yml` 在 `mkdocs-docs/` 子目录, 需 `cd mkdocs-docs && mkdocs gh-deploy` 或 `mkdocs gh-deploy -f mkdocs-docs/mkdocs.yml`。自定义域名 `docs.chengkanghua.top` 靠内容目录根 `CNAME`(由仓库根同名文件复制)随站点部署。
+- docsify 已彻底弃用: 2026-09-06 删除内容目录内 14 个 docsify 残留文件(`_sidebar.md`×8/`_navbar.md`×4/`.nojekyll`×2), 仓库现仅 mkdocs-material 工程。
+- 注意: `mkdocs-docs/mkdocs-docs/extra.css` 被 `mkdocs.yml` 的 `extra_css` 引用, 是网站自定义样式, **不可删**; 2026-09-06 发现该文件此前实际缺失(被引用但文件不在, 致 README 所述窄屏横排样式未生效), 已创建并加入: 顶部 header+tabs 浅灰背景(#f5f5f5)+深灰文字、窄屏标签横排。顶部 GitHub 图标链接由 `mkdocs.yml` 的 `repo_url: https://github.com/chengkanghua/docs` 控制。`mkdocs-docs/.mkdocsignore` 防止噪声复制进 site/, 建议保留。真正可删的"垃圾"只有 `site/`。第三方代码目录(uric_web/myblog/bootstrap/VueDemo/Muban/statics)被 exclude_docs 排除不发布, 但属笔记示例资产, 勿删。

@@ -87,3 +87,13 @@ mkdocs gh-deploy
 - **顶部标签在窄窗口没显示？** 已通过 `extra.css` 让其在窄屏也横排；若仍看不到，请刷新（Ctrl+F5）或重启 `mkdocs serve`。
 - **构建出现“图片/链接找不到”的 WARNING？** 通常是源笔记引用了图片但图片没放进对应 `assets/`，不影响构建，把图补到正确路径即可消除。
 - **改了 `mkdocs.yml` 没生效？** `mkdocs serve` 会监听配置文件变化并自动重建，刷新浏览器即可；若异常可重启 `mkdocs serve`。
+
+---
+
+## 四、工程清理与忽略规则
+
+- **构建产物不进 git**：`site/`（mkdocs 生成的静态站）已被仓库根 `.gitignore` 忽略，主分支只保留源码；发布统一用 `mkdocs gh-deploy` 推送到 `gh-pages` 分支。
+- **`.mkdocsignore`**：位于 `mkdocs-docs/`，防止 `.DS_Store`、Python 虚拟环境、缓存等被复制进 `site/`，让部署产物更干净（与 git 管理无关，可留）。
+- **导航手工维护**：早期自动生成导航的 `generate_nav.py` 已删除，新增页面直接在 `mkdocs.yml` 的 `nav` 下加一行（见第二节）。
+- **docsify 已弃用**：原 docsify 的 `_sidebar.md` / `_navbar.md` / `.nojekyll` 残留已于 2026-09-06 清理，仓库现仅 MkDocs 工程。
+- **macOS 文件已清理**：仓库曾有的 `.DS_Store` 已全部删除，且被 `.gitignore` 忽略，不会重新提交。
